@@ -1,0 +1,356 @@
+.fancytree-container {
+  --ft-node-padding-y: 0.25rem;
+  --ft-node-padding-x: 0.5rem;
+  --ft-node-selected-bg: var(--gray-300);
+  --ft-node-selected-color: var(--body-color);
+  --ft-node-active-bg: var(--component-active-bg);
+  --ft-node-active-color: var(--component-active-color);
+  --ft-check-width: 1.25rem;
+  --ft-check-height: 1.25rem;
+  --ft-check-border-width: calc(var(--border-width) * 2);
+  --ft-check-border-color: var(--gray-400);
+  --ft-check-bg: var(--white);
+  --ft-check-border-radius: 0.1875em;
+  --ft-check-transition: box-shadow var(--transition-base-timer) ease-in-out, border-color var(--transition-base-timer) ease-in-out, background-color var(--transition-base-timer) ease-in-out;
+  --ft-check-checked-border-color: transparent;
+  --ft-check-checked-bg: var(--component-active-bg);
+  --ft-radio-border-radius: 100rem;
+  list-style: none;
+  white-space: nowrap;
+  padding: 0;
+  margin: 0;
+  overflow: auto;
+  position: relative;
+}
+.fancytree-container:focus {
+  outline: 0;
+}
+.fancytree-container ul {
+  list-style: none;
+  padding-right: var(--icon-font-size);
+  margin: 0;
+}
+.ui-fancytree-disabled .fancytree-container {
+  opacity: 0.65;
+}
+.ui-fancytree-disabled .fancytree-container,
+.ui-fancytree-disabled .fancytree-title,
+.ui-fancytree-disabled .fancytree-expander {
+  cursor: default;
+}
+.ui-fancytree-disabled .fancytree-treefocus .fancytree-selected .fancytree-title {
+  background-color: var(--ft-node-selected-bg);
+  color: var(--ft-node-selected-color);
+}
+.fancytree-expander:after,
+.fancytree-icon:after,
+.fancytree-checkbox:after,
+.fancytree-drag-helper-img:after,
+.fancytree-drop-before:after,
+.fancytree-drop-after:after,
+.fancytree-loading .fancytree-expander:after,
+.fancytree-statusnode-wait .fancytree-icon:after {
+  font-family: var(--icon-font-family);
+  display: inline-block;
+  font-size: var(--icon-font-size);
+  line-height: 1;
+  vertical-align: top;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body[dir="rtl"] .fancytree-expander:after,
+html[dir="rtl"] .fancytree-expander:after {
+  transform: scaleX(-1);
+  transform-origin: center;
+}
+.fancytree-icon,
+.fancytree-custom-icon,
+.fancytree-expander {
+  display: inline-block;
+  vertical-align: top;
+  margin-right: var(--ft-node-padding-x);
+  margin-top: calc((var(--body-line-height-computed) + var(--ft-node-padding-y) * 2 - var(--icon-font-size)) * 0.5);
+  width: var(--icon-font-size);
+  height: var(--icon-font-size);
+}
+.fancytree-checkbox {
+  vertical-align: top;
+  margin-top: calc((var(--body-line-height-computed) + var(--ft-node-padding-y) * 2 - var(--ft-check-height)) * 0.5);
+  margin-right: var(--ft-node-padding-x);
+}
+img.fancytree-icon {
+  border: 0;
+}
+.fancytree-exp-c .fancytree-expander:after {
+  content: "\f31c";
+}
+.fancytree-exp-cl .fancytree-expander:after {
+  content: "\f31c";
+}
+.fancytree-exp-cd .fancytree-expander:after,
+.fancytree-exp-cdl .fancytree-expander:after {
+  content: "\f31c";
+}
+.fancytree-exp-e .fancytree-expander:after,
+.fancytree-exp-ed .fancytree-expander:after {
+  content: "\f31a";
+}
+.fancytree-exp-el .fancytree-expander:after,
+.fancytree-exp-edl .fancytree-expander:after {
+  content: "\f31a";
+}
+.fancytree-statusnode-error .fancytree-icon:after {
+  content: "\f62d";
+}
+.fancytree-loading .fancytree-expander,
+.fancytree-statusnode-wait .fancytree-icon {
+  margin-right: auto;
+  margin-left: auto;
+  display: inline-block;
+  text-align: center;
+  width: var(--icon-font-size);
+  height: var(--icon-font-size);
+}
+.fancytree-loading .fancytree-expander:after,
+.fancytree-statusnode-wait .fancytree-icon:after {
+  content: "\f5a7";
+  transition: all ease-in-out var(--transition-base-timer);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fancytree-loading .fancytree-expander:after,
+  .fancytree-statusnode-wait .fancytree-icon:after {
+    transition: none;
+  }
+}
+.fancytree-ico-c .fancytree-icon:after,
+.fancytree-ico-e .fancytree-icon:after {
+  content: "\f3eb";
+}
+.fancytree-has-children.fancytree-ico-c .fancytree-icon:after {
+  content: "\f3e6";
+}
+.fancytree-has-children.fancytree-ico-e .fancytree-icon:after {
+  content: "\f3e4";
+}
+.fancytree-ico-cf .fancytree-icon:after,
+.fancytree-ico-ef .fancytree-icon:after {
+  content: "\f40c";
+}
+.fancytree-has-children.fancytree-ico-cf .fancytree-icon:after {
+  content: "\f415";
+}
+.fancytree-has-children.fancytree-ico-ef .fancytree-icon:after {
+  content: "\f40f";
+}
+.fancytree-checkbox {
+  width: var(--ft-check-width);
+  height: var(--ft-check-height);
+  border: var(--ft-check-border-width) solid var(--ft-check-border-color);
+  background-color: var(--ft-check-bg);
+  display: inline-block;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  border-radius: var(--ft-check-border-radius);
+  transition: var(--ft-check-transition);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fancytree-checkbox {
+    transition: none;
+  }
+}
+.fancytree-checkbox[data-color-theme=dark],
+[data-color-theme=dark] .fancytree-checkbox:not([data-color-theme]),
+html[data-color-theme=dark] .fancytree-checkbox {
+  color-scheme: dark;
+  --ft-check-bg: #2c2d33;
+}
+.fancytree-checkbox:after {
+  content: "";
+  position: absolute;
+  width: calc(var(--ft-check-width) - var(--ft-check-border-width) * 2);
+  height: calc(var(--ft-check-width) - var(--ft-check-border-width) * 2);
+  top: 0;
+  right: 0;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M5 10l4 4l6-8'/%3e%3c/svg%3e");
+  background-position: center;
+  background-size: contain;
+  opacity: 0;
+  transition: opacity ease-in-out var(--transition-base-timer);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fancytree-checkbox:after {
+    transition: none;
+  }
+}
+.fancytree-selected .fancytree-checkbox:after,
+.fancytree-partsel .fancytree-checkbox:after {
+  opacity: 1;
+}
+.fancytree-unselectable .fancytree-checkbox {
+  opacity: 0.65;
+  cursor: default;
+}
+.fancytree-selected .fancytree-checkbox,
+.fancytree-partsel .fancytree-checkbox {
+  border-color: var(--ft-check-checked-border-color);
+  background-color: var(--ft-check-checked-bg);
+}
+.fancytree-has-children:not(.fancytree-selected) .fancytree-checkbox:after {
+  background-image: none;
+}
+.fancytree-partsel.fancytree-has-children:not(.fancytree-selected) .fancytree-checkbox:after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M5 10h10'/%3e%3c/svg%3e");
+}
+.fancytree-radio .fancytree-checkbox {
+  border-radius: var(--ft-radio-border-radius);
+}
+.fancytree-radio .fancytree-checkbox:after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%23fff'/%3e%3c/svg%3e");
+}
+.fancytree-drag-helper .fancytree-title {
+  padding-left: calc(var(--ft-node-padding-x) * 2 + var(--icon-font-size));
+  border: var(--border-width) solid var(--border-color);
+  opacity: 0.8;
+  margin: 0;
+}
+.fancytree-drag-helper-img:after {
+  position: absolute;
+  top: 50%;
+  margin-top: calc(var(--icon-font-size) * 0.5 * -1);
+  left: var(--ft-node-padding-x);
+  z-index: 10;
+}
+.fancytree-drop-accept .fancytree-drag-helper-img:after {
+  content: "\f33f";
+  color: var(--success);
+}
+.fancytree-drop-reject .fancytree-drag-helper-img:after {
+  content: "\f62d";
+  color: var(--danger);
+}
+#fancytree-drop-marker.fancytree-drop-before,
+#fancytree-drop-marker.fancytree-drop-after {
+  width: 15rem;
+  border-top: var(--border-width) solid var(--border-color);
+  position: absolute !important;
+}
+.fancytree-drag-source {
+  opacity: 0.5;
+}
+.fancytree-drop-target.fancytree-drop-accept a {
+  background-color: var(--primary) !important;
+  color: var(--white) !important;
+  text-decoration: none;
+}
+.fancytree-node {
+  display: inherit;
+  width: 100%;
+  position: relative;
+  margin-bottom: 1px;
+}
+.fancytree-title {
+  border: 0;
+  padding: var(--ft-node-padding-y) var(--ft-node-padding-x);
+  margin-right: var(--spacer-1);
+  display: inline-block;
+  cursor: pointer;
+  border-radius: var(--border-radius);
+  transition: all ease-in-out var(--transition-base-timer);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fancytree-title {
+    transition: none;
+  }
+}
+.fancytree-title > input {
+  border: 0;
+  outline: 0;
+  padding: 0;
+  background-color: transparent;
+  color: var(--body-color);
+}
+.fancytree-selected .fancytree-title,
+.fancytree-active .fancytree-title {
+  background-color: var(--ft-node-selected-bg);
+  color: var(--ft-node-selected-color);
+}
+.fancytree-treefocus .fancytree-selected .fancytree-title {
+  background-color: var(--ft-node-active-bg);
+  color: var(--ft-node-active-color);
+}
+.fancytree-ext-table .fancytree-node {
+  display: inline-block;
+  width: auto;
+  margin: 0;
+}
+.fancytree-ext-table .fancytree-title {
+  display: inline;
+}
+.fancytree-ext-table.fancytree-container {
+  white-space: normal;
+}
+.fancytree-ext-table .fancytree-expander,
+.fancytree-ext-table .fancytree-icon,
+.fancytree-ext-table .fancytree-custom-icon {
+  margin-top: calc((var(--icon-font-size) - var(--body-font-size)) * 0.5);
+}
+.fancytree-ext-table .fancytree-checkbox {
+  margin: 0 auto;
+  float: none;
+}
+.fancytree-ext-table tbody tr {
+  transition: all ease-in-out var(--transition-base-timer);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fancytree-ext-table tbody tr {
+    transition: none;
+  }
+}
+.fancytree-ext-table tbody tr td:first-child {
+  text-align: center;
+}
+.fancytree-ext-table tbody tr .fancytree-title {
+  background-color: transparent;
+  color: inherit !important;
+  padding: 0;
+  transition: none;
+}
+.fancytree-ext-table tbody tr.fancytree-focused,
+.fancytree-ext-table tbody tr.fancytree-active {
+  background-color: var(--gray-200);
+}
+.fancytree-ext-table tbody tr.fancytree-selected {
+  background-color: var(--gray-300);
+}
+.fancytree-ext-table tbody tr.fancytree-selected .fancytree-title {
+  background-color: transparent;
+}
+.fancytree-treefocus .fancytree-ext-table tbody tr.fancytree-selected .fancytree-title {
+  transition: color ease-in-out var(--transition-base-timer);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fancytree-treefocus .fancytree-ext-table tbody tr.fancytree-selected .fancytree-title {
+    transition: none;
+  }
+}
+.fancytree-ext-childcounter .fancytree-childcounter {
+  position: absolute;
+  left: 0;
+  top: var(--ft-node-padding-y);
+  color: rgba(var(--body-color-rgb), 0.75);
+}
+.fancytree-helper-hidden {
+  display: none;
+}
+.fancytree-helper-indeterminate-cb {
+  color: rgba(var(--body-color-rgb), 0.75);
+}
+.fancytree-helper-disabled {
+  color: rgba(var(--body-color-rgb), 0.5);
+}
+.fancytree-helper-spin {
+  -webkit-animation: rotation 1s linear infinite;
+  animation: rotation 1s linear infinite;
+}
+

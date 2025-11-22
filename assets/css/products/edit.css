@@ -1,0 +1,58 @@
+.feature-autocomplete {
+    position: relative;
+}
+
+.feature-autocomplete .autocomplete-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    max-height: 220px;
+    overflow-y: auto;
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.35rem;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+}
+
+body.dark-theme .feature-autocomplete .autocomplete-results,
+.theme-dark .feature-autocomplete .autocomplete-results {
+    background: #1c1f23;
+    border-color: #2f3338;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.feature-autocomplete .autocomplete-results .list-group-item {
+    cursor: pointer;
+}
+
+.feature-autocomplete .autocomplete-results .list-group-item:hover,
+.feature-autocomplete .autocomplete-results .list-group-item:focus {
+    background: rgba(52, 152, 219, 0.15);
+}
+
+/* Save Success Animation */
+.save-success {
+    background-color: rgba(40, 167, 69, 0.1) !important;
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+    transition: all 0.3s ease;
+}
+
+/* Save Warning Animation */
+.save-warning {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+    border-color: #ffc107 !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+    transition: all 0.3s ease;
+}
+
+/* Save Error Animation */
+.save-error {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    transition: all 0.3s ease;
+}
+

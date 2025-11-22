@@ -1,0 +1,98 @@
+# Changelog
+
+All notable changes to the RMS Shop package will be documented in this file.
+
+## [1.0.0] - 2025-11-15
+
+### Added
+- 🎉 Initial release of RMS Shop package
+- ✅ Complete product management system
+- ✅ Category tree with unlimited nesting
+- ✅ Product variants (combinations) support
+- ✅ Shopping cart with Redis caching
+- ✅ Checkout flow with address management
+- ✅ Order management system
+- ✅ Multi-currency support
+- ✅ Product images with AVIF optimization
+- ✅ Product videos
+- ✅ Product attributes & features
+- ✅ Product ratings & reviews
+- ✅ User addresses management
+- ✅ Points/reward system
+- ✅ Admin dashboard with statistics
+- ✅ Event-driven notifications
+- ✅ Stock reservation system
+- ✅ Discount system (percentage/fixed)
+- ✅ Complete admin panel
+- ✅ User-facing catalog
+- ✅ Comprehensive documentation
+
+### Features
+- Models: 23 models covering all shop entities
+- Controllers: 13 admin controllers + 1 panel controller
+- Views: Complete Blade templates for admin & panel
+- Assets: JavaScript files for dynamic interactions
+- Migrations: Database schema for complete shop system
+- Events: 2 main events (OrderPlaced, ProductStockDepleted)
+- Listeners: 4 listeners for notifications and cache
+- Policies: Order and Product policies
+- Services: Pricing service for calculations
+
+### Technical Details
+- PHP 8.2+ compatible
+- Laravel 11 ready
+- RMS Core integration
+- PSR-4 autoloading
+- Service Provider registration
+- Route auto-loading
+- View auto-loading
+- Migration auto-loading
+
+### Package Structure
+```
+rms/shop/
+├── src/
+│   ├── Models/              (23 models)
+│   ├── Http/Controllers/    (14 controllers)
+│   ├── Events/              (2 events)
+│   ├── Listeners/           (4 listeners)
+│   ├── Policies/            (2 policies)
+│   └── Services/            (1 service)
+├── config/
+│   └── shop.php
+├── database/migrations/     (2 migrations)
+├── resources/views/         (Admin & Panel views)
+├── public/                  (JS/CSS assets)
+├── routes/                  (admin.php, panel.php)
+└── README.md
+```
+
+### Migration from App
+
+This package was extracted from a production application (IRAS) and refactored into a reusable package with:
+- Namespace changes: `App\*` → `RMS\Shop\*`
+- Service Provider for auto-registration
+- Publishable assets (config, migrations, views, public)
+- Complete documentation
+- Standalone functionality
+
+---
+
+## Future Plans
+
+- [ ] Integration with payment gateways
+- [ ] Advanced inventory management
+- [ ] Product bundles
+- [ ] Coupons & promotions
+- [ ] Wishlist functionality
+- [ ] Product comparison
+- [ ] Advanced search & filters
+- [ ] SEO optimization
+- [ ] Multi-language support
+- [ ] API endpoints
+- [ ] Admin API
+- [ ] Webhooks
+- [ ] Analytics dashboard
+- [ ] Export functionality
+- [ ] Bulk operations
+
