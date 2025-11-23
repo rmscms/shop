@@ -63,8 +63,8 @@ class ImageLibraryController extends AdminController implements HasList, HasForm
     {
         parent::beforeRenderView();
         $this->view
-            ->withCss('shop/image-library.css')
-            ->withJs('shop/image-library.js')
+            ->withCss('vendor/shop/admin/css/image-library.css', true)
+            ->withJs('vendor/shop/admin/js/image-library.js', true)
             ->withJsVariables([
                 'imageLibraryRoutes' => [
                     'upload' => route('admin.shop.image-library.upload'),
@@ -86,8 +86,8 @@ class ImageLibraryController extends AdminController implements HasList, HasForm
         $this->view->usePackageNamespace('shop')
             ->setTheme('admin')
             ->setTpl('image-library.index')
-            ->withCss('shop/image-library.css')
-            ->withJs('shop/image-library.js')
+            ->withCss('vendor/shop/admin/css/image-library.css', true)
+            ->withJs('vendor/shop/admin/js/image-library.js', true)
             ->withVariables(compact('images', 'search'))
             ->withJsVariables([
                 'ImageLibraryConfig' => [

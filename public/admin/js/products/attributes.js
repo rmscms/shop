@@ -997,16 +997,16 @@ function debounce(fn, wait = 250) {
     } catch(e) { alert(message); }
   }
 
-  // Save Success Animation Function
+  // Save Success Animation Function (Using is-valid for visual feedback)
   function showSaveSuccess(inputElement) {
     if (!inputElement) return;
 
-    // Add success class
-    inputElement.classList.add('save-success');
+    // Add valid class (Bootstrap standard for success state)
+    inputElement.classList.add('is-valid');
 
     // Remove class after 2 seconds
     setTimeout(() => {
-      inputElement.classList.remove('save-success');
+      inputElement.classList.remove('is-valid');
     }, 2000);
   }
 
@@ -1074,5 +1074,3 @@ function debounce(fn, wait = 250) {
     wireActions();
   });
 })();
-
-

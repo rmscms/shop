@@ -52,10 +52,10 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
 
         $this->view->setTpl('pages.shop.products.edit')
             ->withPlugins([ 'confirm-modal', 'image-uploader', 'ckeditor'])
-            ->withJs('shop/products/edit.js')
-            ->withJs('shop/products/attributes.js')
-            ->withJs('shop/products/video.js')
-            ->withJs('shop/products/features.js')
+            ->withJs('vendor/shop/admin/js/products/edit.js', true)
+            ->withJs('vendor/shop/admin/js/products/attributes.js', true)
+            ->withJs('vendor/shop/admin/js/products/video.js', true)
+            ->withJs('vendor/shop/admin/js/products/features.js', true)
             ->withVariables([
                 'product' => null,
                 'categories' => $categories,
@@ -178,10 +178,10 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
         $this->useUserTemplates();
         $this->view->setTpl('pages.shop.products.edit')
             ->withPlugins([ 'confirm-modal', 'image-uploader', 'ckeditor'])
-            ->withJs('shop/products/edit.js')
-            ->withJs('shop/products/attributes.js')
-            ->withJs('shop/products/video.js')
-            ->withJs('shop/products/features-new.js')
+            ->withJs('vendor/shop/admin/js/products/edit.js', true)
+            ->withJs('vendor/shop/admin/js/products/attributes.js', true)
+            ->withJs('vendor/shop/admin/js/products/video.js', true)
+            ->withJs('vendor/shop/admin/js/products/features-new.js', true)
             ->withVariables([
                 'product' => $product,
                 'categories' => $categories,

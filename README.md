@@ -26,6 +26,7 @@ A professional e-commerce solution built on top of RMS Core, featuring a complet
 - Pricing (base price, sale price, CNY pricing)
 - Discount system (percentage or fixed amount)
 - Image gallery with multiple sizes
+- AVIF image optimization with background jobs
 - Video support
 - Custom attributes per product
 - Product features by category
@@ -105,7 +106,7 @@ FFPROBE_PATH=ffprobe
 For optimal performance, run separate workers for each queue:
 
 ```bash
-# Terminal 1: AVIF conversion (high priority)
+# Terminal 1: AVIF conversion (high priority, for image optimization)
 php artisan queue:work --queue=shop-avif --tries=3 --timeout=300
 
 # Terminal 2: Video processing (CPU intensive)
@@ -124,6 +125,12 @@ return [
     'default_status' => 'pending',
     'active_order_statuses' => 'pending,preparing,paid',
     'cart_reservation_ttl' => 1800, // 30 minutes
+    'image_sizes' => [ // Image optimization sizes
+        'thumb' => [200, 200],
+        'medium' => [600, 600],
+        'large' => [1200, 1200],
+    ],
+    'avif_quality' => 75, // AVIF compression quality (0-100)
     // ... more options
 ];
 ```

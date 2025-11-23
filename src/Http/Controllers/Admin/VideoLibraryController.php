@@ -60,7 +60,7 @@ class VideoLibraryController extends AdminController implements HasList, HasForm
     {
         parent::beforeRenderView();
         $this->view
-            ->withJs('shop/video-library.js')
+            ->withJs('vendor/shop/admin/js/video-library.js', true)
             ->withJsVariables([
                 'videoLibraryRoutes' => [
                     'upload' => route('admin.shop.video-library.upload'),
@@ -80,7 +80,7 @@ class VideoLibraryController extends AdminController implements HasList, HasForm
         $this->view->usePackageNamespace('shop')
             ->setTheme('admin')
             ->setTpl('video-library.index')
-            ->withJs('shop/video-library.js')
+            ->withJs('vendor/shop/admin/js/video-library.js', true)
             ->withPlugins(['hls', 'confirm-modal'])
             ->withVariables(compact('videos', 'search'))
             ->withJsVariables([

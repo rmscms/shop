@@ -162,8 +162,8 @@ class OrdersController extends AdminController implements HasList, ShouldFilter,
             ->setTheme('admin')
             ->setTpl('orders.show')
             ->withPlugins(['confirm-modal', 'amount-formatter'])
-            ->withCss('shop/orders.css')
-            ->withJs('shop/orders-show.js')
+            ->withCss('vendor/shop/admin/css/orders.css', true)
+            ->withJs('vendor/shop/admin/js/orders-show.js', true)
             ->withVariables([
                 'order' => $data['order'],
                 'items' => $data['items'],

@@ -166,8 +166,8 @@ class ProductPurchaseStatsController extends AdminController implements HasList,
             ->setTheme('admin')
             ->setTpl('purchase-stats.dashboard')
             ->withPlugins(['chart-js'])
-            ->withCss('shop/purchase-stats.css')
-            ->withJs('shop/purchase-stats.js')
+            ->withCss('vendor/shop/admin/css/purchase-stats.css', true)
+            ->withJs('vendor/shop/admin/js/purchase-stats.js', true)
             ->withVariables([
                 'popularProducts' => $popularProducts,
                 'dailyRevenue' => $dailyRevenue,

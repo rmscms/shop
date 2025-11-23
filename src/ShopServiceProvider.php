@@ -59,6 +59,7 @@ class ShopServiceProvider extends ServiceProvider
         // Publish assets (JS/CSS for admin panel)
         $this->publishes([
             __DIR__.'/../public/admin/js' => public_path('vendor/shop/admin/js'),
+            __DIR__.'/../public/admin/css' => public_path('vendor/shop/admin/css'),
         ], 'shop-assets');
 
         // Publish plugins separately

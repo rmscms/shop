@@ -18,6 +18,7 @@ use RMS\Shop\Http\Controllers\Admin\ShopSettingsController;
 use RMS\Shop\Http\Controllers\Admin\EditorUploadController;
 use RMS\Shop\Http\Controllers\Admin\ImageLibraryController;
 use RMS\Shop\Http\Controllers\Admin\VideoLibraryController;
+use RMS\Shop\Http\Controllers\Admin\AvifController;
 
 Route::middleware([
         'web',
@@ -147,6 +148,16 @@ Route::middleware([
         Route::delete('products/{product}/image-library/detach', [ImageLibraryController::class, 'detachFromProduct'])->name('products.image-library.detach');
         Route::post('products/{product}/image-library/set-main', [ImageLibraryController::class, 'setMainImage'])->name('products.image-library.set-main');
         Route::post('products/{product}/image-library/sort', [ImageLibraryController::class, 'updateSort'])->name('products.image-library.sort');
+
+        // AVIF Manager
+        Route::prefix('avif')->name('avif.')->group(function () {
+            Route::get('/', [AvifController::class, 'index'])->name('index');
+            Route::get('/stats', [AvifController::class, 'stats'])->name('stats');
+            Route::post('/regenerate-all', [AvifController::class, 'regenerateAll'])->name('regenerate-all');
+            Route::post('/clean-all', [AvifController::class, 'cleanAll'])->name('clean-all');
+            Route::post('/regenerate-directory', [AvifController::class, 'regenerateDirectory'])->name('regenerate-directory');
+            Route::post('/upload-convert', [AvifController::class, 'uploadAndConvert'])->name('upload-convert');
+        });
 
         // Video Library
         Route::get('video-library', [VideoLibraryController::class, 'index'])->name('video-library.index');

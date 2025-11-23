@@ -95,7 +95,7 @@ class CategoriesController extends AdminController implements HasList, HasForm, 
             ->setTheme('admin')
             ->setTpl('categories.tree')
             ->withPlugins(['fancytree'])
-            ->withJs('shop/categories/tree.js')
+            ->withJs('vendor/shop/admin/js/categories/tree.js', true)
             ->withVariables([
                 'treeData' => $treeData,
                 'defaultCategoryId' => $defaultId,

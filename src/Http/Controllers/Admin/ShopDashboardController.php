@@ -46,7 +46,7 @@ class ShopDashboardController extends AdminController
                 'overallStatus' => $overallStatus,
                 'stats' => $stats,
             ])
-            ->withJs('shop/dashboard.js');
+            ->withJs('vendor/shop/admin/js/dashboard.js', true);
         return $this->view();
     }
 

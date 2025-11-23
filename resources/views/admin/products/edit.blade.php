@@ -52,7 +52,7 @@
           <li class="nav-item">
               <a class="nav-link" id="videos-tab" data-bs-toggle="tab" href="#videos" role="tab" aria-controls="videos" aria-selected="false">
                   <i class="ph ph-video-camera me-1"></i> @lang('shop::shop.tabs.videos')
-                  <span class="badge bg-secondary ms-1" id="video-count">{{ $product->assignedVideos->count() ?? 0 }}</span>
+                  <span class="badge bg-secondary ms-1" id="video-count">{{ !empty($product) ? (optional($product->assignedVideos)->count() ?? 0) : 0 }}</span>
               </a>
           </li>
         </ul>
@@ -382,11 +382,3 @@
 </div>
 @endsection
 
-@push('scripts')
-<script src="{{ asset('vendor/shop/admin/js/products/image-management.js') }}"></script>
-@endpush
-
-@push('styles')
-<link rel="stylesheet" href="{{ asset('vendor/shop/admin/css/products/edit.css') }}">
-<link rel="stylesheet" href="{{ asset('vendor/shop/admin/css/image-library.css') }}">
-@endpush

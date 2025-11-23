@@ -93,7 +93,9 @@
                 return;
               }
               if (data && (data.ok || data.success)) {
-                if (typeof showToast === 'function') { showToast('ذخیره شد', 'success'); }
+                if (!triggerToast('success', 'موفق', (data && data.message) ? data.message : 'قیمت‌ها ذخیره شد', 2200) && typeof showToast === 'function') {
+                  showToast('ذخیره شد', 'success');
+                }
               } else {
                 var m = (data && data.message) ? data.message : 'ذخیره ناموفق';
                 showErrorToast(m);
@@ -140,14 +142,28 @@
         el.insertAdjacentElement('afterend', fb);
       }
     }
+    function triggerToast(type, title, message, duration){
+      if (window.showToastMessage){
+        window.showToastMessage(type || 'info', title || '', message || '', duration || 3500);
+        return true;
+      }
+      if (typeof showToast === 'function'){
+        showToast(message || title || '', type || 'info');
+        return true;
+      }
+      return false;
+    }
     function showErrorToast(lines){
+      var msgArray = Array.isArray(lines) ? lines.filter(Boolean) : [];
+      var message = msgArray.length ? msgArray.join(' - ') : (typeof lines === 'string' ? lines : 'خطا در ذخیره');
+      if (triggerToast('danger', 'خطا', message, 4500)) return;
       var t2 = document.createElement('div'); t2.className='alert alert-danger position-fixed start-0 top-0 m-3'; t2.style.zIndex = '2000';
-      if (Array.isArray(lines) && lines.length){
+      if (msgArray.length){
         var ul = document.createElement('ul'); ul.className='mb-0 ps-3';
-        lines.forEach(function(l){ var li=document.createElement('li'); li.textContent=l; ul.appendChild(li); });
+        msgArray.forEach(function(l){ var li=document.createElement('li'); li.textContent=l; ul.appendChild(li); });
         t2.appendChild(ul);
       } else {
-        t2.textContent = (typeof lines==='string'? lines : 'خطا در ذخیره');
+        t2.textContent = message;
       }
       document.body.appendChild(t2); setTimeout(function(){ t2.remove(); }, 4000);
     }
