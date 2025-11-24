@@ -96,3 +96,7 @@ This package was extracted from a production application (IRAS) and refactored i
 - [ ] Export functionality
 - [ ] Bulk operations
 
+## [1.0.2] - 2025-11-23
+### Added
+- ShopInstallCommand for automated installation including migrations, publishing, env updates, queue config, and sidebar menu insertion from stub.
+

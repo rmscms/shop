@@ -51,6 +51,20 @@ A professional e-commerce solution built on top of RMS Core, featuring a complet
 
 ## Installation
 
+To install the RMS Shop package:
+
+1. Require the package via Composer:
+   ```
+   composer require rms/shop
+   ```
+
+2. Run the installer:
+   ```
+   php artisan shop:install
+   ```
+
+This will publish resources, run migrations, update .env, configure queues, and add shop menus to the admin sidebar.
+
 ### 1. Install via Composer
 
 ```bash

@@ -18,7 +18,8 @@
     },
     "autoload": {
         "psr-4": {
-            "RMS\\Shop\\": "src/"
+            "RMS\\Shop\\": "src/",
+            "RMS\\Shop\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "extra": {

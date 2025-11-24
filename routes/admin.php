@@ -42,15 +42,14 @@ Route::middleware([
         Route::put('settings', [ShopSettingsController::class, 'update'])->name('settings.update');
         
         // Categories
-        RouteHelper::adminResource(CategoriesController::class, 'categories');
+        Route::resource('categories', CategoriesController::class);
        
 
         // Category tree routes
         Route::get('categories/tree', [CategoriesController::class, 'tree'])->name('categories.tree');
         Route::get('categories/tree/data', [CategoriesController::class, 'treeData'])->name('categories.tree.data');
-        Route::resource('categories', CategoriesController::class);
         // Products
-        RouteHelper::adminResource(ProductsController::class, 'products');
+        Route::resource('products', ProductsController::class);
        
 
         // Product custom routes
@@ -89,9 +88,8 @@ Route::middleware([
         Route::get('products/attributes/values/search', [ProductAttributeLookupController::class, 'values'])->name('products.attributes.values.search');
         Route::post('products/attributes/definitions', [ProductAttributeLookupController::class, 'storeDefinition'])->name('products.attributes.definitions.store');
         Route::post('products/attributes/values', [ProductAttributeLookupController::class, 'storeValue'])->name('products.attributes.values.store');
-        Route::resource('products', ProductsController::class);
         // Orders (limited to index, show only)
-        RouteHelper::adminResource(OrdersController::class, 'orders', [
+        Route::resource('orders', OrdersController::class, [
             'export' => true,
             'sort' => false,
             'toggle_active' => false,
@@ -111,30 +109,22 @@ Route::middleware([
         Route::post('orders/{order}/notes/add', [OrdersController::class, 'addNote'])->name('orders.notes.add');
         Route::post('orders/{order}/notes/{note}/update', [OrdersController::class, 'updateNote'])->name('orders.notes.update');
         Route::post('orders/{order}/notes/{note}/delete', [OrdersController::class, 'deleteNote'])->name('orders.notes.delete');
-        Route::resource('orders', OrdersController::class)->only(['index', 'show']);
         // Basic resources
-        RouteHelper::filter(CartsController::class, 'carts');
         Route::resource('carts', CartsController::class)->only(['index', 'show', 'destroy']);
 
-        RouteHelper::adminResource(CurrenciesController::class, 'currencies');
         Route::resource('currencies', CurrenciesController::class);
-
-        RouteHelper::adminResource(CurrencyRatesController::class, 'currency-rates');
         Route::resource('currency-rates', CurrencyRatesController::class);
 
-        RouteHelper::adminResource(ProductFeatureCategoriesController::class, 'product-feature-categories');
         Route::resource('product-feature-categories', ProductFeatureCategoriesController::class);
-
-        RouteHelper::filter(ProductPurchaseStatsController::class, 'product-purchase-stats');
         Route::resource('product-purchase-stats', ProductPurchaseStatsController::class)->only(['index']);
 
-        RouteHelper::filter(UserPointsController::class, 'user-points');
         Route::resource('user-points', UserPointsController::class)->only(['index']);
 
         // Image Library
-        Route::post('image-library/upload', [ImageLibraryController::class, 'upload'])->name('image-library.upload');
-        Route::delete('image-library/ajax-delete/{image}', [ImageLibraryController::class, 'ajaxDestroy'])->name('image-library.ajax-destroy');
-        Route::post('image-library/{image}/generate-avif', [ImageLibraryController::class, 'generateAvif'])->name('image-library.generate-avif');
+        Route::resource('image-library', ImageLibraryController::class);
+        Route::post('image-library/{id}/assign', [ImageLibraryController::class, 'assign'])->name('image-library.assign');
+        Route::post('image-library/{id}/detach', [ImageLibraryController::class, 'detach'])->name('image-library.detach');
+        Route::post('image-library/{id}/generate-avif', [ImageLibraryController::class, 'generateAvif'])->name('image-library.generate-avif');
         Route::get('image-library', [ImageLibraryController::class, 'index'])->name('image-library.index');
         Route::post('image-library', [ImageLibraryController::class, 'store'])->name('image-library.store');
         Route::get('image-library/{image}', [ImageLibraryController::class, 'show'])->name('image-library.show');
@@ -160,10 +150,9 @@ Route::middleware([
         });
 
         // Video Library
-        Route::get('video-library', [VideoLibraryController::class, 'index'])->name('video-library.index');
-        Route::post('video-library/upload', [VideoLibraryController::class, 'upload'])->name('video-library.upload');
-        Route::delete('video-library/ajax-delete/{video}', [VideoLibraryController::class, 'ajaxDestroy'])->name('video-library.ajax-destroy');
-        Route::delete('video-library/{video}', [VideoLibraryController::class, 'ajaxDestroy'])->name('video-library.destroy');
+        Route::resource('video-library', VideoLibraryController::class);
+        Route::post('video-library/{id}/assign', [VideoLibraryController::class, 'assign'])->name('video-library.assign');
+        Route::post('video-library/{id}/detach', [VideoLibraryController::class, 'detach'])->name('video-library.detach');
 
         // Product videos (specific routes before parametric ones)
         Route::get('products/{product}/videos/list', [ProductsController::class, 'listVideos'])->name('products.videos.list');

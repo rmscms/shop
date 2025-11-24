@@ -31,6 +31,12 @@ class ShopServiceProvider extends ServiceProvider
             return new \RMS\Shop\Support\PanelApi\CartStorage($app['cache']->store());
         });
         $this->app->singleton(\RMS\Shop\Support\PanelApi\CartManager::class);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \RMS\Shop\Console\Commands\ShopInstallCommand::class,
+            ]);
+        }
     }
 
     public function boot()

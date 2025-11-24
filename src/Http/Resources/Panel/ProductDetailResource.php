@@ -54,7 +54,7 @@ class ProductDetailResource extends ProductResource
             return $this->combinations->map(function ($combination) use ($priceService) {
                 [$comboPrice, $comboPriceCny] = $this->convertPriceValue(
                     $priceService,
-                    $combination->price,
+                    $combination->sale_price,
                     $combination->sale_price_cny,
                     'comb:'.$combination->id.':price'
                 );
