@@ -43,14 +43,14 @@ Route::middleware([
         
         // Categories
         Route::resource('categories', CategoriesController::class);
-       
+        RouteHelper::adminResource(CategoriesController::class, 'categories');
 
         // Category tree routes
         Route::get('categories/tree', [CategoriesController::class, 'tree'])->name('categories.tree');
         Route::get('categories/tree/data', [CategoriesController::class, 'treeData'])->name('categories.tree.data');
         // Products
         Route::resource('products', ProductsController::class);
-       
+        RouteHelper::adminResource(ProductsController::class, 'products');
 
         // Product custom routes
         Route::post('products/{product}/save-combinations', [ProductsController::class, 'saveCombinations'])->name('products.save-combinations');
@@ -95,7 +95,12 @@ Route::middleware([
             'toggle_active' => false,
             'batch_actions' => [],
         ]);
-      
+        RouteHelper::adminResource(OrdersController::class, 'orders', [
+            'export' => true,
+            'sort' => false,
+            'toggle_active' => false,
+            'batch_actions' => [],
+        ]);
 
         // Order custom routes
         Route::get('orders/{order}/whatsapp', [OrdersController::class, 'whatsapp'])->name('orders.whatsapp');
@@ -111,19 +116,37 @@ Route::middleware([
         Route::post('orders/{order}/notes/{note}/delete', [OrdersController::class, 'deleteNote'])->name('orders.notes.delete');
         // Basic resources
         Route::resource('carts', CartsController::class)->only(['index', 'show', 'destroy']);
+        RouteHelper::adminResource(CartsController::class, 'carts', [
+            'export' => false,
+            'sort' => false,
+        ]);
 
         Route::resource('currencies', CurrenciesController::class);
+        RouteHelper::adminResource(CurrenciesController::class, 'currencies');
+
         Route::resource('currency-rates', CurrencyRatesController::class);
+        RouteHelper::adminResource(CurrencyRatesController::class, 'currency-rates');
 
         Route::resource('product-feature-categories', ProductFeatureCategoriesController::class);
+        RouteHelper::adminResource(ProductFeatureCategoriesController::class, 'product-feature-categories');
+
         Route::resource('product-purchase-stats', ProductPurchaseStatsController::class)->only(['index']);
+        RouteHelper::adminResource(ProductPurchaseStatsController::class, 'product-purchase-stats', [
+            'toggle_active' => false,
+            'batch_actions' => [],
+        ]);
 
         Route::resource('user-points', UserPointsController::class)->only(['index']);
+        RouteHelper::adminResource(UserPointsController::class, 'user-points', [
+            'toggle_active' => false,
+            'batch_actions' => [],
+        ]);
 
         // Image Library
         Route::post('image-library/upload', [ImageLibraryController::class, 'upload'])->name('image-library.upload');
         Route::delete('image-library/{image}/ajax', [ImageLibraryController::class, 'ajaxDestroy'])->name('image-library.ajax-destroy');
         Route::resource('image-library', ImageLibraryController::class);
+        RouteHelper::adminResource(ImageLibraryController::class, 'image-library');
         Route::post('image-library/{id}/assign', [ImageLibraryController::class, 'assign'])->name('image-library.assign');
         Route::post('image-library/{id}/detach', [ImageLibraryController::class, 'detach'])->name('image-library.detach');
         Route::post('image-library/{id}/generate-avif', [ImageLibraryController::class, 'generateAvif'])->name('image-library.generate-avif');
@@ -156,6 +179,7 @@ Route::middleware([
 
         // Video Library
         Route::resource('video-library', VideoLibraryController::class);
+        RouteHelper::adminResource(VideoLibraryController::class, 'video-library');
         Route::post('video-library/{id}/assign', [VideoLibraryController::class, 'assign'])->name('video-library.assign');
         Route::post('video-library/{id}/detach', [VideoLibraryController::class, 'detach'])->name('video-library.detach');
 

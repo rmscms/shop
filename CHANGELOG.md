@@ -111,3 +111,7 @@ This package was extracted from a production application (IRAS) and refactored i
 - Image library uploader JS refactored to handle missing routes/modals gracefully.
 - Admin routes expose upload & AJAX delete endpoints explicitly for image library.
 
+## [1.0.4] - 2025-11-25
+### Fixed
+- Re-registered filter/clear-filter helper routes for all shop admin resources (e.g. `admin.shop.products.filter`) so the admin list filters load without errors.
+
