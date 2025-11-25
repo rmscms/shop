@@ -2,36 +2,74 @@
 (function() {
     'use strict';
 
-    const config = window.ImageLibraryConfig || {};
+    const config = (window.RMS && window.RMS.ImageLibraryConfig) || window.ImageLibraryConfig || {};
     let currentDeleteImageId = null;
 
-    // DOM elements
-    const searchInput = document.getElementById('search-input');
-    const searchBtn = document.getElementById('search-btn');
-    const uploadBtn = document.getElementById('upload-btn');
-    const uploadInput = document.getElementById('upload-input');
-    const uploadModal = new bootstrap.Modal(document.getElementById('upload-modal'));
-    const deleteModal = new bootstrap.Modal(document.getElementById('delete-modal'));
-    const imagesContainer = document.getElementById('images-container');
+    // DOM references (assigned on init)
+    let searchInput;
+    let searchBtn;
+    let uploadBtn;
+    let uploadInput;
+    let uploadModal;
+    let deleteModal;
+    let imagesContainer;
 
     // Upload modal elements
-    const uploadFilesInput = document.getElementById('upload-files');
-    const uploadPreview = document.getElementById('upload-preview');
-    const uploadPreviewImages = document.getElementById('upload-preview-images');
-    const startUploadBtn = document.getElementById('start-upload-btn');
+    let uploadFilesInput;
+    let uploadPreview;
+    let uploadPreviewImages;
+    let startUploadBtn;
 
     // Delete modal elements
-    const deleteImagePreview = document.getElementById('delete-image-preview');
-    const deleteImageFilename = document.getElementById('delete-image-filename');
-    const deleteImageInfo = document.getElementById('delete-image-info');
-    const deleteWarning = document.getElementById('delete-warning');
-    const deleteSuccess = document.getElementById('delete-success');
-    const usageCount = document.getElementById('usage-count');
-    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    let deleteImagePreview;
+    let deleteImageFilename;
+    let deleteImageInfo;
+    let deleteWarning;
+    let deleteSuccess;
+    let usageCount;
+    let confirmDeleteBtn;
+
+    let uploadRoute = '';
+    let destroyRouteTemplate = '';
 
     // Initialize
     function init() {
+        cacheDomElements();
         setupEventListeners();
+    }
+
+    function cacheDomElements() {
+        searchInput = document.getElementById('search-input');
+        searchBtn = document.getElementById('search-btn');
+        uploadBtn = document.getElementById('upload-btn');
+        uploadInput = document.getElementById('upload-input');
+        imagesContainer = document.getElementById('images-container');
+
+        uploadFilesInput = document.getElementById('upload-files');
+        uploadPreview = document.getElementById('upload-preview');
+        uploadPreviewImages = document.getElementById('upload-preview-images');
+        startUploadBtn = document.getElementById('start-upload-btn');
+
+        deleteImagePreview = document.getElementById('delete-image-preview');
+        deleteImageFilename = document.getElementById('delete-image-filename');
+        deleteImageInfo = document.getElementById('delete-image-info');
+        deleteWarning = document.getElementById('delete-warning');
+        deleteSuccess = document.getElementById('delete-success');
+        usageCount = document.getElementById('usage-count');
+        confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+
+        const uploadModalEl = document.getElementById('upload-modal');
+        if (uploadModalEl && window.bootstrap && bootstrap.Modal) {
+            uploadModal = bootstrap.Modal.getOrCreateInstance(uploadModalEl);
+        }
+
+        const deleteModalEl = document.getElementById('delete-modal');
+        if (deleteModalEl && window.bootstrap && bootstrap.Modal) {
+            deleteModal = bootstrap.Modal.getOrCreateInstance(deleteModalEl);
+        }
+
+        uploadRoute = config.routes?.upload || '';
+        destroyRouteTemplate = config.routes?.destroy || '';
     }
 
     // Setup event listeners
@@ -86,16 +124,26 @@
 
     // File selection for main upload button
     function handleFileSelection(e) {
+        if (!uploadFilesInput) {
+            return;
+        }
+
         const files = Array.from(e.target.files);
         if (files.length > 0) {
             uploadFilesInput.files = e.target.files;
             handleUploadFileSelection({ target: uploadFilesInput });
-            uploadModal.show();
+            if (uploadModal) {
+                uploadModal.show();
+            }
         }
     }
 
     // Handle upload file selection
     function handleUploadFileSelection(e) {
+        if (!uploadPreview || !uploadPreviewImages || !startUploadBtn) {
+            return;
+        }
+
         const files = Array.from(e.target.files);
 
         if (files.length === 0) {
@@ -149,6 +197,10 @@
 
     // Update file list after removing a file
     function updateFileListAfterRemove(removedIndex) {
+        if (!uploadFilesInput || !uploadPreview || !startUploadBtn) {
+            return;
+        }
+
         const dt = new DataTransfer();
         const files = Array.from(uploadFilesInput.files);
 
@@ -168,6 +220,10 @@
 
     // Start upload process
     async function startUpload() {
+        if (!uploadFilesInput || !uploadPreview || !uploadPreviewImages || !startUploadBtn) {
+            return;
+        }
+
         const files = Array.from(uploadFilesInput.files);
         if (files.length === 0) return;
 
@@ -189,7 +245,9 @@
         }
 
         // Reset form and reload page
-        uploadModal.hide();
+        if (uploadModal) {
+            uploadModal.hide();
+        }
         uploadFilesInput.value = '';
         uploadPreview.classList.add('d-none');
         startUploadBtn.disabled = false;
@@ -206,7 +264,11 @@
 
         const progressBar = previewItem.querySelector('.progress-bar');
 
-        const response = await fetch(config.routes.upload, {
+        if (!uploadRoute) {
+            throw new Error('upload route not configured');
+        }
+
+        const response = await fetch(uploadRoute, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': config.csrf,
@@ -286,7 +348,9 @@
             }
 
             currentDeleteImageId = imageId;
-            deleteModal.show();
+            if (deleteModal) {
+                deleteModal.show();
+            }
 
         } catch (error) {
             console.error('Error showing delete modal:', error);
@@ -301,7 +365,13 @@
         confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> در حال حذف...';
 
         try {
-            const response = await fetch(config.routes.destroy(currentDeleteImageId), {
+            const destroyUrl = resolveRoute(destroyRouteTemplate, currentDeleteImageId);
+            if (!destroyUrl) {
+                showErrorToast('Route حذف تصویر تنظیم نشده است.');
+                return;
+            }
+
+            const response = await fetch(destroyUrl, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': config.csrf,
@@ -313,7 +383,9 @@
 
             if (result.success) {
                 showToast('تصویر با موفقیت حذف شد', 'success');
-                deleteModal.hide();
+                if (deleteModal) {
+                    deleteModal.hide();
+                }
                 // Remove the card from DOM
                 const card = document.querySelector(`.image-card[data-image-id="${currentDeleteImageId}"]`);
                 if (card) {
@@ -334,6 +406,13 @@
     }
 
     // Utility functions
+    function resolveRoute(template, value) {
+        if (!template || !value) {
+            return '';
+        }
+        return template.replace('__ID__', value);
+    }
+
     function showToast(message, type = 'info') {
         if (window.showToastMessage) {
             window.showToastMessage(type, '', message);

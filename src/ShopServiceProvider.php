@@ -35,6 +35,7 @@ class ShopServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \RMS\Shop\Console\Commands\ShopInstallCommand::class,
+                \RMS\Shop\Console\Commands\AvifDirectoryCommand::class,
             ]);
         }
     }

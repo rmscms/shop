@@ -100,3 +100,14 @@ This package was extracted from a production application (IRAS) and refactored i
 ### Added
 - ShopInstallCommand for automated installation including migrations, publishing, env updates, queue config, and sidebar menu insertion from stub.
 
+## [1.0.3] - 2025-11-25
+### Added
+- AVIF directory manager console (`shop:avif-directory`) to add/list/activate/remove custom public or storage paths.
+- New AVIF dashboard view with directory controls and per-directory statistics.
+- Database support for AVIF directories (`shop_avif_directories` migration + model).
+
+### Changed
+- AVIF helper now reads directories from database and includes storage paths such as `uploads/products/library/orig`.
+- Image library uploader JS refactored to handle missing routes/modals gracefully.
+- Admin routes expose upload & AJAX delete endpoints explicitly for image library.
+

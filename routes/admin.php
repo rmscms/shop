@@ -121,6 +121,8 @@ Route::middleware([
         Route::resource('user-points', UserPointsController::class)->only(['index']);
 
         // Image Library
+        Route::post('image-library/upload', [ImageLibraryController::class, 'upload'])->name('image-library.upload');
+        Route::delete('image-library/{image}/ajax', [ImageLibraryController::class, 'ajaxDestroy'])->name('image-library.ajax-destroy');
         Route::resource('image-library', ImageLibraryController::class);
         Route::post('image-library/{id}/assign', [ImageLibraryController::class, 'assign'])->name('image-library.assign');
         Route::post('image-library/{id}/detach', [ImageLibraryController::class, 'detach'])->name('image-library.detach');
@@ -147,6 +149,9 @@ Route::middleware([
             Route::post('/clean-all', [AvifController::class, 'cleanAll'])->name('clean-all');
             Route::post('/regenerate-directory', [AvifController::class, 'regenerateDirectory'])->name('regenerate-directory');
             Route::post('/upload-convert', [AvifController::class, 'uploadAndConvert'])->name('upload-convert');
+            Route::post('/directories', [AvifController::class, 'storeDirectory'])->name('directories.store');
+            Route::post('/directories/{directory}/toggle', [AvifController::class, 'toggleDirectory'])->name('directories.toggle');
+            Route::delete('/directories/{directory}', [AvifController::class, 'destroyDirectory'])->name('directories.destroy');
         });
 
         // Video Library

@@ -65,6 +65,30 @@ To install the RMS Shop package:
 
 This will publish resources, run migrations, update .env, configure queues, and add shop menus to the admin sidebar.
 
+### Manage AVIF Directories
+
+You can register additional folders (public or storage paths) for AVIF stats and queue jobs:
+
+```bash
+# List directories
+php artisan shop:avif-directory list
+
+# Add public path (relative to public/)
+php artisan shop:avif-directory add uploads/blog/images --type=public
+
+# Add storage path (relative to storage/app/public)
+php artisan shop:avif-directory add uploads/blog/originals --type=storage
+
+# Activate/deactivate
+php artisan shop:avif-directory deactivate uploads/blog/images
+php artisan shop:avif-directory activate uploads/blog/images
+
+# Remove (needs --force to skip confirmation)
+php artisan shop:avif-directory remove uploads/blog/originals --type=storage --force
+```
+
+These directories appear in the AVIF dashboard and can be extended from other packages such as `rms/blog`.
+
 ### 1. Install via Composer
 
 ```bash
