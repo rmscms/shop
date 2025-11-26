@@ -38,6 +38,10 @@ class ProductResource extends JsonResource
             'category' => $this->whenLoaded('category', function () use ($request) {
                 return (new CategoryBriefResource($this->category))->toArray($request);
             }),
+            'brand_id' => $this->brand_id ? (int) $this->brand_id : null,
+            'brand' => $this->whenLoaded('brand', function () use ($request) {
+                return (new BrandResource($this->brand))->toArray($request);
+            }),
             'main_image' => $mainImage,
             'main_video' => $this->whenLoaded('assignedVideos', function () {
                 $mainVideoModel = $this->assignedVideos->first();

@@ -50,6 +50,7 @@ class CartManager
         $products = Product::query()
             ->with([
                 'category:id,name,slug',
+                'brand:id,name,slug,description,sort',
                 'images' => function ($q) {
                     $q->select('id', 'product_id', 'path', 'is_main', 'sort')
                         ->orderByDesc('is_main')

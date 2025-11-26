@@ -112,7 +112,7 @@
     var SAVE_ENDPOINT = (window.RMS && RMS.apiEndpoints && RMS.apiEndpoints.saveBasic)
       ? RMS.apiEndpoints.saveBasic
       : ((window.App && App.apiEndpoints && App.apiEndpoints.saveBasic) ? App.apiEndpoints.saveBasic : null);
-    var PICK_FIELDS = ['name','slug','sku','category_id','active','point_per_unit','cost_cny','sale_price_cny','discount_type','discount_value','stock_qty','short_desc','description'];
+    var PICK_FIELDS = ['name','slug','sku','category_id','brand_id','active','point_per_unit','cost_cny','sale_price_cny','discount_type','discount_value','stock_qty','short_desc','description'];
     function collectParams(){
       var fd = new URLSearchParams();
       PICK_FIELDS.forEach(function(n){ var el = document.querySelector('[name="'+n+'"]'); if (!el) return; if (el.type==='checkbox') fd.set(n, el.checked? '1':'0'); else fd.set(n, el.value||''); });

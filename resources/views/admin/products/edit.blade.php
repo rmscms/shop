@@ -104,6 +104,16 @@
             @error('category_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
             <div class="form-text mt-1">برای انتخاب/تغییر دسته، از درخت بالا استفاده کنید.</div>
           </div>
+          <div class="col-md-4">
+            <label class="form-label">@lang('shop.product.brand')</label>
+            <select name="brand_id" class="form-select @error('brand_id') is-invalid @enderror" required>
+              <option value="">یک برند را انتخاب کنید</option>
+              @foreach(($brands ?? []) as $brandId => $brandName)
+                <option value="{{ $brandId }}" @selected((int) old('brand_id', $product->brand_id ?? 0) === (int) $brandId)>{{ $brandName }}</option>
+              @endforeach
+            </select>
+            @error('brand_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+          </div>
           <div class="col-12">
             <label class="form-label">توضیح کوتاه</label>
             <textarea name="short_desc" class="form-control js-ckeditor" data-editor="ckeditor" data-min-height="200px" rows="5" data-upload-url="{{ route('admin.shop.editor.upload') }}">{{ old('short_desc', $product->short_desc ?? '') }}</textarea>

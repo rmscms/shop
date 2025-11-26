@@ -19,6 +19,7 @@ class ProductController extends BaseController
      *     summary="List products",
      *     @OA\Parameter(name="q", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="category_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="brand_id", in="query", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="active", in="query", @OA\Schema(type="boolean")),
      *     @OA\Parameter(name="min_price", in="query", @OA\Schema(type="number", format="float")),
      *     @OA\Parameter(name="max_price", in="query", @OA\Schema(type="number", format="float")),
@@ -45,6 +46,7 @@ class ProductController extends BaseController
         $query = Product::query()
             ->with([
                 'category:id,name,slug',
+                'brand:id,name,slug,description,sort',
                 'assignedImages' => function ($q) {
                     $q->orderByPivot('is_main', 'desc')
                         ->orderByPivot('sort');
@@ -65,6 +67,10 @@ class ProductController extends BaseController
 
         $query->when($request->filled('category_id'), function (Builder $builder) use ($request) {
             $builder->where('category_id', (int) $request->input('category_id'));
+        });
+
+        $query->when($request->filled('brand_id'), function (Builder $builder) use ($request) {
+            $builder->where('brand_id', (int) $request->input('brand_id'));
         });
 
         $query->when($request->filled('slug'), function (Builder $builder) use ($request) {
@@ -120,6 +126,7 @@ class ProductController extends BaseController
         $model = Product::query()
             ->with([
                 'category:id,name,slug',
+                'brand:id,name,slug,description,sort',
                 'assignedImages' => function ($q) {
                     $q->orderByPivot('is_main', 'desc')
                         ->orderByPivot('sort');

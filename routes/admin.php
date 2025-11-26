@@ -5,6 +5,7 @@ use RMS\Core\Helpers\RouteHelper;
 use RMS\Shop\Http\Controllers\Admin\ShopDashboardController;
 use RMS\Shop\Http\Controllers\Admin\CategoriesController;
 use RMS\Shop\Http\Controllers\Admin\ProductsController;
+use RMS\Shop\Http\Controllers\Admin\BrandsController;
 use RMS\Shop\Http\Controllers\Admin\OrdersController;
 use RMS\Shop\Http\Controllers\Admin\CartsController;
 use RMS\Shop\Http\Controllers\Admin\CurrenciesController;
@@ -44,6 +45,10 @@ Route::middleware([
         // Categories
         Route::resource('categories', CategoriesController::class);
         RouteHelper::adminResource(CategoriesController::class, 'categories');
+
+        // Brands
+        Route::resource('brands', BrandsController::class);
+        RouteHelper::adminResource(BrandsController::class, 'brands');
 
         // Category tree routes
         Route::get('categories/tree', [CategoriesController::class, 'tree'])->name('categories.tree');

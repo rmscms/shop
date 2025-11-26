@@ -84,7 +84,7 @@ class OrderController extends BaseController
         $userId = (int) $request->user()->id;
         $model = Order::query()
             ->where('user_id', $userId)
-            ->with(['items.product', 'items.combination', 'items.image'])
+            ->with(['items.product.brand', 'items.combination', 'items.image'])
             ->findOrFail($order);
 
         $model->setRelation('visibleNotes', $this->visibleNotes($model->id));
@@ -215,7 +215,7 @@ class OrderController extends BaseController
         }
 
         OrderAdminService::updateStatus($model->id, $newStatus, null);
-        $model->refresh()->load(['items.product', 'items.combination', 'items.image']);
+        $model->refresh()->load(['items.product.brand', 'items.combination', 'items.image']);
         $model->setRelation('visibleNotes', $this->visibleNotes($model->id));
 
         return $this->apiSuccess((new OrderDetailResource($model))->toArray($request));

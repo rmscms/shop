@@ -10,6 +10,7 @@ A professional e-commerce solution built on top of RMS Core, featuring a complet
 - ✅ Multi-currency support (CNY, IRR, etc.)
 - ✅ Product management with variants (combinations)
 - ✅ Category tree with unlimited nesting
+- ✅ Brand management with product assignment
 - ✅ Shopping cart with Redis-based reservation
 - ✅ Complete checkout flow
 - ✅ Order management with status tracking
@@ -43,6 +44,7 @@ A professional e-commerce solution built on top of RMS Core, featuring a complet
 ### 👨‍💼 Admin Panel
 - Complete CRUD for products
 - Category tree management
+- Brand CRUD + sidebar integration
 - Order management with status updates
 - Currency & exchange rates
 - Image size configuration
@@ -193,6 +195,7 @@ Default prefix: `/api/v1/panel`
 
 - `POST /auth/login` – Obtain Sanctum token
 - `GET /products` – Catalog listing
+- `GET /brands` – Active brand list (for filters & selectors)
 - `GET /cart` / `POST /cart/items` – Cart operations
 - `POST /checkout` – Start checkout & payment
 - `GET /orders` / `GET /orders/{id}` – Order history & detail

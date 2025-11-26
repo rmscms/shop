@@ -120,3 +120,9 @@ This package was extracted from a production application (IRAS) and refactored i
 - Order line items now capture the exact gallery image (`image_id` + snapshot metadata) at checkout so later image changes don't affect historical orders.
 - API and admin order views read the stored snapshot (including AVIF variants) and expose both `image_url` and `image_avif_url`.
 
+## [1.0.6] - 2025-11-26
+### Added
+- Brand management (CRUD, sidebar entry, migrations) and brand assignment for every product.
+- Panel API now exposes `GET /brands`, accepts `brand_id` filters, and all product/cart/order resources embed brand details.
+- Product admin form/tab includes a required brand selector; migrations backfill existing products with a default brand.
+

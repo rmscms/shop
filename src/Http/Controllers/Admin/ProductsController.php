@@ -13,6 +13,7 @@ use RMS\Shop\Models\ProductImage;
 use RMS\Shop\Models\ProductVideo;
 use RMS\Shop\Models\ProductFeatureCategory;
 use RMS\Shop\Models\ProductFeature;
+use RMS\Shop\Models\Brand;
 use RMS\Shop\Http\Requests\ProductStoreRequest;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -54,8 +55,9 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
     {
         // Core aliases base table as `a`, so join on `a.category_id`
         $sql->leftJoin('categories', 'categories.id', '=', 'a.category_id')
+            ->leftJoin('shop_brands', 'shop_brands.id', '=', 'a.brand_id')
             // Ensure row identifier resolves to base table id (avoid collisions with joined tables)
-            ->addSelect('a.id as id', 'categories.name as category_name', 'a.discount_type', 'a.discount_value')
+            ->addSelect('a.id as id', 'categories.name as category_name', 'shop_brands.name as brand_name', 'a.discount_type', 'a.discount_value')
             // Exclude soft-deleted products from admin list/search
             ->whereNull('a.deleted_at');
     }
@@ -64,6 +66,7 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
     public function create(Request $request)
     {
         $categories = Category::query()->orderBy('name')->pluck('name','id')->toArray();
+        $brands = $this->getBrandOptions();
         $rate = CurrencyRate::query()->where('base_code','CNY')->where('quote_code','IRT')->orderByDesc('effective_at')->value('sell_rate');
 
         $categoryService = app(CategoryTreeService::class);
@@ -87,6 +90,7 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
                 'combinations' => [],
                 'categoryTree' => $categoryTree,
                 'defaultCategoryId' => $defaultCategoryId,
+                'brands' => $brands,
             ])
             ->withJsVariables([
                 'apiEndpoints' => [
@@ -128,6 +132,7 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
         $categoryService = app(CategoryTreeService::class);
         $categoryTree = $categoryService->getTreeForPlugin($selectedCategoryId ? (int) $selectedCategoryId : null, false);
         $defaultCategoryId = $categoryService->defaultCategoryId();
+        $brands = $this->getBrandOptions();
         $attrRows = ProductAttribute::query()
             ->where('product_id', (int)$id)
             ->orderBy('sort')
@@ -226,6 +231,7 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
                 'featureCategories' => $featureCategories,
                 'categoryTree' => $categoryTree,
                 'defaultCategoryId' => $defaultCategoryId,
+                'brands' => $brands,
             ])
             ->withJsVariables([
                 'productId' => (int)$id,
@@ -307,6 +313,11 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
                 ->advanced()
                 ->optional(),
 
+            Field::select('brand_id', trans('shop.product.brand'))
+                ->setOptions($this->getBrandOptions())
+                ->advanced()
+                ->required(),
+
             Field::price('cost_cny', trans('shop.product.cost_cny'))->optional(),
             Field::price('sale_price_cny', trans('shop.product.sale_price_cny'))->optional(),
             Field::number('stock_qty', trans('shop.combinations.stock'))->withDefaultValue(0)->required(),
@@ -334,6 +345,11 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
                 ->setOptions(['' => trans('shop.common.all')] + $this->getCategoryOptions())
                 ->filterType(Field::SELECT)
                 ->customMethod('renderCategoryName')
+                ->width('160px'),
+            Field::select('brand_id')->withTitle(trans('shop.brand.name'))
+                ->setOptions(['' => trans('shop.common.all')] + $this->getBrandOptions())
+                ->filterType(Field::SELECT)
+                ->customMethod('renderBrandName')
                 ->width('160px'),
             Field::make('price_irt', 'price')
                 ->withTitle(trans('shop.product.price'))
@@ -372,6 +388,7 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
             'name' => ['required','string','max:190'],
             'slug' => ['required','string','max:190'],
             'sku'  => ['nullable','string','max:190'],
+            'brand_id' => ['required','integer','exists:shop_brands,id'],
             'price' => ['nullable','numeric'],
             'sale_price' => ['nullable','numeric'],
             'cost_cny' => ['nullable','numeric'],
@@ -393,6 +410,7 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
             'slug' => trans('shop.product.slug'),
             'sku' => trans('shop.product.sku'),
             'category_id' => trans('shop.product.category'),
+            'brand_id' => trans('shop.product.brand'),
             'cost_cny' => trans('shop.product.cost_cny'),
             'sale_price_cny' => trans('shop.product.sale_price_cny'),
             'stock_qty' => trans('shop.combinations.stock'),
@@ -562,6 +580,16 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
         return app(CategoryTreeService::class)->flatOptions(false);
     }
 
+    private function getBrandOptions(): array
+    {
+        return Brand::query()
+            ->where('is_active', true)
+            ->orderBy('sort')
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
     public function saveCombinations(Request $request, int $productId)
     {
         // expects attributes_json and combinations_json from UI state
@@ -643,6 +671,14 @@ class ProductsController extends AdminController implements HasList, HasForm, Sh
         $val = null;
         if (is_object($row)) { $val = $row->category_name ?? null; }
         if (is_array($row)) { $val = $val ?? ($row['category_name'] ?? null); }
+        return e((string)($val ?? ''));
+    }
+
+    public function renderBrandName($row): string
+    {
+        $val = null;
+        if (is_object($row)) { $val = $row->brand_name ?? null; }
+        if (is_array($row)) { $val = $val ?? ($row['brand_name'] ?? null); }
         return e((string)($val ?? ''));
     }
 

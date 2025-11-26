@@ -19,7 +19,7 @@ class Product extends Model
     protected $table = 'products';
 
     protected $fillable = [
-        'name', 'slug', 'sku', 'price', 'sale_price', 'active', 'stock_qty', 'category_id',
+        'name', 'slug', 'sku', 'price', 'sale_price', 'active', 'stock_qty', 'category_id', 'brand_id',
         'short_desc', 'description', 'cost_cny', 'sale_price_cny', 'point_per_unit',
         'discount_type', 'discount_value',
     ];
@@ -59,6 +59,11 @@ class Product extends Model
             ->withPivot(['is_main', 'sort'])
             ->orderBy('video_assignments.is_main', 'desc')
             ->orderBy('video_assignments.sort');
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'brand_id');
     }
 
     // Custom renderer for admin list thumbnail (AVIF + fallback)

@@ -26,6 +26,12 @@
             'routes' => ['admin.shop.categories.*'],
         ],
         [
+            'title' => 'برندها',
+            'url' => route('admin.shop.brands.index'),
+            'icon' => 'ph-tag',
+            'routes' => ['admin.shop.brands.*'],
+        ],
+        [
             'title' => 'سفارش‌ها',
             'url' => route('admin.shop.orders.index'),
             'icon' => 'ph-shopping-bag',

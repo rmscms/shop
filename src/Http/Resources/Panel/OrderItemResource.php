@@ -28,6 +28,11 @@ class OrderItemResource extends JsonResource
             'total' => (float) $this->total,
             'image_url' => $image['url'] ?? null,
             'image_avif_url' => $image['avif_url'] ?? null,
+            'brand_id' => $this->product?->brand_id ? (int) $this->product->brand_id : null,
+            'brand' => $this->when(
+                $this->product && $this->product->relationLoaded('brand') && $this->product->brand,
+                fn () => (new BrandResource($this->product->brand))->toArray($request)
+            ),
         ];
     }
 }

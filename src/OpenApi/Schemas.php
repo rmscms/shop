@@ -28,6 +28,15 @@ use OpenApi\Annotations as OA;
  * )
  *
  * @OA\Schema(
+ *     schema="BrandResource",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="name", type="string"),
+ *     @OA\Property(property="slug", type="string"),
+ *     @OA\Property(property="description", type="string", nullable=true),
+ *     @OA\Property(property="sort", type="integer")
+ * )
+ *
+ * @OA\Schema(
  *     schema="ProductResource",
  *     @OA\Property(property="id", type="integer"),
  *     @OA\Property(property="name", type="string"),
@@ -42,7 +51,9 @@ use OpenApi\Annotations as OA;
  *         @OA\Property(property="id", type="integer"),
  *         @OA\Property(property="name", type="string"),
  *         @OA\Property(property="slug", type="string")
- *     )
+ *     ),
+ *     @OA\Property(property="brand_id", type="integer", nullable=true),
+ *     @OA\Property(property="brand", ref="#/components/schemas/BrandResource", nullable=true)
  * )
  *
  * @OA\Schema(
@@ -159,7 +170,9 @@ use OpenApi\Annotations as OA;
  *     @OA\Property(property="unit_price", type="number", format="float"),
  *     @OA\Property(property="total", type="number", format="float"),
  *     @OA\Property(property="image_url", type="string", format="uri", nullable=true),
- *     @OA\Property(property="image_avif_url", type="string", format="uri", nullable=true)
+ *     @OA\Property(property="image_avif_url", type="string", format="uri", nullable=true),
+ *     @OA\Property(property="brand_id", type="integer", nullable=true),
+ *     @OA\Property(property="brand", ref="#/components/schemas/BrandResource", nullable=true)
  * )
  *
  * @OA\Schema(

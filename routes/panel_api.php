@@ -14,6 +14,7 @@ use RMS\Shop\Http\Controllers\Api\Panel\ProductController;
 use RMS\Shop\Http\Controllers\Api\Panel\PaymentDriverController;
 use RMS\Shop\Http\Controllers\Api\Panel\ProductGalleryController;
 use RMS\Shop\Http\Controllers\Api\Panel\ProductMutationController;
+use RMS\Shop\Http\Controllers\Api\Panel\BrandController;
 
 $prefix = trim(config('shop.panel_api.prefix', 'api/v1/panel'), '/');
 $middleware = config('shop.panel_api.middleware', ['api']);
@@ -29,6 +30,7 @@ Route::prefix($prefix)
 
         Route::get('products', [ProductController::class, 'index'])->name('products.index');
         Route::get('products/{product}', [ProductController::class, 'show'])->name('products.show');
+        Route::get('brands', [BrandController::class, 'index'])->name('brands.index');
 
         Route::get('categories/tree', [CategoryController::class, 'tree'])->name('categories.tree');
         Route::get('addresses/provinces', [AddressController::class, 'provinces'])->name('addresses.provinces');
