@@ -96,8 +96,9 @@ class OrderViewService
         $rows = DB::table('order_items as oi')
             ->leftJoin('products as p','p.id','=','oi.product_id')
             ->leftJoin('product_combinations as pc','pc.id','=','oi.combination_id')
+            ->leftJoin('image_library as il','il.id','=','oi.image_id')
             ->where('oi.order_id',$orderId)
-            ->select('oi.*','p.name as product_name','pc.sku as sku','oi.item_name','oi.item_attributes')
+            ->select('oi.*','p.name as product_name','pc.sku as sku','oi.item_name','oi.item_attributes','il.path as library_image_path')
             ->orderBy('oi.id')->get();
         $items = [];
         foreach ($rows as $it) {
@@ -105,6 +106,13 @@ class OrderViewService
                 ? self::formatAttributeList($it->item_attributes)
                 : ($it->combination_id ? self::combinationLabel((int) $it->combination_id) : null);
             $thumb = null; $thumbAvif = null; $fullUrl = null; $fullAvif = null;
+            $snapshotImage = self::snapshotImageVariant($it);
+            if ($snapshotImage) {
+                $thumb = $snapshotImage['avif_url'] ?: $snapshotImage['url'];
+                $thumbAvif = $snapshotImage['avif_url'] ?? null;
+                $fullUrl = $snapshotImage['url'] ?? null;
+                $fullAvif = $snapshotImage['avif_url'] ?? null;
+            }
             if ($it->combination_id) {
                 $t = self::thumbnailForCombination((int) $it->combination_id);
                 if ($t) { $thumb = $t['avif_url'] ?: $t['url']; $thumbAvif = $t['avif_url'] ?? null; $fullUrl = $t['url'] ?? null; $fullAvif = $t['avif_url'] ?? null; }
@@ -189,6 +197,28 @@ class OrderViewService
         })->filter()->implode(' / ');
     }
 
+    protected static function snapshotImageVariant($row): ?array
+    {
+        $snapshot = $row->image_snapshot ?? null;
+        if (is_string($snapshot)) {
+            $snapshot = json_decode($snapshot, true);
+        }
+
+        if (!is_array($snapshot)) {
+            $snapshot = [];
+        }
+
+        $path = $snapshot['path'] ?? $row->library_image_path ?? null;
+        if (!$path) {
+            return null;
+        }
+
+        $disk = $snapshot['disk'] ?? 'public';
+        $avifPath = $snapshot['avif_path'] ?? null;
+
+        return self::formatImageVariant($path, $disk, $avifPath);
+    }
+
     protected static function thumbnailForCombination(int $combinationId): ?array
     {
         $path = DB::table('product_combination_images')
@@ -211,22 +241,30 @@ class OrderViewService
         return self::formatImageVariant($path);
     }
 
-    protected static function formatImageVariant(?string $relativePath): ?array
+    protected static function formatImageVariant(?string $relativePath, string $disk = 'public', ?string $explicitAvifPath = null): ?array
     {
-        if (!$relativePath || !Storage::disk('public')->exists($relativePath)) {
+        if (!$relativePath) {
             return null;
         }
 
-        $url = Storage::disk('public')->url($relativePath);
+        $diskInstance = Storage::disk($disk);
+        if (!$diskInstance->exists($relativePath)) {
+            return null;
+        }
+
+        $url = $diskInstance->url($relativePath);
         $avifUrl = null;
-        if (Str::contains($relativePath, '/orig/')) {
+        $avifRel = $explicitAvifPath;
+
+        if (!$avifRel && Str::contains($relativePath, '/orig/')) {
             $dir = Str::beforeLast($relativePath, '/orig/');
             $name = Str::afterLast($relativePath, '/orig/');
             $base = pathinfo($name, PATHINFO_FILENAME);
             $avifRel = $dir.'/avif/'.$base.'.avif';
-            if (Storage::disk('public')->exists($avifRel)) {
-                $avifUrl = Storage::disk('public')->url($avifRel);
-            }
+        }
+
+        if ($avifRel && $diskInstance->exists($avifRel)) {
+            $avifUrl = $diskInstance->url($avifRel);
         }
 
         return [

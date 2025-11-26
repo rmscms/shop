@@ -158,7 +158,8 @@ use OpenApi\Annotations as OA;
  *     @OA\Property(property="qty", type="integer"),
  *     @OA\Property(property="unit_price", type="number", format="float"),
  *     @OA\Property(property="total", type="number", format="float"),
- *     @OA\Property(property="image_url", type="string", format="uri", nullable=true)
+ *     @OA\Property(property="image_url", type="string", format="uri", nullable=true),
+ *     @OA\Property(property="image_avif_url", type="string", format="uri", nullable=true)
  * )
  *
  * @OA\Schema(

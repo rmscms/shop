@@ -13,6 +13,10 @@ class OrderItemResource extends JsonResource
      */
     public function toArray($request): array
     {
+        $image = method_exists($this->resource, 'snapshotImageUrls')
+            ? $this->snapshotImageUrls()
+            : ['url' => null, 'avif_url' => null];
+
         return [
             'id' => (int) $this->id,
             'product_id' => (int) $this->product_id,
@@ -22,7 +26,8 @@ class OrderItemResource extends JsonResource
             'qty' => (int) $this->qty,
             'unit_price' => (float) $this->unit_price,
             'total' => (float) $this->total,
-            'image_url' => $this->product?->mainImageUrl(),
+            'image_url' => $image['url'] ?? null,
+            'image_avif_url' => $image['avif_url'] ?? null,
         ];
     }
 }

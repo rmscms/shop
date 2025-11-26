@@ -17,11 +17,16 @@ use RMS\Shop\Models\OrderItem;
 use RMS\Shop\Services\CartReservationService;
 use RMS\Shop\Services\ShopPriceService;
 use RMS\Shop\Support\PanelApi\CartStorage;
+use RMS\Shop\Models\Product;
+use RMS\Shop\Models\ProductCombination;
+use Illuminate\Support\Str;
 
 class PaymentCallbackController extends Controller
 {
     protected array $productNameCache = [];
     protected array $combinationAttributeCache = [];
+    protected array $combinationImageCache = [];
+    protected array $productImageCache = [];
 
     public function __construct(
         protected CartReservationService $reservations,
@@ -163,11 +168,14 @@ class PaymentCallbackController extends Controller
                 }
                 $lineSubtotal = isset($line['subtotal']) ? (float) $line['subtotal'] : round($unitPrice * (int) ($line['qty'] ?? 1), 2);
                 $rateValue = $line['rate']['rate'] ?? $pricing['rate']['rate'] ?? null;
+                $imageSnapshot = $this->buildImageSnapshot($line);
 
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $line['product_id'],
                     'combination_id' => $line['combination_id'],
+                    'image_id' => $imageSnapshot['image_id'] ?? null,
+                    'image_snapshot' => $imageSnapshot,
                     'qty' => $line['qty'],
                     'unit_price' => $unitPrice,
                     'total' => $lineSubtotal,
@@ -320,6 +328,120 @@ class PaymentCallbackController extends Controller
         })->filter(fn ($attr) => $attr['title'] !== '' || $attr['value'] !== '')->values()->all();
 
         return $this->combinationAttributeCache[$combinationId] = $attributes;
+    }
+
+    protected function buildImageSnapshot(array $line): ?array
+    {
+        $combinationId = $line['combination_id'] ?? null;
+        if ($combinationId) {
+            $snapshot = $this->combinationImageSnapshot((int) $combinationId);
+            if ($snapshot) {
+                return $snapshot;
+            }
+        }
+
+        return $this->productImageSnapshot((int) $line['product_id']);
+    }
+
+    protected function combinationImageSnapshot(int $combinationId): ?array
+    {
+        if (array_key_exists($combinationId, $this->combinationImageCache)) {
+            return $this->combinationImageCache[$combinationId];
+        }
+
+        $assignment = $this->fetchAssignedImage(ProductCombination::class, $combinationId);
+        if ($assignment) {
+            return $this->combinationImageCache[$combinationId] = $assignment;
+        }
+
+        $legacyPath = DB::table('product_combination_images')
+            ->where('combination_id', $combinationId)
+            ->orderByDesc('is_main')
+            ->orderBy('sort')
+            ->value('path');
+
+        if ($legacyPath) {
+            return $this->combinationImageCache[$combinationId] = [
+                'image_id' => null,
+                'disk' => 'public',
+                'path' => $legacyPath,
+                'avif_path' => $this->deriveAvifPath($legacyPath),
+                'source' => 'legacy_combination',
+            ];
+        }
+
+        return $this->combinationImageCache[$combinationId] = null;
+    }
+
+    protected function productImageSnapshot(int $productId): ?array
+    {
+        if (array_key_exists($productId, $this->productImageCache)) {
+            return $this->productImageCache[$productId];
+        }
+
+        $assignment = $this->fetchAssignedImage(Product::class, $productId);
+        if ($assignment) {
+            return $this->productImageCache[$productId] = $assignment;
+        }
+
+        $legacyPath = DB::table('product_images')
+            ->where('product_id', $productId)
+            ->orderByDesc('is_main')
+            ->orderBy('sort')
+            ->value('path');
+
+        if ($legacyPath) {
+            return $this->productImageCache[$productId] = [
+                'image_id' => null,
+                'disk' => 'public',
+                'path' => $legacyPath,
+                'avif_path' => $this->deriveAvifPath($legacyPath),
+                'source' => 'legacy_product',
+            ];
+        }
+
+        return $this->productImageCache[$productId] = null;
+    }
+
+    protected function fetchAssignedImage(string $assignableType, int $assignableId): ?array
+    {
+        try {
+            $row = DB::table('image_assignments as ia')
+                ->join('image_library as il', 'il.id', '=', 'ia.image_id')
+                ->where('ia.assignable_type', $assignableType)
+                ->where('ia.assignable_id', $assignableId)
+                ->orderByDesc('ia.is_main')
+                ->orderBy('ia.sort')
+                ->select('ia.image_id', 'il.path')
+                ->first();
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        if (!$row) {
+            return null;
+        }
+
+        return [
+            'image_id' => (int) $row->image_id,
+            'disk' => 'public',
+            'path' => $row->path,
+            'avif_path' => $this->deriveAvifPath($row->path),
+            'source' => 'library',
+        ];
+    }
+
+    protected function deriveAvifPath(?string $relativePath): ?string
+    {
+        if (!$relativePath || !Str::contains($relativePath, '/orig/')) {
+            return null;
+        }
+
+        $directory = Str::beforeLast($relativePath, '/orig/');
+        $filename = Str::afterLast($relativePath, '/orig/');
+        $baseName = pathinfo($filename, PATHINFO_FILENAME);
+
+        return $directory.'/avif/'.$baseName.'.avif';
     }
 }
 

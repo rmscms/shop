@@ -115,3 +115,8 @@ This package was extracted from a production application (IRAS) and refactored i
 ### Fixed
 - Re-registered filter/clear-filter helper routes for all shop admin resources (e.g. `admin.shop.products.filter`) so the admin list filters load without errors.
 
+## [1.0.5] - 2025-11-26
+### Added
+- Order line items now capture the exact gallery image (`image_id` + snapshot metadata) at checkout so later image changes don't affect historical orders.
+- API and admin order views read the stored snapshot (including AVIF variants) and expose both `image_url` and `image_avif_url`.
+
