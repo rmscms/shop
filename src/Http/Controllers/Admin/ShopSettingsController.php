@@ -2,12 +2,12 @@
 
 namespace RMS\Shop\Http\Controllers\Admin;
 
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Core\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 
-class ShopSettingsController extends AdminController
+class ShopSettingsController extends ShopAdminController
 {
     public function table(): string { return 'settings'; }
     public function modelName(): string { return Setting::class; }

@@ -7,13 +7,13 @@ use Illuminate\Http\JsonResponse;
 use RMS\Core\Contracts\Filter\ShouldFilter;
 use RMS\Core\Contracts\Form\HasForm;
 use RMS\Core\Contracts\List\HasList;
-use RMS\Core\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Core\Data\Field;
 use RMS\Shop\Models\VideoLibrary;
 use RMS\Shop\Models\Product;
 use RMS\Shop\Services\VideoLibraryService;
 
-class VideoLibraryController extends AdminController implements HasList, HasForm, ShouldFilter
+class VideoLibraryController extends ShopAdminController implements HasList, HasForm, ShouldFilter
 {
     public function table(): string
     {

@@ -5,10 +5,10 @@ namespace RMS\Shop\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use RMS\Core\Contracts\Filter\ShouldFilter;
 use RMS\Core\Contracts\List\HasList;
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Core\Data\Field;
 
-class UserPointsController extends AdminController implements HasList, ShouldFilter
+class UserPointsController extends ShopAdminController implements HasList, ShouldFilter
 {
     public function table(): string { return 'user_point_logs'; }
     public function modelName(): string { return \stdClass::class; }

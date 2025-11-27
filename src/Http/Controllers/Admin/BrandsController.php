@@ -2,7 +2,7 @@
 
 namespace RMS\Shop\Http\Controllers\Admin;
 
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
 use RMS\Core\Contracts\Filter\ShouldFilter;
@@ -11,7 +11,7 @@ use RMS\Core\Contracts\List\HasList;
 use RMS\Core\Data\Field;
 use RMS\Shop\Models\Brand;
 
-class BrandsController extends AdminController implements HasList, HasForm, ShouldFilter
+class BrandsController extends ShopAdminController implements HasList, HasForm, ShouldFilter
 {
     public function table(): string
     {

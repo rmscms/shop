@@ -2,7 +2,7 @@
 
 namespace RMS\Shop\Http\Controllers\Admin;
 
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Shop\Models\Order;
 use RMS\Core\Models\Setting;
 use Illuminate\Database\Query\Builder;
@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
 use RMS\PDF\PDFFacade as PDF;
 use RMS\PDF\{Seller, Buyer, Invoice};
 
-class OrdersController extends AdminController implements HasList, ShouldFilter, HasStats, ShouldExport
+class OrdersController extends ShopAdminController implements HasList, ShouldFilter, HasStats, ShouldExport
 {
     public function table(): string { return 'orders'; }
     public function modelName(): string { return Order::class; }

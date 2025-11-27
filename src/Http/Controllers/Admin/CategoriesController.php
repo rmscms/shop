@@ -7,11 +7,10 @@ use RMS\Core\Contracts\Actions\ChangeBoolField;
 use RMS\Core\Contracts\Filter\ShouldFilter;
 use RMS\Core\Contracts\Form\HasForm;
 use RMS\Core\Contracts\List\HasList;
-use App\Http\Controllers\Admin\AdminController;
 use RMS\Core\Data\Field;
 use RMS\Shop\Services\CategoryTreeService;
 
-class CategoriesController extends AdminController implements HasList, HasForm, ShouldFilter, ChangeBoolField
+class CategoriesController extends ShopAdminController implements HasList, HasForm, ShouldFilter, ChangeBoolField
 {
     public function table(): string
     {

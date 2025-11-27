@@ -8,13 +8,13 @@ use RMS\Core\Contracts\Actions\ChangeBoolField;
 use RMS\Core\Contracts\Filter\ShouldFilter;
 use RMS\Core\Contracts\Form\HasForm;
 use RMS\Core\Contracts\List\HasList;
-use RMS\Core\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Core\Data\Field;
 use RMS\Shop\Models\ImageLibrary;
 use RMS\Shop\Models\Product;
 use RMS\Shop\Services\ImageLibraryService;
 
-class ImageLibraryController extends AdminController implements HasList, HasForm, ShouldFilter
+class ImageLibraryController extends ShopAdminController implements HasList, HasForm, ShouldFilter
 {
     public function table(): string
     {

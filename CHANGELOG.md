@@ -126,3 +126,37 @@ This package was extracted from a production application (IRAS) and refactored i
 - Panel API now exposes `GET /brands`, accepts `brand_id` filters, and all product/cart/order resources embed brand details.
 - Product admin form/tab includes a required brand selector; migrations backfill existing products with a default brand.
 
+## [1.0.7] - 2025-11-27
+### Changed
+- **Breaking:** All shop admin controllers now extend `ShopAdminController` instead of `App\Http\Controllers\Admin\AdminController`
+- Created base `ShopAdminController` class that extends `RMS\Core\Controllers\Admin\ProjectAdminController`
+- This change enables centralized controller customization and removes dependency on application-level base controller
+
+### Fixed
+- Fixed circular dependency issue preventing `shop:install` command execution on fresh Laravel installations
+- Shop package can now be installed without requiring application AdminController to exist first
+
+### Technical Details
+- Updated 14 controller classes to use new inheritance structure:
+  - CategoriesController
+  - ProductsController  
+  - BrandsController
+  - AvifController
+  - OrdersController
+  - ShopDashboardController
+  - CartsController
+  - ImageLibraryController
+  - VideoLibraryController
+  - ProductPurchaseStatsController
+  - ProductFeatureCategoriesController
+  - CurrencyRatesController
+  - UserPointsController
+  - ShopSettingsController
+  - CurrenciesController
+
+### Benefits
+- Easier to maintain: Single point of customization for all shop controllers
+- Better separation of concerns: No tight coupling to application code
+- More flexible: Can override base controller behavior in one place
+- Laravel 12 compatible: Tested and working with latest Laravel version
+

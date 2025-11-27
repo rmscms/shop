@@ -2,14 +2,14 @@
 
 namespace RMS\Shop\Http\Controllers\Admin;
 
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RMS\Shop\Helpers\AvifHelper;
 use RMS\Shop\Jobs\RegenerateAvifForDirectories;
 use RMS\Shop\Models\AvifDirectory;
 
-class AvifController extends AdminController
+class AvifController extends ShopAdminController
 {
     public function table(): string { return 'none'; }
     public function modelName(): string { return 'none'; }

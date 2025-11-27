@@ -6,10 +6,10 @@ use Illuminate\Http\Request;
 use RMS\Core\Contracts\Filter\ShouldFilter;
 use RMS\Core\Contracts\Form\HasForm;
 use RMS\Core\Contracts\List\HasList;
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Core\Data\Field;
 
-class CurrenciesController extends AdminController implements HasList, HasForm, ShouldFilter
+class CurrenciesController extends ShopAdminController implements HasList, HasForm, ShouldFilter
 {
     public function table(): string
     {

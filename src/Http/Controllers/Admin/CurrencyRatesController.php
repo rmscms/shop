@@ -6,11 +6,11 @@ use Illuminate\Http\Request;
 use RMS\Core\Contracts\Filter\ShouldFilter;
 use RMS\Core\Contracts\Form\HasForm;
 use RMS\Core\Contracts\List\HasList;
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Core\Data\Field;
 use RMS\Shop\Models\Currency;
 
-class CurrencyRatesController extends AdminController implements HasList, HasForm, ShouldFilter
+class CurrencyRatesController extends ShopAdminController implements HasList, HasForm, ShouldFilter
 {
     /**
      * Clean formatted amount fields before validation.

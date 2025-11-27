@@ -2,7 +2,7 @@
 
 namespace RMS\Shop\Http\Controllers\Admin;
 
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Shop\Models\ProductPurchaseStats;
 use RMS\Shop\Services\ProductPurchaseStatsService;
 use Illuminate\Http\Request;
@@ -17,7 +17,7 @@ use Carbon\Carbon;
 use RMS\Core\View\HelperList\Generator as ListGenerator;
 use function RMS\Helper\displayAmount;
 
-class ProductPurchaseStatsController extends AdminController implements HasList, ShouldFilter, HasStats
+class ProductPurchaseStatsController extends ShopAdminController implements HasList, ShouldFilter, HasStats
 {
     public function table(): string
     {

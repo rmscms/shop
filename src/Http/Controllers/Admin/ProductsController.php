@@ -25,7 +25,7 @@ use RMS\Core\Contracts\Filter\ShouldFilter;
 use RMS\Core\Contracts\Form\HasForm;
 use RMS\Core\Contracts\List\HasList;
 use RMS\Core\Data\Field;
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -41,7 +41,7 @@ use RMS\Shop\Http\Controllers\Admin\Traits\ProductVideoTrait;
 use RMS\Shop\Services\CategoryTreeService;
 use RMS\Shop\Services\VideoLibraryService;
 
-class ProductsController extends AdminController implements HasList, HasForm, ShouldFilter, ChangeBoolField
+class ProductsController extends ShopAdminController implements HasList, HasForm, ShouldFilter, ChangeBoolField
 {
     use ProductImagesTrait, ProductFeaturesTrait, ProductVideoTrait;
 

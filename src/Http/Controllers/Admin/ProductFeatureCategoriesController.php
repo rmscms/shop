@@ -5,7 +5,7 @@ namespace RMS\Shop\Http\Controllers\Admin;
 use RMS\Shop\Models\ProductFeatureCategory;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Model;
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Core\Data\Field;
 use RMS\Core\Data\StatCard;
 use RMS\Core\Contracts\List\HasList;
@@ -17,7 +17,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
-class ProductFeatureCategoriesController extends AdminController implements
+class ProductFeatureCategoriesController extends ShopAdminController implements
     HasList,
     HasForm,
     ShouldFilter,

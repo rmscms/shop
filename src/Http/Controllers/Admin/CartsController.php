@@ -2,7 +2,7 @@
 
 namespace RMS\Shop\Http\Controllers\Admin;
 
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Shop\Models\Cart;
 use Illuminate\Database\Query\Builder;
 use RMS\Core\Contracts\Export\ShouldExport;
@@ -13,7 +13,7 @@ use RMS\Core\Data\Field;
 use RMS\Core\Data\StatCard;
 use Illuminate\Support\Facades\DB;
 
-class CartsController extends AdminController implements HasList, ShouldFilter, HasStats, ShouldExport
+class CartsController extends ShopAdminController implements HasList, ShouldFilter, HasStats, ShouldExport
 {
     public function table(): string { return 'carts'; }
     public function modelName(): string { return Cart::class; }

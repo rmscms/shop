@@ -2,14 +2,14 @@
 
 namespace RMS\Shop\Http\Controllers\Admin;
 
-use App\Http\Controllers\Admin\AdminController;
+use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use Illuminate\Http\Request;
 use RMS\Shop\Services\SystemRequirementsService;
 use RMS\Shop\Models\Product;
 use RMS\Shop\Models\Order;
 use RMS\Shop\Models\Category;
 
-class ShopDashboardController extends AdminController
+class ShopDashboardController extends ShopAdminController
 {
     public function table(): string { return 'products'; }
     public function modelName(): string { return \RMS\Shop\Models\Product::class; }
