@@ -25,7 +25,8 @@ class TranscodeProductVideo implements ShouldQueue
         $this->productId = $productId;
         $this->videoId = $videoId;
         $this->sourceRelPath = $sourceRelPath;
-        $this->onQueue('media');
+        $queueName = config('shop.queues.media', 'shop-media');
+        $this->onQueue($queueName);
     }
 
     public function handle(): void

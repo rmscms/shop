@@ -299,6 +299,213 @@ Views will be copied to `resources/views/vendor/shop/`
 - RMS Core ^1.0
 - Redis (for cart caching)
 
+## Swagger API Documentation
+
+پکیج Shop از Swagger/OpenAPI برای مستندسازی API استفاده می‌کند. تمام endpoint های Panel API با annotation های کامل Swagger مستندسازی شده‌اند.
+
+### نصب و راه‌اندازی Swagger
+
+#### 1. نصب پکیج l5-swagger
+
+```bash
+composer require darkaonline/l5-swagger
+```
+
+#### 2. Publish کردن فایل‌های Swagger
+
+```bash
+php artisan vendor:publish --provider "L5Swagger\L5SwaggerServiceProvider"
+```
+
+این دستور فایل‌های config و views مربوط به Swagger را publish می‌کند.
+
+#### 3. تنظیم routes/api.php
+
+در Laravel 11، باید فایل `routes/api.php` را ایجاد کنید (اگر وجود ندارد):
+
+```php
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+// Route های shop از طریق ShopServiceProvider لود می‌شوند
+// این فایل برای route های API خودتان است (در صورت نیاز)
+```
+
+#### 4. تنظیم bootstrap/app.php
+
+در فایل `bootstrap/app.php` باید API routes را فعال کنید:
+
+```php
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',  // این خط را اضافه کنید
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    // ...
+```
+
+**نکته مهم:** حتی اگر `routes/api.php` خالی باشد، این تنظیم لازم است تا Laravel API routing را فعال کند.
+
+#### 5. تنظیم config/l5-swagger.php
+
+در فایل `config/l5-swagger.php`، باید مسیر پکیج shop را به بخش `annotations` اضافه کنید:
+
+```php
+'annotations' => [
+    base_path('app'),
+    base_path('vendor/rmscms/shop/src'),  // این خط را اضافه کنید
+],
+```
+
+**اگر از path repository استفاده می‌کنید** (مثل `../../rms2-packages/packages/rms/shop`)، باید مسیر کامل را اضافه کنید:
+
+```php
+'annotations' => [
+    base_path('app'),
+    'C:\laragon\www\rms2-packages\packages\rms\shop\src',  // مسیر کامل پکیج
+],
+```
+
+#### 6. Publish کردن config پکیج shop
+
+```bash
+php artisan vendor:publish --tag=shop-config
+```
+
+این دستور فایل `config/shop/swagger.php` را publish می‌کند.
+
+#### 7. Generate کردن Swagger Documentation
+
+```bash
+php artisan l5-swagger:generate
+```
+
+این دستور تمام annotation های Swagger را از پکیج shop و پروژه شما scan می‌کند و فایل JSON documentation را ایجاد می‌کند.
+
+#### 8. دسترسی به Swagger UI
+
+بعد از generate موفق، می‌توانید به Swagger UI دسترسی داشته باشید:
+
+```
+http://127.0.0.1:8000/api/documentation
+```
+
+### تنظیمات Swagger در پکیج Shop
+
+فایل `config/shop/swagger.php` شامل تنظیمات زیر است:
+
+```php
+return [
+    'enabled' => env('SHOP_SWAGGER_ENABLED', false),
+    'route' => env('SHOP_SWAGGER_ROUTE', 'api/documentation'),
+    'annotations_path' => base_path('vendor/rmscms/shop/src'),
+    'info' => [
+        'title' => 'RMS Shop Panel API',
+        'version' => '1.0.0',
+        'description' => 'REST API used by the RMS customer panel application.',
+    ],
+    'server' => [
+        'url' => '/api/v1/panel',
+        'description' => 'Panel API base URL',
+    ],
+];
+```
+
+### API Endpoints مستندسازی شده
+
+تمام endpoint های Panel API با Swagger مستندسازی شده‌اند:
+
+#### Authentication
+- `POST /api/v1/panel/auth/login` - ورود کاربر
+- `POST /api/v1/panel/auth/register` - ثبت‌نام کاربر
+- `GET /api/v1/panel/auth/me` - اطلاعات کاربر فعلی
+- `POST /api/v1/panel/auth/logout` - خروج کاربر
+
+#### Catalog
+- `GET /api/v1/panel/products` - لیست محصولات (با فیلتر و pagination)
+- `GET /api/v1/panel/products/{id}` - جزئیات محصول
+- `GET /api/v1/panel/brands` - لیست برندها
+- `GET /api/v1/panel/categories/tree` - درخت دسته‌بندی‌ها
+
+#### Cart
+- `GET /api/v1/panel/cart` - مشاهده سبد خرید
+- `POST /api/v1/panel/cart/items` - افزودن محصول به سبد
+- `PATCH /api/v1/panel/cart/items/{lineId}` - به‌روزرسانی تعداد
+- `DELETE /api/v1/panel/cart/items/{lineId}` - حذف از سبد
+
+#### Addresses
+- `GET /api/v1/panel/addresses` - لیست آدرس‌ها
+- `POST /api/v1/panel/addresses` - افزودن آدرس
+- `PUT /api/v1/panel/addresses/{id}` - به‌روزرسانی آدرس
+- `DELETE /api/v1/panel/addresses/{id}` - حذف آدرس
+- `POST /api/v1/panel/addresses/{id}/default` - تنظیم آدرس پیش‌فرض
+
+#### Orders
+- `GET /api/v1/panel/orders` - لیست سفارش‌ها
+- `GET /api/v1/panel/orders/{id}` - جزئیات سفارش
+- `GET /api/v1/panel/orders/{id}/notes` - یادداشت‌های سفارش
+- `POST /api/v1/panel/orders/{id}/notes` - افزودن یادداشت
+- `POST /api/v1/panel/orders/{id}/status` - تغییر وضعیت سفارش
+
+#### Checkout
+- `POST /api/v1/panel/checkout` - شروع فرآیند پرداخت
+
+#### Payments
+- `GET /api/v1/panel/payment/drivers` - لیست درگاه‌های پرداخت فعال
+
+#### Currencies
+- `GET /api/v1/panel/currencies` - لیست ارزها
+- `GET /api/v1/panel/currency-rates` - نرخ‌های ارز
+- `POST /api/v1/panel/currency-rates` - افزودن نرخ ارز
+
+### رفع مشکلات رایج
+
+#### خطا: `Required @OA\PathItem() not found`
+این خطا زمانی رخ می‌دهد که `@OA\Info()` در چند جا تعریف شده باشد. پکیج shop خودش `PanelApiDoc.php` دارد که `@OA\Info()` را تعریف می‌کند، پس نباید در controller های خودتان دوباره تعریف کنید.
+
+#### خطا: `@OA\Get() requires at least one @OA\Response()`
+این خطا زمانی رخ می‌دهد که annotation یک endpoint فاقد `@OA\Response` باشد. تمام endpoint های پکیج shop این مشکل را ندارند، اما اگر endpoint جدیدی اضافه می‌کنید، حتماً `@OA\Response` را اضافه کنید.
+
+#### خطا: `The "..." directory does not exist`
+این خطا زمانی رخ می‌دهد که مسیر annotations در `config/l5-swagger.php` اشتباه باشد. مطمئن شوید که مسیر درست است:
+- اگر از vendor استفاده می‌کنید: `base_path('vendor/rmscms/shop/src')`
+- اگر از path repository استفاده می‌کنید: مسیر کامل پکیج
+
+### به‌روزرسانی Documentation
+
+هر بار که تغییراتی در API ایجاد می‌کنید، باید دوباره generate کنید:
+
+```bash
+php artisan l5-swagger:generate
+```
+
+برای development، می‌توانید در `.env` تنظیم کنید:
+
+```env
+L5_SWAGGER_GENERATE_ALWAYS=true
+```
+
+این باعث می‌شود که documentation در هر request به‌روزرسانی شود (فقط برای development).
+
+### استفاده از Swagger در Frontend
+
+Swagger UI امکان تست مستقیم API را فراهم می‌کند:
+
+1. باز کردن `http://127.0.0.1:8000/api/documentation`
+2. کلیک روی endpoint مورد نظر
+3. کلیک روی "Try it out"
+4. وارد کردن پارامترها
+5. کلیک روی "Execute"
+
+برای استفاده از authentication:
+1. ابتدا از endpoint `/auth/login` token دریافت کنید
+2. در بالای صفحه Swagger، روی دکمه "Authorize" کلیک کنید
+3. token را در فرمت `Bearer {token}` وارد کنید
+4. حالا می‌توانید endpoint های protected را تست کنید
+
 ## Plugins
 
 This package includes the following JavaScript plugins:

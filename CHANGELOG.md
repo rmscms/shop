@@ -160,3 +160,25 @@ This package was extracted from a production application (IRAS) and refactored i
 - More flexible: Can override base controller behavior in one place
 - Laravel 12 compatible: Tested and working with latest Laravel version
 
+## [1.0.8] - 2025-12-18
+### Fixed
+- ✅ رفع مشکل دکمه Generate AVIF در Image Library: اضافه شدن handler برای ارسال درخواست AJAX به endpoint مربوطه
+- ✅ رفع مشکل Queue Hardcoded: تمام job‌های پردازش رسانه حالا از تنظیمات `.env` استفاده می‌کنند
+
+### Changed
+- 🔧 **ConvertImageToAvif**: Queue از `config('shop.queues.avif')` خوانده می‌شود (قبلاً hardcoded به `'images'`)
+- 🔧 **TranscodeVideo**: Queue از `config('shop.queues.media')` خوانده می‌شود (قبلاً hardcoded به `'videos'`)
+- 🔧 **TranscodeProductVideo**: Queue از `config('shop.queues.media')` خوانده می‌شود (قبلاً hardcoded به `'media'`)
+
+### Technical Details
+- تمام job‌های پردازش رسانه حالا از متغیرهای محیطی استفاده می‌کنند:
+  - `SHOP_QUEUE_AVIF` → برای تبدیل تصاویر به AVIF
+  - `SHOP_QUEUE_MEDIA` → برای پردازش ویدئوها (HLS transcoding)
+- دکمه Generate AVIF در Image Library حالا به درستی کار می‌کند و درخواست AJAX را ارسال می‌کند
+- JavaScript handler برای دکمه Generate AVIF اضافه شد (`image-library.js`)
+
+### Benefits
+- انعطاف‌پذیری بیشتر: امکان تنظیم queueهای مختلف برای هر محیط (development/production)
+- مدیریت بهتر منابع: امکان اجرای workerهای جداگانه برای هر نوع پردازش
+- سازگاری با تنظیمات موجود: استفاده از متغیرهای `.env` که در `shop:install` ایجاد می‌شوند
+

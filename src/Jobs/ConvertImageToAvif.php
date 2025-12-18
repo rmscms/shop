@@ -30,7 +30,8 @@ class ConvertImageToAvif implements ShouldQueue
     {
         $this->relativePath = $relativePath;
         $this->quality = $quality;
-        $this->onQueue('images');
+        $queueName = config('shop.queues.avif', 'shop-avif');
+        $this->onQueue($queueName);
     }
 
     public function handle(): void

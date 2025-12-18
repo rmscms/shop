@@ -62,7 +62,6 @@ Route::prefix($prefix)
             Route::post('currency-rates', [CurrencyRateController::class, 'store'])->name('currency-rates.store');
             Route::post('products/{product}/stock', [ProductMutationController::class, 'updateStock'])->name('products.stock');
             Route::post('products/{product}/gallery', [ProductGalleryController::class, 'upload'])->name('products.gallery.upload');
-            Route::delete('products/{product}/gallery/{image}', [ProductGalleryController::class, 'destroy'])->name('products.gallery.delete');
             Route::post('products/{product}/gallery/set-main', [ProductGalleryController::class, 'setMain'])->name('products.gallery.set-main');
             Route::post('products/{product}/gallery/sort', [ProductGalleryController::class, 'sort'])->name('products.gallery.sort');
             Route::post('products/{product}/gallery/assign', [ProductGalleryController::class, 'assign'])->name('products.gallery.assign');

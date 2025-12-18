@@ -25,7 +25,7 @@ return [
     */
     'routes' => [
         'admin' => [
-            'enabled' => true,
+            'enabled' => env('SHOP_ADMIN_ROUTES_ENABLED', true),
             'prefix' => env('SHOP_ADMIN_PREFIX', 'admin/shop'),
             'name' => env('SHOP_ADMIN_ROUTE_NAME', 'admin.shop.'),
             'middleware' => ['web', 'auth:admin'],

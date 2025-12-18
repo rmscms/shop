@@ -46,6 +46,10 @@ class ShopInstallCommand extends Command
         $this->info('Configuring queue...');
         $this->configureQueue();
 
+        // 7. Create required directories
+        $this->info('Creating required directories...');
+        $this->createDirectories();
+
         $this->info('RMS Shop installed successfully! Run queue workers as per README.');
     }
 
@@ -120,5 +124,39 @@ class ShopInstallCommand extends Command
         Artisan::call('migrate');
 
         $this->info('Queue configured to database driver. Shop queues ready.');
+    }
+
+    protected function createDirectories()
+    {
+        $directories = [
+            'storage/app/public' => 'برای ذخیره فایل‌های عمومی',
+            'storage/app/public/uploads' => 'برای ذخیره آپلودها',
+            'storage/app/public/uploads/products' => 'برای ذخیره تصاویر محصولات',
+        ];
+
+        foreach ($directories as $dir => $description) {
+            $path = base_path($dir);
+            
+            if (!File::exists($path)) {
+                try {
+                    File::makeDirectory($path, 0755, true);
+                    $this->info("✅ Directory created: {$dir}");
+                } catch (\Exception $e) {
+                    $this->warn("⚠️ Could not create directory {$dir}: {$e->getMessage()}");
+                }
+            } else {
+                $this->info("ℹ️ Directory already exists: {$dir}");
+            }
+
+            // Check if writable
+            if (File::exists($path) && !is_writable($path)) {
+                try {
+                    chmod($path, 0755);
+                    $this->info("✅ Directory permissions updated: {$dir}");
+                } catch (\Exception $e) {
+                    $this->warn("⚠️ Could not set permissions for {$dir}: {$e->getMessage()}");
+                }
+            }
+        }
     }
 }

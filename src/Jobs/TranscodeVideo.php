@@ -24,7 +24,8 @@ class TranscodeVideo implements ShouldQueue
     public function __construct(int $videoId)
     {
         $this->videoId = $videoId;
-        $this->onQueue('videos');
+        $queueName = config('shop.queues.media', 'shop-media');
+        $this->onQueue($queueName);
     }
 
     public function handle(): void

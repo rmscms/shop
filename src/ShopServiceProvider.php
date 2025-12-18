@@ -11,6 +11,7 @@ class ShopServiceProvider extends ServiceProvider
         // Merge config
         $this->mergeConfigFrom(__DIR__.'/../config/shop.php', 'shop');
         $this->mergeConfigFrom(__DIR__.'/../config/panel_api.php', 'shop.panel_api');
+        $this->mergeConfigFrom(__DIR__.'/../config/swagger.php', 'shop.swagger');
         
         // Register services
         $this->app->singleton(\RMS\Shop\Services\CartService::class);
@@ -46,6 +47,7 @@ class ShopServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../config/shop.php' => config_path('shop.php'),
             __DIR__.'/../config/panel_api.php' => config_path('shop/panel_api.php'),
+            __DIR__.'/../config/swagger.php' => config_path('shop/swagger.php'),
         ], 'shop-config');
 
         // Publish migrations
@@ -60,7 +62,7 @@ class ShopServiceProvider extends ServiceProvider
 
         // Publish translations
         $this->publishes([
-            __DIR__.'/../resources/lang' => lang_path('vendor/shop'),
+            __DIR__.'/../resources/lang/fa/shop.php' => lang_path('fa/shop.php'),
         ], 'shop-lang');
 
         // Publish assets (JS/CSS for admin panel)

@@ -108,6 +108,11 @@
         if (imagesContainer) {
             imagesContainer.addEventListener('click', handleImageCardClick);
         }
+
+        // Generate AVIF button handler
+        if (imagesContainer) {
+            imagesContainer.addEventListener('click', handleGenerateAvifClick);
+        }
     }
 
     // Search functionality
@@ -306,6 +311,61 @@
             const imageId = target.dataset.imageId;
             const canDelete = target.dataset.canDelete === 'true';
             showDeleteModal(imageId, canDelete);
+        }
+    }
+
+    // Handle generate AVIF button click
+    async function handleGenerateAvifClick(e) {
+        const target = e.target.closest('.generate-avif-btn');
+        if (!target) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const imageId = target.dataset.imageId;
+        if (!imageId) return;
+
+        // Disable button and show loading
+        target.disabled = true;
+        const originalHTML = target.innerHTML;
+        target.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+
+        try {
+            const generateRoute = (config.routes && config.routes.generateAvif) || '';
+            const generateUrl = resolveRoute(generateRoute, imageId);
+            if (!generateUrl) {
+                throw new Error('Route generate AVIF تنظیم نشده است');
+            }
+
+            const response = await fetch(generateUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': config.csrf,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast(result.message || 'ساخت AVIF در صف قرار گرفت', 'success');
+                // Update button state (hide it since AVIF will be generated)
+                target.closest('.image-card').querySelector('.badge.bg-warning')?.classList.replace('bg-warning', 'bg-info');
+                target.closest('.image-card').querySelector('.badge.bg-warning')?.querySelector('i')?.classList.replace('ph-warning', 'ph-clock');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                showErrorToast(result.message || 'خطا در ساخت AVIF');
+                target.disabled = false;
+                target.innerHTML = originalHTML;
+            }
+        } catch (error) {
+            console.error('Generate AVIF failed:', error);
+            showErrorToast('خطا در ساخت AVIF: ' + error.message);
+            target.disabled = false;
+            target.innerHTML = originalHTML;
         }
     }
 

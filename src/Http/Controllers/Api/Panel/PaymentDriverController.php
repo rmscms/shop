@@ -13,7 +13,26 @@ class PaymentDriverController extends BaseController
      * @OA\Get(
      *     path="/payment/drivers",
      *     tags={"Payments"},
-     *     summary="List active payment gateways"
+     *     summary="List active payment gateways",
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of active payment drivers",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="ok"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="driver", type="string"),
+     *                     @OA\Property(property="title", type="string"),
+     *                     @OA\Property(property="description", type="string", nullable=true),
+     *                     @OA\Property(property="logo", type="string", nullable=true),
+     *                     @OA\Property(property="logo_url", type="string")
+     *                 )
+     *             )
+     *         )
+     *     )
      * )
      */
     public function index(): JsonResponse
