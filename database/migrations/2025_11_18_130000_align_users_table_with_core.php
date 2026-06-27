@@ -31,20 +31,12 @@ return new class extends Migration
             if (!Schema::hasColumn('users', 'deleted_at')) {
                 $table->softDeletes();
             }
-
-            if (Schema::hasColumn('users', 'group_id')) {
-                $table->index('group_id');
-            }
-            if (Schema::hasColumn('users', 'active')) {
-                $table->index('active');
-            }
-            if (Schema::hasColumn('users', 'email_verified_at')) {
-                $table->index('email_verified_at');
-            }
-            if (Schema::hasColumn('users', 'created_at')) {
-                $table->index('created_at');
-            }
         });
+
+        $this->ensureIndex('users', 'group_id');
+        $this->ensureIndex('users', 'active');
+        $this->ensureIndex('users', 'email_verified_at');
+        $this->ensureIndex('users', 'created_at');
     }
 
     public function down(): void
@@ -53,20 +45,12 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('users', function (Blueprint $table) {
-            if (Schema::hasColumn('users', 'created_at')) {
-                $table->dropIndex('users_created_at_index');
-            }
-            if (Schema::hasColumn('users', 'email_verified_at')) {
-                $table->dropIndex('users_email_verified_at_index');
-            }
-            if (Schema::hasColumn('users', 'active')) {
-                $table->dropIndex('users_active_index');
-            }
-            if (Schema::hasColumn('users', 'group_id')) {
-                $table->dropIndex('users_group_id_index');
-            }
+        $this->dropIndexIfExists('users', 'created_at');
+        $this->dropIndexIfExists('users', 'email_verified_at');
+        $this->dropIndexIfExists('users', 'active');
+        $this->dropIndexIfExists('users', 'group_id');
 
+        Schema::table('users', function (Blueprint $table) {
             if (Schema::hasColumn('users', 'deleted_at')) {
                 $table->dropSoftDeletes();
             }
@@ -76,6 +60,54 @@ return new class extends Migration
                 }
             }
         });
+    }
+
+    private function ensureIndex(string $table, string $column): void
+    {
+        if (!Schema::hasTable($table) || !Schema::hasColumn($table, $column)) {
+            return;
+        }
+
+        $indexName = "{$table}_{$column}_index";
+        if ($this->hasIndex($table, $indexName)) {
+            return;
+        }
+
+        Schema::table($table, function (Blueprint $blueprint) use ($column, $indexName) {
+            $blueprint->index($column, $indexName);
+        });
+    }
+
+    private function dropIndexIfExists(string $table, string $column): void
+    {
+        if (!Schema::hasTable($table) || !Schema::hasColumn($table, $column)) {
+            return;
+        }
+
+        $indexName = "{$table}_{$column}_index";
+        if (!$this->hasIndex($table, $indexName)) {
+            return;
+        }
+
+        Schema::table($table, function (Blueprint $blueprint) use ($indexName) {
+            $blueprint->dropIndex($indexName);
+        });
+    }
+
+    private function hasIndex(string $table, string $indexName): bool
+    {
+        $connection = Schema::getConnection();
+
+        return match ($connection->getDriverName()) {
+            'sqlite' => collect($connection->select("PRAGMA index_list('{$table}')"))
+                ->contains(fn ($row) => ($row->name ?? $row->Name ?? null) === $indexName),
+            'mysql' => !empty($connection->select("SHOW INDEX FROM `{$table}` WHERE Key_name = ?", [$indexName])),
+            'pgsql' => !empty($connection->select(
+                'SELECT indexname FROM pg_indexes WHERE tablename = ? AND indexname = ?',
+                [$table, $indexName]
+            )),
+            default => false,
+        };
     }
 };
 
