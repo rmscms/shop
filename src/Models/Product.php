@@ -49,6 +49,7 @@ class Product extends Model
         return $this->belongsToMany(ImageLibrary::class, 'image_assignments', 'assignable_id', 'image_id', 'id', 'id')
             ->where('image_assignments.assignable_type', self::class)
             ->withPivot(['is_main', 'sort'])
+            ->orderByDesc('image_assignments.is_main')
             ->orderBy('image_assignments.sort');
     }
 
@@ -69,6 +70,18 @@ class Product extends Model
     // Custom renderer for admin list thumbnail (AVIF + fallback)
     public function renderListThumb(): string
     {
+        $assigned = $this->resolveMainAssignedImage();
+        if ($assigned) {
+            $rel = (string) $assigned->path;
+            $urlOrig = e(Storage::disk('public')->url($rel));
+            $urlAvif = $assigned->avif_url ? e($assigned->avif_url) : null;
+            $alt = e($this->name ?? '');
+
+            return $urlAvif
+                ? "<picture><source srcset=\"$urlAvif\" type=\"image/avif\"><img src=\"$urlOrig\" alt=\"$alt\" loading=\"lazy\" decoding=\"async\" style=\"width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--bs-border-color);\"></picture>"
+                : "<img src=\"$urlOrig\" alt=\"$alt\" loading=\"lazy\" decoding=\"async\" style=\"width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--bs-border-color);\">";
+        }
+
         $row = $this->images()
             ->orderByDesc('is_main')
             ->orderBy('sort')
@@ -90,7 +103,14 @@ class Product extends Model
     // ===== Image helpers =====
     public function mainImageUrl(): ?string
     {
-        // Prefer loaded relation to avoid extra queries
+        $assigned = $this->resolveMainAssignedImage();
+        if ($assigned) {
+            $url = $assigned->avif_url ?: $assigned->url;
+
+            return $url ?: null;
+        }
+
+        // Legacy product_images fallback. Prefer a loaded relation to avoid extra queries.
         $img = $this->relationLoaded('images') ? $this->images->sortByDesc('is_main')->sortBy('sort')->first() : $this->images()->orderByDesc('is_main')->orderBy('sort')->first();
         if (!$img) { return null; }
         $rel = (string)$img->path;
@@ -102,6 +122,23 @@ class Product extends Model
         return Storage::disk('public')->exists($avifRel)
             ? Storage::disk('public')->url($avifRel)
             : Storage::disk('public')->url($rel);
+    }
+
+    protected function resolveMainAssignedImage(): ?ImageLibrary
+    {
+        if ($this->relationLoaded('assignedImages')) {
+            return $this->assignedImages
+                ->sortBy([
+                    fn ($image) => ($image->pivot->is_main ?? false) ? 0 : 1,
+                    fn ($image) => (int) ($image->pivot->sort ?? 0),
+                ])
+                ->first();
+        }
+
+        return $this->assignedImages()
+            ->orderByDesc('image_assignments.is_main')
+            ->orderBy('image_assignments.sort')
+            ->first();
     }
 
     // ===== Read-only helpers (for controller) =====

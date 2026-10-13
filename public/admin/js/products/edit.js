@@ -1,7 +1,42 @@
 // git-trigger
 (function(){
-  document.addEventListener('DOMContentLoaded', function(){
-    // Persist active tab across reloads and submits (non-AJAX)
+    document.addEventListener('DOMContentLoaded', function(){
+      // Auto-generate slug from name (only in create mode)
+      (function initSlugAutoGeneration(){
+        var nameInput = document.querySelector('input[name="name"][data-auto-slug]');
+        var slugInput = document.querySelector('input[name="slug"][data-slug-target]');
+        if (!nameInput || !slugInput) return;
+        
+        var isCreateMode = nameInput.getAttribute('data-auto-slug') === 'true';
+        if (!isCreateMode) return; // Don't auto-generate in edit mode
+        
+        var slugManuallyEdited = false;
+        
+        // Track if user manually edits slug
+        slugInput.addEventListener('input', function(){
+          slugManuallyEdited = true;
+        });
+        
+        // Generate slug from name
+        nameInput.addEventListener('input', function(){
+          if (slugManuallyEdited) return; // Don't overwrite if user manually edited
+          
+          var name = this.value || '';
+          // Convert to slug: lowercase, replace spaces with hyphens, remove special chars
+          var slug = name
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, '-')           // Replace spaces with hyphens
+            .replace(/[^\w\-]+/g, '')      // Remove special characters except hyphens
+            .replace(/\-\-+/g, '-')        // Replace multiple hyphens with single
+            .replace(/^-+/, '')            // Remove leading hyphens
+            .replace(/-+$/, '');           // Remove trailing hyphens
+          
+          slugInput.value = slug;
+        });
+      })();
+      
+      // Persist active tab across reloads and submits (non-AJAX)
     try{
       var tabHidden = document.getElementById('active_tab');
       // Activate tab from location.hash if present

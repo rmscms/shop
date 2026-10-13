@@ -21,7 +21,7 @@ class ShopInstallCommand extends Command
 
         // 2. Publish resources
         $this->info('Publishing resources...');
-        $tags = ['shop-config', 'shop-migrations', 'shop-views', 'shop-assets', 'shop-plugins-admin'];
+        $tags = ['shop-config', 'shop-migrations', 'shop-views', 'shop-lang', 'shop-assets', 'shop-plugins-admin'];
         foreach ($tags as $tag) {
             Artisan::call('vendor:publish', ['--tag' => $tag, '--force' => true]);
         }
@@ -49,6 +49,10 @@ class ShopInstallCommand extends Command
         // 7. Create required directories
         $this->info('Creating required directories...');
         $this->createDirectories();
+
+        // 8. Override the CMS admin login appearance. Logo files stay with the project.
+        $this->info('Overriding admin login appearance...');
+        $this->publishAdminLogin();
 
         $this->info('RMS Shop installed successfully! Run queue workers as per README.');
     }
@@ -124,6 +128,23 @@ class ShopInstallCommand extends Command
         Artisan::call('migrate');
 
         $this->info('Queue configured to database driver. Shop queues ready.');
+    }
+
+    protected function publishAdminLogin(): void
+    {
+        $source = dirname(__DIR__, 3).'/public/admin/css/login.css';
+        $theme = trim((string) config('cms.admin_theme', 'admin'), '/');
+        $destination = public_path($theme.'/css/login.css');
+
+        if (! is_file($source)) {
+            $this->warn('Shop login stylesheet was not found.');
+
+            return;
+        }
+
+        File::ensureDirectoryExists(dirname($destination));
+        File::copy($source, $destination);
+        $this->info('Admin login layout is now the shop design. Project logo files were left in place.');
     }
 
     protected function createDirectories()

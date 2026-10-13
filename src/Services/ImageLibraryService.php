@@ -3,6 +3,7 @@
 namespace RMS\Shop\Services;
 
 use RMS\Shop\Models\ImageLibrary;
+use RMS\Shop\Models\ImageLibraryFolder;
 use RMS\Shop\Models\ImageAssignment;
 use RMS\Shop\Models\Product;
 use RMS\Shop\Models\ProductCombination;
@@ -10,35 +11,46 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RMS\Shop\Jobs\ConvertImageToAvif;
+use RMS\Shop\Services\ImageSizeService;
+use RMS\Shop\Support\MediaLibrarySchema;
 
 class ImageLibraryService
 {
     /**
      * Upload image to library
      */
-    public static function uploadImage($file, string $filename = null): ImageLibrary
+    public static function uploadImage($file, ImageLibraryFolder|string|null $folderOrFilename = null, ?string $filename = null): ImageLibrary
     {
+        $folder = null;
+        if (is_string($folderOrFilename)) {
+            $filename = $folderOrFilename;
+        } elseif ($folderOrFilename instanceof ImageLibraryFolder) {
+            $folder = $folderOrFilename;
+        }
+
         $filename = $filename ?: Str::uuid() . '.' . strtolower($file->getClientOriginalExtension());
 
-        // Create library directory structure
-        $baseDir = 'uploads/products/library';
-        $origDir = $baseDir . '/orig';
+        $origDir = static::origDirectoryForFolder($folder);
+        $avifDir = static::avifDirectoryForFolder($folder);
+        Storage::disk('public')->makeDirectory($origDir);
+        Storage::disk('public')->makeDirectory($avifDir);
 
-        // Store original file
         $path = $file->storeAs($origDir, $filename, 'public');
 
-        // Generate AVIF variant
         ConvertImageToAvif::dispatch($path);
 
-        // Create library entry
-        $image = ImageLibrary::create([
+        $payload = [
             'filename' => $filename,
             'path' => $path,
             'size_bytes' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
-        ]);
+        ];
 
-        return $image;
+        if (MediaLibrarySchema::hasImageFolders()) {
+            $payload['folder_id'] = $folder?->id;
+        }
+
+        return ImageLibrary::create($payload);
     }
 
     /**
@@ -69,13 +81,18 @@ class ImageLibraryService
         }
 
         // Create new assignment
-        return ImageAssignment::create([
+        $assignment = ImageAssignment::create([
             'image_id' => $image->id,
             'assignable_type' => $assignableType,
             'assignable_id' => $assignableId,
             'is_main' => $isMain,
             'sort' => $sort,
         ]);
+
+        // Generate size variants for the image (deduplication handled in service)
+        ImageSizeService::generateVariantsForImage($image);
+
+        return $assignment;
     }
 
     /**
@@ -105,15 +122,10 @@ class ImageLibraryService
             return false;
         }
 
-        // Delete physical files
         $path = $image->path;
-        Storage::disk('public')->delete($path);
-
-        // Delete AVIF variant if exists
-        $dir = dirname($path);
-        $filename = pathinfo($image->filename, PATHINFO_FILENAME);
-        $avifPath = $dir . '/avif/' . $filename . '.avif';
-        Storage::disk('public')->delete($avifPath);
+        $disk = Storage::disk('public');
+        $disk->delete($path);
+        $disk->delete(ImageLibrary::resolveAvifPath($path));
 
         // Delete from database
         return $image->delete();
@@ -138,17 +150,19 @@ class ImageLibraryService
     /**
      * Search images in library with smart filtering
      */
-    public static function searchImages(string $query = null, int $perPage = 20): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    public static function searchImages(string $query = null, int $perPage = 20, ?int $folderId = null, bool $unfiledOnly = false): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         $search = trim($query ?? '');
 
         if (empty($search)) {
             // Default: Show unassigned images first (newest to oldest)
-            return ImageLibrary::query()
+            $builder = ImageLibrary::query()
                 ->withCount('assignments')
                 ->orderByRaw('(SELECT COUNT(*) FROM image_assignments WHERE image_assignments.image_id = image_library.id) ASC')
-                ->orderBy('created_at', 'desc')
-                ->paginate($perPage);
+                ->orderBy('created_at', 'desc');
+            static::applyImageFolderFilter($builder, $folderId, $unfiledOnly);
+
+            return $builder->paginate($perPage);
         }
 
         // Search by product name - find products first
@@ -158,22 +172,26 @@ class ImageLibraryService
 
         if ($productIds->isEmpty()) {
             // No products found, search by filename instead
-            return ImageLibrary::query()
+            $builder = ImageLibrary::query()
                 ->where('filename', 'like', "%{$search}%")
                 ->withCount('assignments')
-                ->orderBy('created_at', 'desc')
-                ->paginate($perPage);
+                ->orderBy('created_at', 'desc');
+            static::applyImageFolderFilter($builder, $folderId, $unfiledOnly);
+
+            return $builder->paginate($perPage);
         }
 
         // Get images assigned to these products
-        return ImageLibrary::query()
+        $builder = ImageLibrary::query()
             ->whereHas('assignments', function ($query) use ($productIds) {
                 $query->where('assignable_type', \RMS\Shop\Models\Product::class)
                       ->whereIn('assignable_id', $productIds);
             })
             ->withCount('assignments')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+            ->orderBy('created_at', 'desc');
+        static::applyImageFolderFilter($builder, $folderId, $unfiledOnly);
+
+        return $builder->paginate($perPage);
     }
 
     /**
@@ -323,6 +341,76 @@ class ImageLibraryService
                 ->where('assignable_type', $assignableType)
                 ->where('assignable_id', $assignableId)
                 ->update(['sort' => $sort]);
+        }
+    }
+
+    public static function moveImage(ImageLibrary $image, ?ImageLibraryFolder $targetFolder): ImageLibrary
+    {
+        return DB::transaction(function () use ($image, $targetFolder) {
+            if (MediaLibrarySchema::hasImageFolders()) {
+                $image->update(['folder_id' => $targetFolder?->id]);
+            }
+
+            return static::syncImageStoragePath($image->fresh(['folder']));
+        });
+    }
+
+    public static function syncImageStoragePath(ImageLibrary $image): ImageLibrary
+    {
+        $folder = MediaLibrarySchema::hasImageFolders() ? $image->folder : null;
+        $origDir = static::origDirectoryForFolder($folder);
+        $newPath = $origDir.'/'.$image->filename;
+
+        if ($image->path === $newPath) {
+            return $image;
+        }
+
+        $disk = Storage::disk('public');
+        $disk->makeDirectory($origDir);
+        $disk->makeDirectory(static::avifDirectoryForFolder($folder));
+
+        if ($disk->exists($image->path)) {
+            $disk->move($image->path, $newPath);
+        }
+
+        $oldAvif = ImageLibrary::resolveAvifPath($image->path);
+        $newAvif = ImageLibrary::resolveAvifPath($newPath);
+        if ($disk->exists($oldAvif)) {
+            $disk->makeDirectory(dirname($newAvif));
+            $disk->move($oldAvif, $newAvif);
+        }
+
+        $image->update(['path' => $newPath]);
+
+        return $image->fresh(['folder']);
+    }
+
+    public static function origDirectoryForFolder(?ImageLibraryFolder $folder): string
+    {
+        $base = 'uploads/products/library/orig';
+        $subPath = trim((string) ($folder?->path ?? ''), '/');
+
+        return $subPath === '' ? $base : $base.'/'.$subPath;
+    }
+
+    public static function avifDirectoryForFolder(?ImageLibraryFolder $folder): string
+    {
+        $base = 'uploads/products/library/avif';
+        $subPath = trim((string) ($folder?->path ?? ''), '/');
+
+        return $subPath === '' ? $base : $base.'/'.$subPath;
+    }
+
+    protected static function applyImageFolderFilter($builder, ?int $folderId, bool $unfiledOnly): void
+    {
+        if (! MediaLibrarySchema::hasImageFolders()) {
+            return;
+        }
+
+        if ($unfiledOnly) {
+            $builder->whereNull('folder_id');
+        } elseif ($folderId) {
+            $builder->where('folder_id', $folderId);
         }
     }
 }

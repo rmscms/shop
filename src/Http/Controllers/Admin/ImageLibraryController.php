@@ -12,6 +12,7 @@ use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Core\Data\Field;
 use RMS\Shop\Models\ImageLibrary;
 use RMS\Shop\Models\Product;
+use RMS\Shop\Services\ImageLibraryFolderService;
 use RMS\Shop\Services\ImageLibraryService;
 
 class ImageLibraryController extends ShopAdminController implements HasList, HasForm, ShouldFilter
@@ -124,11 +125,16 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
     {
         $request->validate([
             'image' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:5120'],
+            'folder_id' => ['nullable', 'integer'],
         ]);
 
         try {
             $file = $request->file('image');
-            $image = ImageLibraryService::uploadImage($file);
+            $folder = null;
+            if ($request->filled('folder_id') && \RMS\Shop\Support\MediaLibrarySchema::hasImageFolders()) {
+                $folder = \RMS\Shop\Models\ImageLibraryFolder::query()->findOrFail((int) $request->input('folder_id'));
+            }
+            $image = ImageLibraryService::uploadImage($file, $folder);
 
             return response()->json([
                 'success' => true,
@@ -139,6 +145,7 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
                     'url' => $image->url,
                     'avif_url' => $image->avif_url,
                     'size_formatted' => $image->formatted_size,
+                    'folder_id' => $image->folder_id,
                 ]
             ]);
         } catch (\Exception $e) {
@@ -287,8 +294,7 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
             $assignedCount = 0;
             
             foreach ($request->image_ids as $imageId) {
-                $image = ImageLibrary::findOrFail($imageId);
-                ImageLibraryService::assignImage($image, $product);
+                \RMS\Shop\Services\ProductImagesService::assignToProduct($product->id, $imageId);
                 $assignedCount++;
             }
 
@@ -426,8 +432,7 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
         ]);
 
         try {
-            $image = ImageLibrary::findOrFail($request->image_id);
-            $detached = ImageLibraryService::detachImage($image, $product);
+            $detached = \RMS\Shop\Services\ProductImagesService::detachFromProduct($product->id, $request->image_id);
 
             if ($detached) {
                 return response()->json([
@@ -458,8 +463,7 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
         ]);
 
         try {
-            $image = ImageLibrary::findOrFail($request->image_id);
-            ImageLibraryService::setMainImageByImage($image, $product);
+            \RMS\Shop\Services\ProductImagesService::setMainImage($product->id, $request->image_id);
 
             return response()->json([
                 'success' => true,
@@ -479,12 +483,13 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
     public function updateSort(Request $request, Product $product): JsonResponse
     {
         $request->validate([
-            'image_ids' => ['required', 'array'],
-            'image_ids.*' => ['integer', 'exists:image_library,id'],
+            'items' => ['required', 'array'],
+            'items.*.id' => ['required', 'integer'],
+            'items.*.sort' => ['required', 'integer', 'min:0'],
         ]);
 
         try {
-            ImageLibraryService::updateSortOrder($product, $request->image_ids);
+            \RMS\Shop\Services\ProductImagesService::updateSort($product->id, $request->items);
 
             return response()->json([
                 'success' => true,
@@ -495,6 +500,122 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
                 'success' => false,
                 'message' => 'خطا در به‌روزرسانی ترتیب: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function foldersTree(Request $request): JsonResponse
+    {
+        $selected = $request->input('selected');
+        $selectedId = is_numeric($selected) ? (int) $selected : null;
+
+        return response()->json([
+            'success' => true,
+            'data' => app(ImageLibraryFolderService::class)->getTreeForPlugin($selectedId),
+        ]);
+    }
+
+    public function storeFolder(Request $request): JsonResponse
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:190'],
+            'parent_id' => ['nullable', 'integer'],
+        ]);
+
+        try {
+            $folder = app(ImageLibraryFolderService::class)->createFolder(
+                $request->input('parent_id') ? (int) $request->input('parent_id') : null,
+                (string) $request->input('name')
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'پوشه با موفقیت ساخته شد',
+                'data' => [
+                    'id' => $folder->id,
+                    'name' => $folder->name,
+                    'path' => $folder->path,
+                    'parent_id' => $folder->parent_id,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function updateFolder(Request $request, \RMS\Shop\Models\ImageLibraryFolder $folder): JsonResponse
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:190'],
+        ]);
+
+        try {
+            $folder = app(ImageLibraryFolderService::class)->updateFolder($folder, (string) $request->input('name'));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'پوشه به‌روزرسانی شد',
+                'data' => [
+                    'id' => $folder->id,
+                    'name' => $folder->name,
+                    'path' => $folder->path,
+                    'parent_id' => $folder->parent_id,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function destroyFolder(\RMS\Shop\Models\ImageLibraryFolder $folder): JsonResponse
+    {
+        try {
+            app(ImageLibraryFolderService::class)->deleteFolder($folder);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'پوشه حذف شد',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function moveImage(Request $request, ImageLibrary $image): JsonResponse
+    {
+        $request->validate([
+            'folder_id' => ['nullable', 'integer'],
+        ]);
+
+        try {
+            $targetFolder = ($request->filled('folder_id') && \RMS\Shop\Support\MediaLibrarySchema::hasImageFolders())
+                ? \RMS\Shop\Models\ImageLibraryFolder::query()->findOrFail((int) $request->input('folder_id'))
+                : null;
+
+            $image = ImageLibraryService::moveImage($image, $targetFolder);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تصویر جابه‌جا شد',
+                'data' => [
+                    'id' => $image->id,
+                    'folder_id' => $image->folder_id,
+                    'path' => $image->path,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         }
     }
 }

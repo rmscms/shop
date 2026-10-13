@@ -27,6 +27,55 @@ class ProductService
     }
 
     /**
+     * Update basic product fields via AJAX
+     */
+    public function updateBasic(int $productId, array $data): Product
+    {
+        $normalized = $this->normalizeFields($data);
+        $product = Product::findOrFail($productId);
+        $product->update($normalized);
+        return $product;
+    }
+
+    /**
+     * Update pricing fields via AJAX
+     */
+    public function updatePricing(int $productId, array $data): Product
+    {
+        $normalized = $this->normalizeFields($data);
+        $product = Product::findOrFail($productId);
+        $product->update($normalized);
+        return $product;
+    }
+
+    /**
+     * Save product attributes and combinations from JSON
+     */
+    public function saveAttributesAndCombinations(int $productId, string $attributesJson, string $combinationsJson): void
+    {
+        if (!\is_string($attributesJson) || !\is_string($combinationsJson)) {
+            return;
+        }
+        ProductAttributesService::saveFromJson($productId, $attributesJson, $combinationsJson);
+    }
+
+    /**
+     * Get brand options for select dropdowns
+     */
+    public function getBrandOptions(): array
+    {
+        return app(BrandService::class)->getOptions();
+    }
+
+    /**
+     * Get category options for select dropdowns
+     */
+    public function getCategoryOptions(): array
+    {
+        return app(CategoryTreeService::class)->flatOptions(false);
+    }
+
+    /**
      * Normalize inputs: booleans, integers, discount clamp, empty strings → null where applicable.
      */
     protected function normalizeFields(array $fields): array

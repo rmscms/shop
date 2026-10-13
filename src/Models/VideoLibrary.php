@@ -3,15 +3,27 @@
 namespace RMS\Shop\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
 class VideoLibrary extends Model
 {
     protected $table = 'video_library';
     
-    protected $fillable = ['filename', 'title', 'path', 'hls_path', 'poster_path', 'duration_seconds', 'size_bytes'];
+    protected $fillable = ['filename', 'title', 'path', 'hls_path', 'poster_path', 'duration_seconds', 'size_bytes', 'folder_id'];
 
     protected $appends = ['url', 'hls_url', 'poster_url', 'is_transcoded', 'display_name'];
+
+    protected $casts = [
+        'folder_id' => 'integer',
+        'duration_seconds' => 'integer',
+        'size_bytes' => 'integer',
+    ];
+
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(VideoLibraryFolder::class, 'folder_id');
+    }
 
     public function assignments()
     {

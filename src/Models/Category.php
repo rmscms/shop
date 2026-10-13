@@ -57,9 +57,14 @@ class Category extends Model
         Cache::forget('shop:categories:tree:all');
     }
 
-    public static function ensureDefault(): self
+    public static function ensureDefault(): ?self
     {
         $defaultSlug = (string) config('shop.categories.default_slug', 'uncategorized');
+        $existing = static::query()->where('slug', $defaultSlug)->first();
+        if ($existing || ! config('shop.categories.auto_create_default', true)) {
+            return $existing;
+        }
+
         $defaultName = (string) config('shop.categories.default_name', 'دسته‌بندی نشده');
 
         /** @var self $category */

@@ -989,7 +989,7 @@ function debounce(fn, wait = 250) {
   function toast(message, type){
     try{
       const el = document.createElement('div');
-      el.className = 'position-fixed end-0 bottom-0 m-3 alert alert-'+(type||'info');
+      el.className = 'position-fixed start-0 top-0 m-3 alert alert-'+(type||'info');
       el.style.zIndex = 1060; el.textContent = message;
       document.body.appendChild(el);
       setTimeout(()=>{ el.classList.add('show'); }, 10);

@@ -6,7 +6,6 @@ use RMS\Shop\Http\Controllers\Admin\ShopDashboardController;
 use RMS\Shop\Http\Controllers\Admin\CategoriesController;
 use RMS\Shop\Http\Controllers\Admin\ProductsController;
 use RMS\Shop\Http\Controllers\Admin\BrandsController;
-use RMS\Shop\Http\Controllers\Admin\OrdersController;
 use RMS\Shop\Http\Controllers\Admin\CartsController;
 use RMS\Shop\Http\Controllers\Admin\CurrenciesController;
 use RMS\Shop\Http\Controllers\Admin\CurrencyRatesController;
@@ -18,8 +17,14 @@ use RMS\Shop\Http\Controllers\Admin\UserPointsController;
 use RMS\Shop\Http\Controllers\Admin\ShopSettingsController;
 use RMS\Shop\Http\Controllers\Admin\EditorUploadController;
 use RMS\Shop\Http\Controllers\Admin\ImageLibraryController;
+use RMS\Shop\Http\Controllers\Admin\ImageSizesController;
 use RMS\Shop\Http\Controllers\Admin\VideoLibraryController;
 use RMS\Shop\Http\Controllers\Admin\AvifController;
+
+$ordersControllerClass = (string) config('shop.controllers.admin.orders', \RMS\Shop\Http\Controllers\Admin\OrdersController::class);
+if (!class_exists($ordersControllerClass)) {
+    $ordersControllerClass = \RMS\Shop\Http\Controllers\Admin\OrdersController::class;
+}
 
 Route::middleware([
         'web',
@@ -29,7 +34,7 @@ Route::middleware([
     ])
     ->prefix('admin/shop')
     ->name('admin.shop.')
-    ->group(function () {
+    ->group(function () use ($ordersControllerClass) {
         
         // Dashboard
         Route::get('/', [ShopDashboardController::class, 'index'])->name('dashboard');
@@ -42,6 +47,10 @@ Route::middleware([
         Route::get('settings', [ShopSettingsController::class, 'edit'])->name('settings.edit');
         Route::put('settings', [ShopSettingsController::class, 'update'])->name('settings.update');
         
+        // Category tree routes
+        Route::get('categories/tree', [CategoriesController::class, 'tree'])->name('categories.tree');
+        Route::get('categories/tree/data', [CategoriesController::class, 'treeData'])->name('categories.tree.data');
+
         // Categories
         Route::resource('categories', CategoriesController::class);
         RouteHelper::adminResource(CategoriesController::class, 'categories');
@@ -50,9 +59,10 @@ Route::middleware([
         Route::resource('brands', BrandsController::class);
         RouteHelper::adminResource(BrandsController::class, 'brands');
 
-        // Category tree routes
-        Route::get('categories/tree', [CategoriesController::class, 'tree'])->name('categories.tree');
-        Route::get('categories/tree/data', [CategoriesController::class, 'treeData'])->name('categories.tree.data');
+        // Image Sizes
+        Route::resource('image-sizes', ImageSizesController::class);
+        RouteHelper::adminResource(ImageSizesController::class, 'image-sizes');
+
         // Products
         Route::resource('products', ProductsController::class);
         RouteHelper::adminResource(ProductsController::class, 'products');
@@ -94,13 +104,13 @@ Route::middleware([
         Route::post('products/attributes/definitions', [ProductAttributeLookupController::class, 'storeDefinition'])->name('products.attributes.definitions.store');
         Route::post('products/attributes/values', [ProductAttributeLookupController::class, 'storeValue'])->name('products.attributes.values.store');
         // Orders (limited to index, show only)
-        Route::resource('orders', OrdersController::class, [
+        Route::resource('orders', $ordersControllerClass, [
             'export' => true,
             'sort' => false,
             'toggle_active' => false,
             'batch_actions' => [],
         ]);
-        RouteHelper::adminResource(OrdersController::class, 'orders', [
+        RouteHelper::adminResource($ordersControllerClass, 'orders', [
             'export' => true,
             'sort' => false,
             'toggle_active' => false,
@@ -108,17 +118,19 @@ Route::middleware([
         ]);
 
         // Order custom routes
-        Route::get('orders/{order}/whatsapp', [OrdersController::class, 'whatsapp'])->name('orders.whatsapp');
-        Route::get('orders/{order}/invoice', [OrdersController::class, 'invoice'])->name('orders.invoice');
-        Route::get('orders/{order}/label', [OrdersController::class, 'label'])->name('orders.label');
-        Route::post('orders/{order}/discount', [OrdersController::class, 'applyDiscount'])->name('orders.discount');
-        Route::post('orders/{order}/apply-points', [OrdersController::class, 'applyPoints'])->name('orders.apply-points');
-        Route::post('orders/{order}/tracking/update', [OrdersController::class, 'updateTracking'])->name('orders.tracking.update');
-        Route::post('orders/{order}/update-status', [OrdersController::class, 'updateStatus'])->name('orders.update-status');
-        Route::post('orders/{order}/charge', [OrdersController::class, 'charge'])->name('orders.charge');
-        Route::post('orders/{order}/notes/add', [OrdersController::class, 'addNote'])->name('orders.notes.add');
-        Route::post('orders/{order}/notes/{note}/update', [OrdersController::class, 'updateNote'])->name('orders.notes.update');
-        Route::post('orders/{order}/notes/{note}/delete', [OrdersController::class, 'deleteNote'])->name('orders.notes.delete');
+        Route::get('orders/{order}/whatsapp', [$ordersControllerClass, 'whatsapp'])->name('orders.whatsapp');
+        Route::get('orders/{order}/invoice', [$ordersControllerClass, 'invoice'])->name('orders.invoice');
+        Route::get('orders/{order}/label', [$ordersControllerClass, 'label'])->name('orders.label');
+        Route::post('orders/{order}/discount', [$ordersControllerClass, 'applyDiscount'])->name('orders.discount');
+        Route::post('orders/{order}/apply-points', [$ordersControllerClass, 'applyPoints'])->name('orders.apply-points');
+        Route::post('orders/{order}/tracking/update', [$ordersControllerClass, 'updateTracking'])->name('orders.tracking.update');
+        Route::post('orders/{order}/update-status', [$ordersControllerClass, 'updateStatus'])->name('orders.update-status');
+        Route::post('orders/{order}/charge', [$ordersControllerClass, 'charge'])->name('orders.charge');
+        Route::post('orders/{order}/notes/add', [$ordersControllerClass, 'addNote'])->name('orders.notes.add');
+        Route::post('orders/{order}/notes/{note}/update', [$ordersControllerClass, 'updateNote'])->name('orders.notes.update');
+        Route::post('orders/{order}/notes/{note}/delete', [$ordersControllerClass, 'deleteNote'])->name('orders.notes.delete');
+        Route::post('orders/{order}/retry-sync', [$ordersControllerClass, 'retrySync'])->name('orders.retry-sync');
+        Route::post('orders/{order}/retry-payment', [$ordersControllerClass, 'retryPayment'])->name('orders.retry-payment');
         // Basic resources
         Route::resource('carts', CartsController::class)->only(['index', 'show', 'destroy']);
         RouteHelper::adminResource(CartsController::class, 'carts', [
@@ -149,6 +161,11 @@ Route::middleware([
 
         // Image Library
         Route::post('image-library/upload', [ImageLibraryController::class, 'upload'])->name('image-library.upload');
+        Route::get('image-library/folders/tree', [ImageLibraryController::class, 'foldersTree'])->name('image-library.folders.tree');
+        Route::post('image-library/folders', [ImageLibraryController::class, 'storeFolder'])->name('image-library.folders.store');
+        Route::put('image-library/folders/{folder}', [ImageLibraryController::class, 'updateFolder'])->name('image-library.folders.update');
+        Route::delete('image-library/folders/{folder}', [ImageLibraryController::class, 'destroyFolder'])->name('image-library.folders.destroy');
+        Route::post('image-library/images/{image}/move', [ImageLibraryController::class, 'moveImage'])->name('image-library.images.move');
         Route::delete('image-library/{image}/ajax', [ImageLibraryController::class, 'ajaxDestroy'])->name('image-library.ajax-destroy');
         Route::resource('image-library', ImageLibraryController::class);
         RouteHelper::adminResource(ImageLibraryController::class, 'image-library');
@@ -183,6 +200,13 @@ Route::middleware([
         });
 
         // Video Library
+        Route::post('video-library/upload', [VideoLibraryController::class, 'upload'])->name('video-library.upload');
+        Route::delete('video-library/{id}/ajax', [VideoLibraryController::class, 'ajaxDestroy'])->name('video-library.ajax-destroy');
+        Route::get('video-library/folders/tree', [VideoLibraryController::class, 'foldersTree'])->name('video-library.folders.tree');
+        Route::post('video-library/folders', [VideoLibraryController::class, 'storeFolder'])->name('video-library.folders.store');
+        Route::put('video-library/folders/{folder}', [VideoLibraryController::class, 'updateFolder'])->name('video-library.folders.update');
+        Route::delete('video-library/folders/{folder}', [VideoLibraryController::class, 'destroyFolder'])->name('video-library.folders.destroy');
+        Route::post('video-library/videos/{video}/move', [VideoLibraryController::class, 'moveVideo'])->name('video-library.videos.move');
         Route::resource('video-library', VideoLibraryController::class);
         RouteHelper::adminResource(VideoLibraryController::class, 'video-library');
         Route::post('video-library/{id}/assign', [VideoLibraryController::class, 'assign'])->name('video-library.assign');

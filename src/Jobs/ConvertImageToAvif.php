@@ -7,8 +7,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use RMS\Shop\Models\ImageLibrary;
 
 class ConvertImageToAvif implements ShouldQueue
 {
@@ -47,23 +47,16 @@ class ConvertImageToAvif implements ShouldQueue
             return;
         }
 
-        // Determine directory structure
-        // For products: uploads/products/123/product/orig/uuid.jpg
-        // For library: uploads/products/library/orig/uuid.jpg
-        if (Str::contains($this->relativePath, '/orig/')) {
-            $dir = Str::beforeLast($this->relativePath, '/orig/');
-            $name = Str::afterLast($this->relativePath, '/orig/');
-        } else {
-            // Fallback: assume file is in root
-            $dir = dirname($this->relativePath);
-            $name = basename($this->relativePath);
-        }
-
-        $base = pathinfo($name, PATHINFO_FILENAME);
-        $dstRel = $dir . '/avif/' . $base . '.avif';
+        $dstRel = ImageLibrary::resolveAvifPath($this->relativePath);
         $dst = storage_path('app/public/' . $dstRel);
 
-        @mkdir(dirname($dst), 0777, true);
+        if (! is_dir(dirname($dst)) && ! @mkdir(dirname($dst), 0777, true) && ! is_dir(dirname($dst))) {
+            Log::warning('AVIF conversion failed: could not create destination directory', [
+                'dst' => $dstRel,
+            ]);
+
+            return;
+        }
 
         try {
             if (class_exists(\Intervention\Image\ImageManager::class)) {

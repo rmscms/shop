@@ -141,6 +141,14 @@ return [
         'quality' => 'کیفیت',
     ],
 
+    'image_size' => [
+        'name' => 'نام سایز',
+        'slug' => 'Slug',
+        'width' => 'عرض',
+        'height' => 'ارتفاع',
+        'quality' => 'کیفیت',
+    ],
+
     'image_library' => [
         'title' => 'کتابخانه تصاویر',
         'filename' => 'نام فایل',
@@ -155,6 +163,12 @@ return [
         'search_placeholder' => 'جستجو در تصاویر...',
     ],
 
+    'admin_login' => [
+        'tagline' => 'داشبورد مدیریت',
+        'slogan' => 'ورود به پنل مدیریت',
+        'email_or_username_placeholder' => 'ایمیل یا نام کاربری',
+    ],
+
     'brand' => [
         'name' => 'نام برند',
         'slug' => 'لینک برند',
@@ -163,6 +177,7 @@ return [
         'sort' => 'ترتیب نمایش',
         'products_count' => 'تعداد محصولات',
         'list' => 'برندها',
+        'select_placeholder' => 'یک برند را انتخاب کنید',
     ],
 ];
 

@@ -3,32 +3,86 @@
 namespace RMS\Shop\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RMS\Shop\Jobs\TranscodeVideo;
 use RMS\Shop\Models\VideoAssignment;
 use RMS\Shop\Models\VideoLibrary;
+use RMS\Shop\Models\VideoLibraryFolder;
+use RMS\Shop\Support\MediaLibrarySchema;
 use Illuminate\Database\Eloquent\Model;
 
 class VideoLibraryService
 {
-    public function upload(UploadedFile $file, ?string $title = null): VideoLibrary
+    public function upload(UploadedFile $file, ?string $title = null, ?VideoLibraryFolder $folder = null): VideoLibrary
     {
-        // Generate safe filename (UUID + extension)
         $extension = strtolower($file->getClientOriginalExtension());
         $filename = Str::uuid() . '.' . $extension;
-        $path = $file->storeAs('uploads/products/videos/orig', $filename, 'public');
+        $origDir = static::origDirectoryForFolder($folder);
+        Storage::disk('public')->makeDirectory($origDir);
+        $path = $file->storeAs($origDir, $filename, 'public');
 
-        $video = VideoLibrary::create([
+        $payload = [
             'filename' => $filename,
-            'title' => $title,
             'path' => $path,
             'size_bytes' => $file->getSize(),
-        ]);
+        ];
+
+        if (MediaLibrarySchema::hasVideoTitle()) {
+            $payload['title'] = $title;
+        }
+
+        if (MediaLibrarySchema::hasVideoFolders()) {
+            $payload['folder_id'] = $folder?->id;
+        }
+
+        $video = VideoLibrary::create($payload);
 
         TranscodeVideo::dispatch($video->id);
 
         return $video;
+    }
+
+    public function moveVideo(VideoLibrary $video, ?VideoLibraryFolder $targetFolder): VideoLibrary
+    {
+        return DB::transaction(function () use ($video, $targetFolder) {
+            if (MediaLibrarySchema::hasVideoFolders()) {
+                $video->update(['folder_id' => $targetFolder?->id]);
+            }
+
+            return $this->syncVideoStoragePath($video->fresh(['folder']));
+        });
+    }
+
+    public function syncVideoStoragePath(VideoLibrary $video): VideoLibrary
+    {
+        $folder = MediaLibrarySchema::hasVideoFolders() ? $video->folder : null;
+        $origDir = static::origDirectoryForFolder($folder);
+        $newPath = $origDir.'/'.$video->filename;
+
+        if ($video->path === $newPath) {
+            return $video;
+        }
+
+        $disk = Storage::disk('public');
+        $disk->makeDirectory($origDir);
+
+        if ($disk->exists($video->path)) {
+            $disk->move($video->path, $newPath);
+        }
+
+        $video->update(['path' => $newPath]);
+
+        return $video->fresh(['folder']);
+    }
+
+    public static function origDirectoryForFolder(?VideoLibraryFolder $folder): string
+    {
+        $base = 'uploads/products/videos/orig';
+        $subPath = trim((string) ($folder?->path ?? ''), '/');
+
+        return $subPath === '' ? $base : $base.'/'.$subPath;
     }
 
     public function delete(VideoLibrary $video): void
@@ -88,20 +142,27 @@ class VideoLibraryService
         }
     }
 
-    public function searchVideos(string $search = '', int $page = 1, int $perPage = 20): array
+    public function searchVideos(string $search = '', int $page = 1, int $perPage = 20, ?int $folderId = null, bool $unfiledOnly = false): array
     {
         $query = VideoLibrary::query()
             ->withCount(['assignments as products_count' => function($q) {
                 $q->where('assignable_type', 'RMS\Shop\Models\Product');
             }]);
 
+        $this->applyVideoFolderFilter($query, $folderId, $unfiledOnly);
+
         if ($search) {
-            $query->where('title', 'like', "%{$search}%");
+            $query->where(function ($builder) use ($search) {
+                $builder->where('filename', 'like', "%{$search}%");
+                if (MediaLibrarySchema::hasVideoTitle()) {
+                    $builder->orWhere('title', 'like', "%{$search}%");
+                }
+            });
         }
 
-        $query->orderBy('created_at', 'desc');
-
-        return $query->paginate($perPage, ['*'], 'page', $page)->toArray();
+        return $query->orderByDesc('created_at')
+            ->paginate($perPage, ['*'], 'page', $page)
+            ->toArray();
     }
 
     public function searchVideosForProduct(Model $product, string $search = '', int $page = 1, int $perPage = 20): array
@@ -112,7 +173,11 @@ class VideoLibraryService
         $query = VideoLibrary::query();
 
         if ($search) {
-            $query->where('title', 'like', "%{$search}%");
+            if (MediaLibrarySchema::hasVideoTitle()) {
+                $query->where('title', 'like', "%{$search}%");
+            } else {
+                $query->where('filename', 'like', "%{$search}%");
+            }
         }
 
         // اولویت: ویدیوهای اساین نشده اول، بعد اساین شده‌ها
@@ -130,5 +195,18 @@ class VideoLibraryService
     public function getCombinationVideos(Model $combination)
     {
         return $combination->assignedVideos()->orderBy('sort', 'asc')->orderBy('is_main', 'desc')->get();
+    }
+
+    protected function applyVideoFolderFilter($query, ?int $folderId, bool $unfiledOnly): void
+    {
+        if (! MediaLibrarySchema::hasVideoFolders()) {
+            return;
+        }
+
+        if ($unfiledOnly) {
+            $query->whereNull('folder_id');
+        } elseif ($folderId) {
+            $query->where('folder_id', $folderId);
+        }
     }
 }

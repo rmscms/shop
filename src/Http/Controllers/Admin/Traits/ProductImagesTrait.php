@@ -324,17 +324,6 @@ trait ProductImagesTrait
         $combId = null;
         if (preg_match('/^gallery__(?:comb_(\d+))$/', $fieldName, $m)) { $combId = (int)($m[1] ?? 0) ?: null; }
 
-        // Validate combination belongs to product when present
-        if ($combId) {
-            $okComb = ProductCombination::query()->where(['id'=>$combId,'product_id'=>$productId])->exists();
-            if (!$okComb) { return response()->json(['success'=>false,'message'=>'combination_not_found'], 404); }
-        }
-
-        // Get target model
-        $targetModel = $combId
-            ? ProductCombination::findOrFail($combId)
-            : Product::findOrFail($productId);
-
         // Process uploaded files
         $files = [];
         $flatten = function($v) use (&$flatten, &$files) {
@@ -348,22 +337,9 @@ trait ProductImagesTrait
 
         foreach ($files as $file) {
             try {
-                // Upload to Image Library (handles AVIF conversion)
-                $imageLibrary = ImageLibraryService::uploadImage($file);
-
-                // Assign to target model
-                $assignment = ImageLibraryService::assignImage($imageLibrary, $targetModel);
-
-                // Use AVIF URL if available, otherwise original
-                $imageUrl = $imageLibrary->avif_url ?: $imageLibrary->url;
-
-                $uploaded[] = $imageUrl;
-                $assignments[] = [
-                    'image_id' => $imageLibrary->id,
-                    'assignment_id' => $assignment->id,
-                    'url' => $imageUrl
-                ];
-
+                $result = \RMS\Shop\Services\ProductImagesService::uploadGallery($productId, $file, $fieldName, $combId);
+                $uploaded[] = $result['url'];
+                $assignments[] = $result;
             } catch (\Exception $e) {
                 return response()->json([
                     'success' => false,
@@ -386,34 +362,16 @@ trait ProductImagesTrait
     {
         $productId = (int)$id;
         $path = (string)$request->query('file_path','');
-        if (!$path) return response()->json(['success'=>false,'message'=>'file_path empty'], 400);
-        // convert public URL to storage path if needed
-        if (str_starts_with($path, url('/storage'))) {
-            $rel = str_replace(url('/storage').'/', '', $path);
-        } else if (str_starts_with($path, '/storage/')) {
-            $rel = substr($path, 9);
-        } else {
-            $rel = $path; // assume relative storage path
+        if (!$path) {
+            return response()->json(['success'=>false,'message'=>'file_path empty'], 400);
         }
-        $scope = str_contains($rel, '/combinations/') ? 'combination' : 'product';
-        $dir = Str::beforeLast($rel, '/orig/');
-        $name = Str::afterLast($rel, '/orig/');
-        // Delete original
-        Storage::disk('public')->delete($rel);
-        // Delete AVIF variant if exists
-        $avifRel = $dir.'/avif/'.pathinfo($name, PATHINFO_FILENAME).'.avif';
-        Storage::disk('public')->delete($avifRel);
-        // Cleanup any legacy code_* variants
-        $files = Storage::disk('public')->files($dir);
-        $suffix = '_'.$name;
-        foreach ($files as $f) { if (str_ends_with($f, $suffix)) { Storage::disk('public')->delete($f); } }
-        if ($scope==='product') {
-            ProductImage::query()->where(['product_id'=>$productId,'path'=>$rel])->delete();
-        } else {
-            $combIds = ProductCombination::query()->where('product_id', (int)$productId)->pluck('id');
-            ProductCombinationImage::query()->whereIn('combination_id', $combIds)->where('path',$rel)->delete();
+
+        try {
+            \RMS\Shop\Services\ProductImagesService::deleteGallery($productId, $path);
+            return response()->json(['success'=>true,'message'=>trans('admin.file_deleted') ?? 'حذف انجام شد']);
+        } catch (\Exception $e) {
+            return response()->json(['success'=>false,'message'=>'خطا در حذف فایل: ' . $e->getMessage()], 500);
         }
-        return response()->json(['success'=>true,'message'=>trans('admin.file_deleted') ?? 'حذف انجام شد']);
     }
 
     // Regenerate AVIF variants for all images of a product (async)

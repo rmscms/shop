@@ -40,6 +40,7 @@ use RMS\Shop\Http\Controllers\Admin\Traits\ProductFeaturesTrait;
 use RMS\Shop\Http\Controllers\Admin\Traits\ProductVideoTrait;
 use RMS\Shop\Services\CategoryTreeService;
 use RMS\Shop\Services\VideoLibraryService;
+use RMS\Core\Models\Setting;
 
 class ProductsController extends ShopAdminController implements HasList, HasForm, ShouldFilter, ChangeBoolField
 {
@@ -72,6 +73,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
         $categoryService = app(CategoryTreeService::class);
         $categoryTree = $categoryService->getTreeForPlugin(null, false);
         $defaultCategoryId = $categoryService->defaultCategoryId();
+        $enablePricingStock = (bool) ((int) Setting::get('shop_enable_pricing_stock_management', 1));
 
         $this->view->usePackageNamespace('shop')
             ->setTheme('admin')
@@ -91,6 +93,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
                 'categoryTree' => $categoryTree,
                 'defaultCategoryId' => $defaultCategoryId,
                 'brands' => $brands,
+                'enable_pricing_stock' => $enablePricingStock,
             ])
             ->withJsVariables([
                 'apiEndpoints' => [
@@ -207,6 +210,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
             ->map(function($r){ return ['id'=>(int)$r->id,'name'=>(string)$r->name,'icon'=>(string)($r->icon??'ph-info')]; })
             ->values()->all();
 
+        $enablePricingStock = (bool) ((int) Setting::get('shop_enable_pricing_stock_management', 1));
 
         $this->view->usePackageNamespace('shop')
             ->setTheme('admin')
@@ -232,6 +236,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
                 'categoryTree' => $categoryTree,
                 'defaultCategoryId' => $defaultCategoryId,
                 'brands' => $brands,
+                'enable_pricing_stock' => $enablePricingStock,
             ])
             ->withJsVariables([
                 'productId' => (int)$id,
@@ -512,10 +517,11 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
 
     private function saveAttributesAndCombinations(int $productId, Request $request): void
     {
-        $attrsJson = (string)$request->input('attributes_json','[]');
-        $combsJson = (string)$request->input('combinations_json','[]');
-        if (!\is_string($attrsJson) || !\is_string($combsJson)) { return; }
-        \RMS\Shop\Services\ProductAttributesService::saveFromJson($productId, $attrsJson, $combsJson);
+        app(\RMS\Shop\Services\ProductService::class)->saveAttributesAndCombinations(
+            $productId,
+            (string)$request->input('attributes_json','[]'),
+            (string)$request->input('combinations_json','[]')
+        );
     }
 
 
@@ -528,25 +534,13 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
 
     public function updateBasicAjax(\RMS\Shop\Http\Requests\Admin\Shop\UpdateBasicRequest $request, int $productId)
     {
-        $fields = $request->validated();
-        if (($fields['discount_type'] ?? null) === 'percent' && isset($fields['discount_value'])) {
-            $fields['discount_value'] = max(0, min(100, (float)$fields['discount_value']));
-        }
-        $fields['active'] = !empty($fields['active']);
-        // Eloquent update (keeps behavior)
-        Product::query()->where('id', (int)$productId)->update(array_merge($fields, ['updated_at'=>now()]));
+        $product = app(\RMS\Shop\Services\ProductService::class)->updateBasic($productId, $request->validated());
         return response()->json(['ok'=>true,'message'=>trans('admin.updated_successfully')]);
     }
 
     public function updatePricingAjax(\RMS\Shop\Http\Requests\Admin\Shop\UpdatePricingRequest $request, int $productId)
     {
-        $fields = $request->validated();
-        // Normalize discount percent to [0,100]
-        if (($fields['discount_type'] ?? null) === 'percent' && isset($fields['discount_value'])) {
-            $fields['discount_value'] = max(0, min(100, (float)$fields['discount_value']));
-        }
-        // Update only pricing-related fields
-        Product::query()->where('id', (int)$productId)->update(array_merge($fields, ['updated_at'=>now()]));
+        $product = app(\RMS\Shop\Services\ProductService::class)->updatePricing($productId, $request->validated());
         return response()->json(['ok'=>true,'message'=>trans('admin.updated_successfully')]);
     }
 
@@ -577,17 +571,12 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
 
     private function getCategoryOptions(): array
     {
-        return app(CategoryTreeService::class)->flatOptions(false);
+        return app(\RMS\Shop\Services\ProductService::class)->getCategoryOptions();
     }
 
     private function getBrandOptions(): array
     {
-        return Brand::query()
-            ->where('is_active', true)
-            ->orderBy('sort')
-            ->orderBy('name')
-            ->pluck('name', 'id')
-            ->toArray();
+        return app(\RMS\Shop\Services\BrandService::class)->getOptions();
     }
 
     public function saveCombinations(Request $request, int $productId)

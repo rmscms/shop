@@ -165,21 +165,25 @@ class SystemRequirementsService
         $ffmpegPath = config('shop.media.videos.ffmpeg_path', 'ffmpeg');
         $ffprobePath = config('shop.media.videos.ffprobe_path', 'ffprobe');
         
-        // Check if ffmpeg command exists
         $output = [];
-        $returnVar = 0;
-        
-        // Try to execute ffmpeg -version
-        @exec("$ffmpegPath -version 2>&1", $output, $returnVar);
-        
+        $returnVar = 1;
+        $ffprobeOutput = [];
+        $ffprobeReturn = 1;
+
+        if (self::canExec()) {
+            @\exec($ffmpegPath . ' -version 2>&1', $output, $returnVar);
+            @\exec($ffprobePath . ' -version 2>&1', $ffprobeOutput, $ffprobeReturn);
+        }
+
         $exists = $returnVar === 0 && !empty($output);
         $version = $exists ? (preg_match('/ffmpeg version (\S+)/', $output[0], $matches) ? $matches[1] : 'نامشخص') : null;
-
-        // Check ffprobe
-        $ffprobeOutput = [];
-        $ffprobeReturn = 0;
-        @exec("$ffprobePath -version 2>&1", $ffprobeOutput, $ffprobeReturn);
         $ffprobeExists = $ffprobeReturn === 0 && !empty($ffprobeOutput);
+
+        $message = $exists
+            ? "FFmpeg $version نصب است" . ($ffprobeExists ? ' (با ffprobe)' : ' (بدون ffprobe)')
+            : (self::canExec()
+                ? 'FFmpeg نصب نیست (برای پشتیبانی از ویدیو لازم است)'
+                : 'تابع exec در PHP غیرفعال است؛ FFmpeg قابل بررسی نیست');
 
         return [
             'name' => 'FFmpeg',
@@ -190,10 +194,19 @@ class SystemRequirementsService
             'ffmpeg_path' => $ffmpegPath,
             'ffprobe_path' => $ffprobePath,
             'ffprobe_status' => $ffprobeExists,
-            'message' => $exists 
-                ? "FFmpeg $version نصب است" . ($ffprobeExists ? ' (با ffprobe)' : ' (بدون ffprobe)')
-                : 'FFmpeg نصب نیست (برای پشتیبانی از ویدیو لازم است)',
+            'message' => $message,
         ];
+    }
+
+    protected static function canExec(): bool
+    {
+        if (!function_exists('exec')) {
+            return false;
+        }
+
+        $disabled = array_map('trim', explode(',', (string) ini_get('disable_functions')));
+
+        return !in_array('exec', $disabled, true);
     }
 
     /**

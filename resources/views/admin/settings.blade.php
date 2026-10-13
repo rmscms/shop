@@ -22,6 +22,14 @@
           @endif
         </div>
 
+        <div class="col-12">
+          <label class="form-label fw-semibold">مدیریت قیمت و موجودی از محصول</label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="enable_pricing_stock" name="enable_pricing_stock" value="1" {{ $enable_pricing_stock ? 'checked' : '' }}>
+            <label class="form-check-label" for="enable_pricing_stock">در صورت غیرفعال بودن، تب قیمت و موجودی در صفحه ویرایش محصول نمایش داده نمی‌شود.</label>
+          </div>
+        </div>
+
         <div class="col-md-6">
           <label class="form-label fw-semibold" for="shipping_flat">هزینه حمل ثابت</label>
           <div class="input-group">

@@ -2,6 +2,8 @@
 
 namespace RMS\Shop;
 
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class ShopServiceProvider extends ServiceProvider
@@ -11,6 +13,7 @@ class ShopServiceProvider extends ServiceProvider
         // Merge config
         $this->mergeConfigFrom(__DIR__.'/../config/shop.php', 'shop');
         $this->mergeConfigFrom(__DIR__.'/../config/panel_api.php', 'shop.panel_api');
+        $this->mergeConfigFrom(__DIR__.'/../config/admin_api.php', 'shop.admin_api');
         $this->mergeConfigFrom(__DIR__.'/../config/swagger.php', 'shop.swagger');
         
         // Register services
@@ -32,6 +35,7 @@ class ShopServiceProvider extends ServiceProvider
             return new \RMS\Shop\Support\PanelApi\CartStorage($app['cache']->store());
         });
         $this->app->singleton(\RMS\Shop\Support\PanelApi\CartManager::class);
+        $this->app->singleton(\RMS\Shop\Support\AdminApi\AdminApiResponder::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -47,6 +51,7 @@ class ShopServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../config/shop.php' => config_path('shop.php'),
             __DIR__.'/../config/panel_api.php' => config_path('shop/panel_api.php'),
+            __DIR__.'/../config/admin_api.php' => config_path('shop/admin_api.php'),
             __DIR__.'/../config/swagger.php' => config_path('shop/swagger.php'),
         ], 'shop-config');
 
@@ -91,8 +96,34 @@ class ShopServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__.'/../routes/panel_api.php');
         }
 
-        // Load views
+        if (config('shop.admin_api.enabled', true)) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/admin_api.php');
+        }
+
+        // Load views. Login is applied after every provider so it stays ahead of published CMS views.
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'shop');
+
+        Route::middleware('web')->get('vendor/shop/admin-login.css', function () {
+            $path = __DIR__.'/../public/admin/css/login.css';
+            abort_unless(is_file($path), 404);
+
+            return response()->file($path, [
+                'Content-Type' => 'text/css; charset=UTF-8',
+                'Cache-Control' => 'public, max-age=3600',
+            ]);
+        })->name('shop.admin-login-css');
+
+        $loginViews = __DIR__.'/../resources/views/cms';
+        $docsViews = __DIR__.'/../resources/views/docs';
+
+        // Scalar renders the OpenAPI file l5-swagger already generates.
+        $this->app->booted(function () use ($loginViews, $docsViews) {
+            View::prependNamespace('cms', $loginViews);
+
+            if (class_exists(\L5Swagger\L5SwaggerServiceProvider::class)) {
+                View::prependNamespace('l5-swagger', $docsViews);
+            }
+        });
 
         // Load translations
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'shop');

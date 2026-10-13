@@ -29,6 +29,7 @@ class BrandController extends BaseController
      */
     public function index()
     {
+        $brandService = app(\RMS\Shop\Services\BrandService::class);
         $brands = Brand::query()
             ->where('is_active', true)
             ->orderBy('sort')

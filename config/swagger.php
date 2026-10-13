@@ -26,7 +26,7 @@ return [
     | Swagger Route
     |--------------------------------------------------------------------------
     |
-    | مسیر دسترسی به Swagger UI
+    | مسیر صفحهٔ مستندات. UI با Scalar است و JSON را l5-swagger می‌سازد.
     |
     */
     'route' => env('SHOP_SWAGGER_ROUTE', 'api/documentation'),

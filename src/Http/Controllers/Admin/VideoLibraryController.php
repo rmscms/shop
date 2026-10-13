@@ -11,6 +11,7 @@ use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Core\Data\Field;
 use RMS\Shop\Models\VideoLibrary;
 use RMS\Shop\Models\Product;
+use RMS\Shop\Services\VideoLibraryFolderService;
 use RMS\Shop\Services\VideoLibraryService;
 
 class VideoLibraryController extends ShopAdminController implements HasList, HasForm, ShouldFilter
@@ -138,7 +139,7 @@ class VideoLibraryController extends ShopAdminController implements HasList, Has
                     null,
                     true
                 );
-                $video = $videoService->upload($uploadedFile, $customTitle);
+                $video = $videoService->upload($uploadedFile, $customTitle, $this->resolveUploadFolder($request));
 
                 // Clean up temp file
                 @unlink($finalPath);
@@ -164,7 +165,7 @@ class VideoLibraryController extends ShopAdminController implements HasList, Has
         ]);
 
         $videoService = app(VideoLibraryService::class);
-        $video = $videoService->upload($request->file('video'));
+        $video = $videoService->upload($request->file('video'), null, $this->resolveUploadFolder($request));
 
         return response()->json([
             'success' => true,
@@ -259,5 +260,130 @@ class VideoLibraryController extends ShopAdminController implements HasList, Has
             'success' => true,
             'message' => 'ترتیب ویدیوها ذخیره شد',
         ]);
+    }
+
+    public function foldersTree(Request $request): JsonResponse
+    {
+        $selected = $request->input('selected');
+        $selectedId = is_numeric($selected) ? (int) $selected : null;
+
+        return response()->json([
+            'success' => true,
+            'data' => app(VideoLibraryFolderService::class)->getTreeForPlugin($selectedId),
+        ]);
+    }
+
+    public function storeFolder(Request $request): JsonResponse
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:190'],
+            'parent_id' => ['nullable', 'integer'],
+        ]);
+
+        try {
+            $folder = app(VideoLibraryFolderService::class)->createFolder(
+                $request->input('parent_id') ? (int) $request->input('parent_id') : null,
+                (string) $request->input('name')
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'پوشه با موفقیت ساخته شد',
+                'data' => [
+                    'id' => $folder->id,
+                    'name' => $folder->name,
+                    'path' => $folder->path,
+                    'parent_id' => $folder->parent_id,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function updateFolder(Request $request, \RMS\Shop\Models\VideoLibraryFolder $folder): JsonResponse
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:190'],
+        ]);
+
+        try {
+            $folder = app(VideoLibraryFolderService::class)->updateFolder($folder, (string) $request->input('name'));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'پوشه به‌روزرسانی شد',
+                'data' => [
+                    'id' => $folder->id,
+                    'name' => $folder->name,
+                    'path' => $folder->path,
+                    'parent_id' => $folder->parent_id,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function destroyFolder(\RMS\Shop\Models\VideoLibraryFolder $folder): JsonResponse
+    {
+        try {
+            app(VideoLibraryFolderService::class)->deleteFolder($folder);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'پوشه حذف شد',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function moveVideo(Request $request, VideoLibrary $video): JsonResponse
+    {
+        $request->validate([
+            'folder_id' => ['nullable', 'integer'],
+        ]);
+
+        try {
+            $targetFolder = ($request->filled('folder_id') && \RMS\Shop\Support\MediaLibrarySchema::hasVideoFolders())
+                ? \RMS\Shop\Models\VideoLibraryFolder::query()->findOrFail((int) $request->input('folder_id'))
+                : null;
+
+            $video = app(VideoLibraryService::class)->moveVideo($video, $targetFolder);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'ویدیو جابه‌جا شد',
+                'data' => [
+                    'id' => $video->id,
+                    'folder_id' => $video->folder_id,
+                    'path' => $video->path,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    protected function resolveUploadFolder(Request $request): ?\RMS\Shop\Models\VideoLibraryFolder
+    {
+        if (! $request->filled('folder_id') || ! \RMS\Shop\Support\MediaLibrarySchema::hasVideoFolders()) {
+            return null;
+        }
+
+        return \RMS\Shop\Models\VideoLibraryFolder::query()->find((int) $request->input('folder_id'));
     }
 }

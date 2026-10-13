@@ -16,6 +16,21 @@
 return [
     /*
     |--------------------------------------------------------------------------
+    | Controller Overrides
+    |--------------------------------------------------------------------------
+    |
+    | Allow host applications to override selected admin controllers without
+    | editing package routes.
+    |
+    */
+    'controllers' => [
+        'admin' => [
+            'orders' => \RMS\Shop\Http\Controllers\Admin\OrdersController::class,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Routes Configuration
     |--------------------------------------------------------------------------
     |
@@ -79,6 +94,7 @@ return [
     'categories' => [
         'default_name' => env('SHOP_DEFAULT_CATEGORY_NAME', 'دسته‌بندی نشده'),
         'default_slug' => env('SHOP_DEFAULT_CATEGORY_SLUG', 'uncategorized'),
+        'auto_create_default' => env('SHOP_AUTO_CREATE_DEFAULT_CATEGORY', true),
         'fallback_label' => 'بدون دسته',
         'cache_ttl' => env('SHOP_CATEGORY_CACHE_TTL', 300),
         'demo_tree' => [
@@ -232,5 +248,21 @@ return [
     'frontend_api' => [
         'base_url' => env('SHOP_PANEL_API_URL', env('APP_URL', 'http://127.0.0.1:8000').'/api/v1/panel'),
         'shop_url' => env('SHOP_FRONT_URL', 'http://127.0.0.1:8001'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin login appearance
+    |--------------------------------------------------------------------------
+    |
+    | Shop replaces the CMS login layout. Logo, mark, and cover stay with the
+    | host project: set a public-relative path, or leave null to use the
+    | admin theme files (images/logo_*.svg and images/login_cover.jpg).
+    |
+    */
+    'admin_login' => [
+        'logo' => env('SHOP_ADMIN_LOGIN_LOGO'),
+        'mark' => env('SHOP_ADMIN_LOGIN_MARK'),
+        'cover' => env('SHOP_ADMIN_LOGIN_COVER'),
     ],
 ];

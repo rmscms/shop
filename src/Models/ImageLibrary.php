@@ -3,6 +3,7 @@
 namespace RMS\Shop\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -21,11 +22,18 @@ class ImageLibrary extends Model
         'path',
         'size_bytes',
         'mime_type',
+        'folder_id',
     ];
 
     protected $casts = [
         'size_bytes' => 'integer',
+        'folder_id' => 'integer',
     ];
+
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(ImageLibraryFolder::class, 'folder_id');
+    }
 
     /**
      * Get all assignments for this image (products, combinations)
@@ -33,6 +41,14 @@ class ImageLibrary extends Model
     public function assignments()
     {
         return $this->hasMany(ImageAssignment::class, 'image_id');
+    }
+
+    /**
+     * Get all size variants for this image
+     */
+    public function variants()
+    {
+        return $this->hasMany(\RMS\Shop\Models\ImageSizeVariant::class, 'image_id');
     }
 
     /**
@@ -66,19 +82,7 @@ class ImageLibrary extends Model
      */
     public function getAvifUrlAttribute(): ?string
     {
-        // Path format: uploads/products/library/orig/filename.jpg
-        // AVIF should be: uploads/products/library/avif/filename.avif
-        
-        if (Str::contains($this->path, '/orig/')) {
-            $baseDir = Str::beforeLast($this->path, '/orig/');
-            $filename = pathinfo($this->filename, PATHINFO_FILENAME);
-            $avifPath = $baseDir . '/avif/' . $filename . '.avif';
-        } else {
-            // Fallback for other structures
-            $dir = dirname($this->path);
-            $filename = pathinfo($this->filename, PATHINFO_FILENAME);
-            $avifPath = $dir . '/avif/' . $filename . '.avif';
-        }
+        $avifPath = static::resolveAvifPath((string) $this->path);
 
         if (Storage::disk('public')->exists($avifPath)) {
             return Storage::disk('public')->url($avifPath);
@@ -92,21 +96,27 @@ class ImageLibrary extends Model
      */
     public function getHasAvifAttribute(): bool
     {
-        // Path format: uploads/products/library/orig/filename.jpg
-        // AVIF should be: uploads/products/library/avif/filename.avif
-        
-        if (Str::contains($this->path, '/orig/')) {
-            $baseDir = Str::beforeLast($this->path, '/orig/');
-            $filename = pathinfo($this->filename, PATHINFO_FILENAME);
-            $avifPath = $baseDir . '/avif/' . $filename . '.avif';
-        } else {
-            // Fallback for other structures
-            $dir = dirname($this->path);
-            $filename = pathinfo($this->filename, PATHINFO_FILENAME);
-            $avifPath = $dir . '/avif/' . $filename . '.avif';
+        return Storage::disk('public')->exists(static::resolveAvifPath((string) $this->path));
+    }
+
+    /**
+     * Map an original storage path to its AVIF sibling.
+     * Nested library folders stay intact: .../orig/a/b.jpg -> .../avif/a/b.avif
+     */
+    public static function resolveAvifPath(string $origPath): string
+    {
+        if (! Str::contains($origPath, '/orig/')) {
+            $dir = dirname($origPath);
+            $filename = pathinfo(basename($origPath), PATHINFO_FILENAME);
+
+            return $dir.'/avif/'.$filename.'.avif';
         }
 
-        return Storage::disk('public')->exists($avifPath);
+        $avifPath = Str::replaceFirst('/orig/', '/avif/', $origPath);
+        $dir = pathinfo($avifPath, PATHINFO_DIRNAME);
+        $base = pathinfo($avifPath, PATHINFO_FILENAME);
+
+        return $dir.'/'.$base.'.avif';
     }
 
     /**

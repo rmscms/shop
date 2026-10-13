@@ -86,6 +86,12 @@
             'routes' => ['admin.shop.image-library.*', 'admin.shop.products.image-library.*'],
         ],
         [
+            'title' => 'سایزهای تصویر',
+            'url' => route('admin.shop.image-sizes.index'),
+            'icon' => 'ph-crop',
+            'routes' => ['admin.shop.image-sizes.*'],
+        ],
+        [
             'title' => 'کتابخانه ویدیو',
             'url' => route('admin.shop.video-library.index'),
             'icon' => 'ph-film-reel',

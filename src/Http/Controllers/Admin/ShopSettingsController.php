@@ -19,6 +19,7 @@ class ShopSettingsController extends ShopAdminController
         // Basic settings
         $purchaseEnabled = (bool) ((int) Setting::get('shop_purchase_enabled', 1));
         $shippingFlat = (float) (Setting::get('shop_shipping_flat', 0) ?? 0);
+        $enablePricingStock = (bool) ((int) Setting::get('shop_enable_pricing_stock_management', 1));
 
         // Telegram templates and toggles
         $telegramOrderTemplate = Setting::get('shop_telegram_order_template',
@@ -45,6 +46,7 @@ class ShopSettingsController extends ShopAdminController
             ->withVariables([
                 'purchase_enabled' => $purchaseEnabled,
                 'shipping_flat' => $shippingFlat,
+                'enable_pricing_stock' => $enablePricingStock,
                 'telegram_order_template' => $telegramOrderTemplate,
                 'telegram_order_update_template' => $telegramOrderUpdateTemplate,
                 'tg_send_admins' => $tgSendToAdmins,
@@ -60,6 +62,7 @@ class ShopSettingsController extends ShopAdminController
         $rules = [
             // Checkboxes may be absent when unchecked
             'purchase_enabled' => ['sometimes','boolean'],
+            'enable_pricing_stock' => ['sometimes','boolean'],
             'shipping_flat' => ['required','string'],
             'telegram_order_template' => ['required','string','max:5000'],
             'telegram_order_update_template' => ['required','string','max:5000'],
@@ -86,6 +89,7 @@ class ShopSettingsController extends ShopAdminController
 
         // Persist settings
         Setting::set('shop_purchase_enabled', $request->boolean('purchase_enabled') ? '1' : '0');
+        Setting::set('shop_enable_pricing_stock_management', $request->boolean('enable_pricing_stock') ? '1' : '0');
 
         // Normalize shipping (remove separators and non-digits)
         $raw = (string) $request->input('shipping_flat', '0');

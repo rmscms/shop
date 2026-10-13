@@ -11,12 +11,12 @@ return new class extends Migration
     {
         if (!Schema::hasTable('currencies')) {
             Schema::create('currencies', function (Blueprint $table) {
-                $table->bigIncrements('id');
-                $table->string('code', 10)->unique();
+                $table->string('code', 10)->primary(); // استفاده از code به عنوان primary key
                 $table->string('name');
                 $table->string('symbol', 8)->nullable();
                 $table->unsignedTinyInteger('decimals')->default(2);
                 $table->boolean('is_base')->default(false);
+                $table->boolean('active')->default(true);
                 $table->timestamps();
             });
         }
@@ -28,6 +28,7 @@ return new class extends Migration
                 'symbol' => 'تومان',
                 'decimals' => 0,
                 'is_base' => true,
+                'active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -40,6 +41,7 @@ return new class extends Migration
                 'symbol' => '¥',
                 'decimals' => 2,
                 'is_base' => false,
+                'active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

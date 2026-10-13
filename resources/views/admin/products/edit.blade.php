@@ -15,6 +15,9 @@
           <i class="ph-eye me-1"></i> نمایش محصول
         </a>
       @endif
+      <a href="{{ route('admin.shop.products.create') }}" class="btn btn-success btn-sm">
+        <i class="ph-plus me-1"></i> محصول جدید
+      </a>
       <a href="{{ route('admin.shop.products.index') }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1 rounded-pill px-3">
         <i class="ph-arrow-left me-1"></i><span>@lang('shop.common.back')</span>
       </a>
@@ -45,7 +48,9 @@
       <div class="card-header border-0 pb-0">
         <ul class="nav nav-tabs nav-tabs-highlight card-header-tabs" role="tablist">
           <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab_basic"><i class="ph-info me-2"></i>@lang('shop.tabs.basic')</a></li>
+          @if($enable_pricing_stock ?? true)
           <li class="nav-item"><a class="nav-link {{ empty($product) ? 'disabled' : '' }}" @if(!empty($product)) data-bs-toggle="tab" href="#tab_pricing" @else href="javascript:void(0)" @endif><i class="ph-currency-dollar me-2"></i>@lang('shop.tabs.pricing')</a></li>
+          @endif
           <li class="nav-item"><a class="nav-link {{ empty($product) ? 'disabled' : '' }}" @if(!empty($product)) data-bs-toggle="tab" href="#tab_attributes" @else href="javascript:void(0)" @endif><i class="ph-sliders me-2"></i>@lang('shop.tabs.attributes')</a></li>
           <li class="nav-item"><a class="nav-link {{ empty($product) ? 'disabled' : '' }}" @if(!empty($product)) data-bs-toggle="tab" href="#tab_features" @else href="javascript:void(0)" @endif><i class="ph-list me-2"></i>ویژگی‌ها</a></li>
           <li class="nav-item"><a class="nav-link {{ empty($product) ? 'disabled' : '' }}" @if(!empty($product)) data-bs-toggle="tab" href="#tab_images" @else href="javascript:void(0)" @endif><i class="ph-image me-2"></i>@lang('shop.tabs.images')</a></li>
@@ -64,12 +69,12 @@
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label">@lang('shop.product.name')</label>
-            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $product->name ?? '') }}" required>
+            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $product->name ?? '') }}" data-auto-slug="{{ empty($product) ? 'true' : 'false' }}" required>
             @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
           </div>
           <div class="col-md-3">
             <label class="form-label">@lang('shop.product.slug')</label>
-            <input type="text" name="slug" class="form-control @error('slug') is-invalid @enderror" value="{{ old('slug', $product->slug ?? '') }}" required>
+            <input type="text" name="slug" class="form-control @error('slug') is-invalid @enderror" value="{{ old('slug', $product->slug ?? '') }}" data-slug-target required>
             @error('slug')<div class="invalid-feedback">{{ $message }}</div>@enderror
           </div>
           <div class="col-md-3">
@@ -107,7 +112,7 @@
           <div class="col-md-4">
             <label class="form-label">@lang('shop.product.brand')</label>
             <select name="brand_id" class="form-select @error('brand_id') is-invalid @enderror" required>
-              <option value="">یک برند را انتخاب کنید</option>
+              <option value="">@lang('shop.brand.select_placeholder')</option>
               @foreach(($brands ?? []) as $brandId => $brandName)
                 <option value="{{ $brandId }}" @selected((int) old('brand_id', $product->brand_id ?? 0) === (int) $brandId)>{{ $brandName }}</option>
               @endforeach
@@ -145,6 +150,7 @@
         </div>
       </div>
 
+      @if($enable_pricing_stock ?? true)
       <div id="tab_pricing" class="tab-pane fade p-3">
         @if(empty($product))
           <div class="alert alert-info mb-0"><i class="ph-info me-1"></i> ابتدا محصول را ذخیره کنید تا این تب فعال شود.</div>
@@ -235,6 +241,7 @@
         
         @endif
       </div>
+      @endif
 
       <div id="tab_attributes" class="tab-pane fade p-3">
         @if(empty($product))
