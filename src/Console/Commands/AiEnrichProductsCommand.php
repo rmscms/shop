@@ -17,12 +17,17 @@ class AiEnrichProductsCommand extends Command
         {--limit=0 : Stop after this many products}
         {--missing : Only products without a description}
         {--force : Also redo products that already have an open or applied suggestion}
-        {--sync : Run now instead of queueing (good for testing one product)}';
+        {--sync : Run now instead of queueing (good for testing one product)}
+        {--from-json= : Load suggestions written by hand: [{product_id, name, short_desc, description, feature_groups, ...}] instead of calling the AI}';
 
     protected $description = 'Ask the AI to suggest Persian copy, category, brand and features for products';
 
     public function handle(AiManager $ai, ProductAiEnricher $enricher): int
     {
+        if ($file = $this->option('from-json')) {
+            return $this->fromJson((string) $file, $enricher);
+        }
+
         if (!$ai->configured()) {
             $this->error('AI is not configured. Set SHOP_AI_DRIVER and its API key in .env.');
 
@@ -86,5 +91,34 @@ class AiEnrichProductsCommand extends Command
         $this->info('Review the results in the admin panel: '.route('admin.shop.ai.index'));
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * Each entry is one suggestion in the AI answer's shape plus the product_id it belongs to.
+     */
+    protected function fromJson(string $file, ProductAiEnricher $enricher): int
+    {
+        $entries = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
+        if (!is_array($entries)) {
+            $this->error("Could not read a JSON list from {$file}.");
+
+            return self::FAILURE;
+        }
+
+        $created = 0;
+        foreach ($entries as $entry) {
+            $product = Product::query()->find((int) ($entry['product_id'] ?? 0));
+            if (!$product) {
+                $this->warn('Unknown product_id '.($entry['product_id'] ?? '(none)'));
+                continue;
+            }
+            unset($entry['product_id']);
+            $enricher->fromData($product, (array) $entry, 'manual: '.basename($file));
+            $created++;
+        }
+
+        $this->info("{$created} suggestion(s) ready for review: ".route('admin.shop.ai.index', ['status' => 'ready']));
+
+        return self::SUCCESS;
     }
 }

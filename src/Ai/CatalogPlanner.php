@@ -158,7 +158,8 @@ class CatalogPlanner
                 }
 
                 foreach ($groupItems as $item) {
-                    $name = $item['name'] ?: trim($group['name'].' '.$item['value']);
+                    // A one-row group is already named; several rows need their value to tell them apart.
+                    $name = $item['name'] ?: (count($groupItems) === 1 ? $group['name'] : trim($group['name'].' '.$item['value']));
                     $product = $this->createProduct($name, $base);
                     $this->markImported([$item['id']], $product->id);
                     $result['products'][] = ['id' => $product->id, 'name' => $product->name, 'variants' => 0];

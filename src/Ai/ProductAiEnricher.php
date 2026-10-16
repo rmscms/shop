@@ -78,6 +78,24 @@ class ProductAiEnricher
     }
 
     /**
+     * Store a suggestion written outside the AI call (same shape as the AI answer) for review.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function fromData(Product $product, array $data, string $source = 'manual'): AiSuggestion
+    {
+        $suggestion = $this->queue($product);
+        $suggestion->forceFill([
+            'status' => AiSuggestion::STATUS_READY,
+            'driver' => 'manual',
+            'model' => mb_substr($source, 0, 100),
+            'payload' => $this->normalize($data),
+        ])->save();
+
+        return $suggestion;
+    }
+
+    /**
      * @param  array<int, string>  $fields
      */
     public function apply(AiSuggestion $suggestion, array $fields): Product
