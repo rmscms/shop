@@ -121,5 +121,8 @@ SHOP_AI_MAX_IMAGES=3
 SHOP_QUEUE_AI=shop-ai
 # Seconds between queued jobs in bulk runs (free tiers are rate limited; 6 = 10/minute)
 SHOP_AI_DISPATCH_SPACING=0
+# Catalog plan reads a whole product list in one call
+SHOP_AI_CATALOG_MAX_TOKENS=16000
+SHOP_AI_CATALOG_TIMEOUT=300
 # Optional: a sentence about your store so the copy fits your niche
 SHOP_AI_STORE_CONTEXT=

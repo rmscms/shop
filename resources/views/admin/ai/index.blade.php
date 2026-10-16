@@ -20,6 +20,10 @@
     <div class="alert alert-danger">{{ $errors->first() }}</div>
   @endif
 
+  <div class="mb-3">
+    <a href="{{ route('admin.shop.ai.catalog.index') }}" class="btn btn-sm btn-outline-primary">طرح کاتالوگ: وارد کردن لیست و چیدن دسته‌ها، برندها و تنوع‌ها</a>
+  </div>
+
   @if(!$ready)
     <div class="alert alert-warning mb-0">جدول پیشنهادهای AI هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>
   @else

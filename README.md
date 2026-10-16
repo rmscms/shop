@@ -254,6 +254,22 @@ php artisan shop:ai-enrich --missing --limit=50  # only products without a descr
 
 Existing installs: add the menu item from `resources/stubs/shop-menu.blade.stub` (route `admin.shop.ai.index`) to your sidebar.
 
+### Catalog plan (first-time setup from a product list)
+
+For a new store with a raw list of products, let the AI plan the whole catalog at once before any product exists:
+
+1. Import the list (Excel or CSV; first column name, second column spec/model) from **AI assistant → طرح کاتالوگ** (`/admin/shop/ai/catalog`) or the CLI. Rows go into a staging table only; re-importing the same file updates them.
+2. Build the plan: one AI call reads every row and proposes a category tree (up to 3 levels), brands, and product groups. Each group is either one product with variants (same item in different sizes, shapes or models) or separate products. Rows that look like typos or spreadsheet autofill mistakes are flagged.
+3. Review: untick groups you don't want yet, switch a group between variants and separate products, then apply. Categories and brands are created as needed, and products are created **inactive and without a price**, with one combination per variant.
+4. Run `shop:ai-enrich --missing` to write their copy and features, set yuan prices, and activate them.
+
+```bash
+php artisan shop:catalog-import products.xlsx --batch=tools
+php artisan shop:catalog-plan tools --sync
+```
+
+The plan call reads the whole list, so it has its own limits: `SHOP_AI_CATALOG_MAX_TOKENS` (default 16000) and `SHOP_AI_CATALOG_TIMEOUT` (default 300 s). Excel import uses `phpoffice/phpspreadsheet` when the app has it; otherwise save the sheet as CSV.
+
 ## Database Schema
 
 ### Main Tables

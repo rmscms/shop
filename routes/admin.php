@@ -22,6 +22,7 @@ use RMS\Shop\Http\Controllers\Admin\VideoLibraryController;
 use RMS\Shop\Http\Controllers\Admin\AvifController;
 use RMS\Shop\Http\Controllers\Admin\ApiAccessesController;
 use RMS\Shop\Http\Controllers\Admin\AiSuggestionsController;
+use RMS\Shop\Http\Controllers\Admin\AiCatalogController;
 
 $ordersControllerClass = (string) config('shop.controllers.admin.orders', \RMS\Shop\Http\Controllers\Admin\OrdersController::class);
 if (!class_exists($ordersControllerClass)) {
@@ -55,6 +56,14 @@ Route::middleware([
         Route::post('api-accesses/{access}/revoke', [ApiAccessesController::class, 'revoke'])->name('api-accesses.revoke');
         Route::post('api-accesses/{access}/activate', [ApiAccessesController::class, 'activate'])->name('api-accesses.activate');
         Route::post('api-accesses/{access}/rotate', [ApiAccessesController::class, 'rotate'])->name('api-accesses.rotate');
+
+        // AI catalog plan (before ai/{suggestion} so "catalog" is not read as a suggestion id)
+        Route::get('ai/catalog', [AiCatalogController::class, 'index'])->name('ai.catalog.index');
+        Route::post('ai/catalog/import', [AiCatalogController::class, 'import'])->name('ai.catalog.import');
+        Route::post('ai/catalog/plan', [AiCatalogController::class, 'plan'])->name('ai.catalog.plan');
+        Route::get('ai/catalog/{plan}', [AiCatalogController::class, 'show'])->name('ai.catalog.show');
+        Route::post('ai/catalog/{plan}/apply', [AiCatalogController::class, 'apply'])->name('ai.catalog.apply');
+        Route::post('ai/catalog/{plan}/reject', [AiCatalogController::class, 'reject'])->name('ai.catalog.reject');
 
         // AI product assistant
         Route::get('ai', [AiSuggestionsController::class, 'index'])->name('ai.index');

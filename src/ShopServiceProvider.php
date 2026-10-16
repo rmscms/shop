@@ -45,6 +45,8 @@ class ShopServiceProvider extends ServiceProvider
                 \RMS\Shop\Console\Commands\AvifDirectoryCommand::class,
                 \RMS\Shop\Console\Commands\ShopApiAccessCommand::class,
                 \RMS\Shop\Console\Commands\AiEnrichProductsCommand::class,
+                \RMS\Shop\Console\Commands\CatalogImportCommand::class,
+                \RMS\Shop\Console\Commands\CatalogPlanCommand::class,
             ]);
         }
     }

@@ -14,7 +14,10 @@ class AiManager
         return (string) config('shop.ai.driver', 'anthropic');
     }
 
-    public function driver(?string $name = null): AiDriver
+    /**
+     * @param  array<string, mixed>  $overrides  Per-call options such as a larger max_tokens
+     */
+    public function driver(?string $name = null, array $overrides = []): AiDriver
     {
         $name ??= $this->driverName();
         $config = (array) config('shop.ai.drivers.'.$name, []);
@@ -28,10 +31,12 @@ class AiManager
             'timeout' => (int) config('shop.ai.timeout', 120),
         ];
 
+        $config = $overrides + $config + $options;
+
         return match ($name) {
-            'anthropic' => new AnthropicDriver($config + $options),
-            'openai' => new OpenAiDriver($config + $options),
-            'gemini' => new GeminiDriver($config + $options),
+            'anthropic' => new AnthropicDriver($config),
+            'openai' => new OpenAiDriver($config),
+            'gemini' => new GeminiDriver($config),
             default => throw new AiException("درایور AI ناشناخته: {$name}"),
         };
     }

@@ -43,6 +43,10 @@ return [
     'max_tokens' => (int) env('SHOP_AI_MAX_TOKENS', 4096),
     'timeout' => (int) env('SHOP_AI_TIMEOUT', 120),
 
+    // The catalog plan reads a whole product list in one call, so it gets more room.
+    'catalog_max_tokens' => (int) env('SHOP_AI_CATALOG_MAX_TOKENS', 16000),
+    'catalog_timeout' => (int) env('SHOP_AI_CATALOG_TIMEOUT', 300),
+
     // Images sent per product (main image first). Zero disables vision.
     'max_images' => (int) env('SHOP_AI_MAX_IMAGES', 3),
     // Files larger than this (KB) are skipped; providers reject very large images.

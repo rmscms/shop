@@ -8,6 +8,7 @@ All notable changes to the RMS Shop package will be documented in this file.
 - AI product assistant: Claude or OpenAI-compatible drivers, queued enrichment of product copy, category, brand and features from text and photos, admin review page and `shop:ai-enrich` command.
 - Gemini driver for the AI assistant with optional Google Search grounding; the pages used are shown as sources on the review page.
 - `SHOP_AI_DISPATCH_SPACING` to space out queued AI jobs for rate-limited free tiers.
+- AI catalog plan: import a raw product list (`shop:catalog-import`), let the AI propose categories, brands and variant groups for all of it at once (`shop:catalog-plan`), review it at `/admin/shop/ai/catalog` and create inactive products with combinations.
 
 ### Fixed
 - AI suggestions admin page crashed because `index()` did not match the core controller signature.
