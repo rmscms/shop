@@ -39,6 +39,12 @@
             'icon' => 'ph-list-bullets',
             'routes' => ['admin.shop.product-feature-categories.*'],
         ],
+        [
+            'title' => 'دستیار هوش مصنوعی',
+            'url' => route('admin.shop.ai.index'),
+            'icon' => 'ph-sparkle',
+            'routes' => ['admin.shop.ai.*'],
+        ],
     ]"
 />
 

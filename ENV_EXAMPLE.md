@@ -98,3 +98,19 @@ SHOP_QUEUE_DEFAULT=default
 # redirect_stderr=true
 # stdout_logfile=/path/to/storage/logs/shop-media-worker.log
 
+
+# ============================================
+# AI Product Assistant
+# ============================================
+# anthropic (Claude) or openai (OpenAI or any compatible endpoint)
+SHOP_AI_DRIVER=anthropic
+SHOP_AI_ANTHROPIC_KEY=
+SHOP_AI_ANTHROPIC_MODEL=claude-sonnet-5-5
+SHOP_AI_OPENAI_KEY=
+SHOP_AI_OPENAI_MODEL=gpt-4o-mini
+# Change for a compatible provider or proxy
+SHOP_AI_OPENAI_URL=https://api.openai.com/v1
+SHOP_AI_MAX_IMAGES=3
+SHOP_QUEUE_AI=shop-ai
+# Optional: a sentence about your store so the copy fits your niche
+SHOP_AI_STORE_CONTEXT=

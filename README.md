@@ -232,6 +232,25 @@ $meta = PricingService::discountMeta('percent', 10);
 // ['kind' => 'percent', 'value' => 10.0]
 ```
 
+## AI Product Assistant
+
+Reads each product's name, text and photos and suggests Persian copy (name, short and full description, SEO title/meta, keywords, image alt), a category and brand from your own lists, and features. Chinese or English source text is translated. Nothing changes on a product until an admin applies the suggestion, field by field.
+
+1. Run migrations (`shop_ai_suggestions` table).
+2. Set the driver and key in `.env` (see `ENV_EXAMPLE.md`): `SHOP_AI_DRIVER=anthropic` with `SHOP_AI_ANTHROPIC_KEY`, or `SHOP_AI_DRIVER=openai` with `SHOP_AI_OPENAI_KEY` (any OpenAI-compatible endpoint via `SHOP_AI_OPENAI_URL`).
+3. Start a worker: `php artisan queue:work --queue=shop-ai`
+4. Send products from **Admin → Shop → AI assistant** (`/admin/shop/ai`) or the CLI:
+
+```bash
+php artisan shop:ai-enrich --product=12 --sync   # try one product now
+php artisan shop:ai-enrich                       # queue every product not processed yet
+php artisan shop:ai-enrich --missing --limit=50  # only products without a description
+```
+
+5. Review on the same page: tick the fields to keep and press apply, or reject. Existing features are kept; only new ones are added. SEO fields are shown for copying because the products table has no SEO columns.
+
+Existing installs: add the menu item from `resources/stubs/shop-menu.blade.stub` (route `admin.shop.ai.index`) to your sidebar.
+
 ## Database Schema
 
 ### Main Tables

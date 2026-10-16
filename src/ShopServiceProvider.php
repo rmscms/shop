@@ -15,6 +15,7 @@ class ShopServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/panel_api.php', 'shop.panel_api');
         $this->mergeConfigFrom(__DIR__.'/../config/admin_api.php', 'shop.admin_api');
         $this->mergeConfigFrom(__DIR__.'/../config/swagger.php', 'shop.swagger');
+        $this->mergeConfigFrom(__DIR__.'/../config/ai.php', 'shop.ai');
         
         // Register services
         $this->app->singleton(\RMS\Shop\Services\CartService::class);
@@ -36,12 +37,14 @@ class ShopServiceProvider extends ServiceProvider
         });
         $this->app->singleton(\RMS\Shop\Support\PanelApi\CartManager::class);
         $this->app->singleton(\RMS\Shop\Support\AdminApi\AdminApiResponder::class);
+        $this->app->singleton(\RMS\Shop\Ai\AiManager::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \RMS\Shop\Console\Commands\ShopInstallCommand::class,
                 \RMS\Shop\Console\Commands\AvifDirectoryCommand::class,
                 \RMS\Shop\Console\Commands\ShopApiAccessCommand::class,
+                \RMS\Shop\Console\Commands\AiEnrichProductsCommand::class,
             ]);
         }
     }
@@ -54,6 +57,7 @@ class ShopServiceProvider extends ServiceProvider
             __DIR__.'/../config/panel_api.php' => config_path('shop/panel_api.php'),
             __DIR__.'/../config/admin_api.php' => config_path('shop/admin_api.php'),
             __DIR__.'/../config/swagger.php' => config_path('shop/swagger.php'),
+            __DIR__.'/../config/ai.php' => config_path('shop/ai.php'),
         ], 'shop-config');
 
         // Publish migrations

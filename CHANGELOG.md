@@ -2,6 +2,11 @@
 
 All notable changes to the RMS Shop package will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- AI product assistant: Claude or OpenAI-compatible drivers, queued enrichment of product copy, category, brand and features from text and photos, admin review page and `shop:ai-enrich` command.
+
 ## [1.0.0] - 2025-11-15
 
 ### Added
