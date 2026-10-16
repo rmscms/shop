@@ -26,8 +26,10 @@ class AiSuggestionsController extends ShopAdminController
         return AiSuggestion::class;
     }
 
-    public function index(Request $request, AiManager $ai)
+    // Must match the core AdminController::index(Request) signature.
+    public function index(Request $request)
     {
+        $ai = app(AiManager::class);
         $this->title('دستیار هوش مصنوعی محصولات');
 
         $ready = Schema::hasTable('shop_ai_suggestions');
