@@ -47,6 +47,7 @@ class ShopServiceProvider extends ServiceProvider
                 \RMS\Shop\Console\Commands\AiEnrichProductsCommand::class,
                 \RMS\Shop\Console\Commands\CatalogImportCommand::class,
                 \RMS\Shop\Console\Commands\CatalogPlanCommand::class,
+                \RMS\Shop\Console\Commands\ImageCandidatesCommand::class,
             ]);
         }
     }

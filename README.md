@@ -270,6 +270,17 @@ php artisan shop:catalog-plan tools --sync
 php artisan shop:catalog-plan tools --from-json=storage/app/plan.json
 ```
 
+### Photo suggestions
+
+AI models can't fetch real product photos, so photos are suggested as links and an admin picks them at **AI assistant → عکس‌های پیشنهادی** (`/admin/shop/ai/images`). Ticked photos are downloaded, added to the image library and assigned to the product (the first becomes the main image if the product has none); the rest are dismissed. Suggestions can target staged catalog rows before their products exist; applying the catalog plan moves them to the new products.
+
+```bash
+# [{"row": 68, "images": [{"url": "https://…/photo.jpg", "source_url": "https://…/page", "title": "…"}]}, {"product_id": 12, "images": […]}]
+php artisan shop:image-candidates photos.json --batch=tools
+```
+
+Links are checked to return a JPEG, PNG or WebP before they are stored. Photos from other shops may be copyrighted; the source page is shown under each one.
+
 The plan call reads the whole list, so it has its own limits: `SHOP_AI_CATALOG_MAX_TOKENS` (default 16000) and `SHOP_AI_CATALOG_TIMEOUT` (default 300 s). Excel import uses `phpoffice/phpspreadsheet` when the app has it; otherwise save the sheet as CSV.
 
 ## Database Schema

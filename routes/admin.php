@@ -23,6 +23,7 @@ use RMS\Shop\Http\Controllers\Admin\AvifController;
 use RMS\Shop\Http\Controllers\Admin\ApiAccessesController;
 use RMS\Shop\Http\Controllers\Admin\AiSuggestionsController;
 use RMS\Shop\Http\Controllers\Admin\AiCatalogController;
+use RMS\Shop\Http\Controllers\Admin\AiImagesController;
 
 $ordersControllerClass = (string) config('shop.controllers.admin.orders', \RMS\Shop\Http\Controllers\Admin\OrdersController::class);
 if (!class_exists($ordersControllerClass)) {
@@ -64,6 +65,8 @@ Route::middleware([
         Route::get('ai/catalog/{plan}', [AiCatalogController::class, 'show'])->name('ai.catalog.show');
         Route::post('ai/catalog/{plan}/apply', [AiCatalogController::class, 'apply'])->name('ai.catalog.apply');
         Route::post('ai/catalog/{plan}/reject', [AiCatalogController::class, 'reject'])->name('ai.catalog.reject');
+        Route::get('ai/images', [AiImagesController::class, 'index'])->name('ai.images.index');
+        Route::post('ai/images/{product}', [AiImagesController::class, 'apply'])->name('ai.images.apply');
 
         // AI product assistant
         Route::get('ai', [AiSuggestionsController::class, 'index'])->name('ai.index');

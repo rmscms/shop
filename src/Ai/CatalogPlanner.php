@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RMS\Shop\Models\AiCatalogItem;
 use RMS\Shop\Models\AiCatalogPlan;
+use RMS\Shop\Models\AiImageCandidate;
 use RMS\Shop\Models\Brand;
 use RMS\Shop\Models\Category;
 use RMS\Shop\Models\Product;
@@ -229,6 +230,9 @@ class CatalogPlanner
             'status' => AiCatalogItem::STATUS_IMPORTED,
             'product_id' => $productId,
         ]);
+
+        // Photos found for these rows now belong to their product.
+        AiImageCandidate::query()->whereIn('catalog_item_id', $ids)->whereNull('product_id')->update(['product_id' => $productId]);
     }
 
     /**

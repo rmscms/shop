@@ -22,6 +22,7 @@
 
   <div class="mb-3">
     <a href="{{ route('admin.shop.ai.catalog.index') }}" class="btn btn-sm btn-outline-primary">طرح کاتالوگ: وارد کردن لیست و چیدن دسته‌ها، برندها و تنوع‌ها</a>
+    <a href="{{ route('admin.shop.ai.images.index') }}" class="btn btn-sm btn-outline-primary">عکس‌های پیشنهادی</a>
   </div>
 
   @if(!$ready)
