@@ -72,6 +72,40 @@ class CatalogPlanner
     }
 
     /**
+     * Store a plan written outside the AI call (same shape as the AI answer) for review.
+     * Items and suspicious rows may point at a row number of the file instead of an id.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function fromData(string $batch, array $data, string $source = 'manual'): AiCatalogPlan
+    {
+        $items = $this->stagedItems($batch);
+        $idsByRow = $items->pluck('id', 'row');
+        $resolve = function (array $entry) use ($idsByRow): array {
+            if (empty($entry['id']) && isset($entry['row'])) {
+                $entry['id'] = (int) ($idsByRow[(int) $entry['row']] ?? 0);
+            }
+
+            return $entry;
+        };
+
+        foreach ((array) ($data['groups'] ?? []) as $g => $group) {
+            $data['groups'][$g]['items'] = array_map($resolve, (array) ($group['items'] ?? []));
+        }
+        $data['suspicious'] = array_map($resolve, (array) ($data['suspicious'] ?? []));
+
+        $plan = $this->queue($batch);
+        $plan->forceFill([
+            'status' => AiCatalogPlan::STATUS_READY,
+            'driver' => 'manual',
+            'model' => mb_substr($source, 0, 100),
+            'payload' => $this->normalize($data, $items),
+        ])->save();
+
+        return $plan;
+    }
+
+    /**
      * Create categories, brands and inactive products for the chosen groups.
      *
      * @param  array<int, int>  $groupIndexes  Groups to create; others stay staged

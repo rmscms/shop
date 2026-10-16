@@ -266,6 +266,8 @@ For a new store with a raw list of products, let the AI plan the whole catalog a
 ```bash
 php artisan shop:catalog-import products.xlsx --batch=tools
 php artisan shop:catalog-plan tools --sync
+# or load a plan written by hand (same JSON shape as the AI answer; items may use "row" instead of "id")
+php artisan shop:catalog-plan tools --from-json=storage/app/plan.json
 ```
 
 The plan call reads the whole list, so it has its own limits: `SHOP_AI_CATALOG_MAX_TOKENS` (default 16000) and `SHOP_AI_CATALOG_TIMEOUT` (default 300 s). Excel import uses `phpoffice/phpspreadsheet` when the app has it; otherwise save the sheet as CSV.

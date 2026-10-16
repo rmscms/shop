@@ -14,22 +14,34 @@ class CatalogPlanCommand extends Command
 {
     protected $signature = 'shop:catalog-plan
         {batch : Batch name given by shop:catalog-import}
-        {--sync : Run now instead of queueing}';
+        {--sync : Run now instead of queueing}
+        {--from-json= : Load a plan written by hand (same shape as the AI answer; items may use "row" instead of "id") instead of calling the AI}';
 
     protected $description = 'Ask the AI to plan categories, brands and product groups for a staged product list';
 
     public function handle(AiManager $ai, CatalogPlanner $planner): int
     {
-        if (!$ai->configured()) {
-            $this->error('AI is not configured. Set SHOP_AI_DRIVER and its API key in .env.');
-
-            return self::FAILURE;
-        }
-
         $batch = (string) $this->argument('batch');
         $staged = AiCatalogItem::query()->where('batch', $batch)->where('status', AiCatalogItem::STATUS_STAGED)->count();
         if ($staged === 0) {
             $this->error("No staged rows in batch {$batch}.");
+
+            return self::FAILURE;
+        }
+
+        if ($file = $this->option('from-json')) {
+            $data = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
+            if (!is_array($data)) {
+                $this->error("Could not read a JSON plan from {$file}.");
+
+                return self::FAILURE;
+            }
+
+            return $this->summary($planner->fromData($batch, $data, 'manual: '.basename($file)));
+        }
+
+        if (!$ai->configured()) {
+            $this->error('AI is not configured. Set SHOP_AI_DRIVER and its API key in .env.');
 
             return self::FAILURE;
         }
@@ -53,13 +65,21 @@ class CatalogPlanCommand extends Command
             return self::FAILURE;
         }
 
+        return $this->summary($plan);
+    }
+
+    protected function summary(AiCatalogPlan $plan): int
+    {
         $payload = (array) $plan->payload;
+        $groups = collect($payload['groups'] ?? []);
         $this->info(sprintf(
-            'Plan #%d: %d categories, %d brands, %d groups, %d suspicious rows (tokens in %d / out %d).',
+            'Plan #%d: %d categories, %d brands, %d groups (%d product pages), %d unplanned rows, %d suspicious rows (tokens in %d / out %d).',
             $plan->id,
             count($payload['categories'] ?? []),
             count($payload['brands'] ?? []),
-            count($payload['groups'] ?? []),
+            $groups->count(),
+            $groups->sum(fn ($g) => $g['mode'] === CatalogPlanner::MODE_VARIANTS ? 1 : count($g['items'])),
+            $groups->where('unplanned', true)->count(),
             count($payload['suspicious'] ?? []),
             $plan->input_tokens,
             $plan->output_tokens,
