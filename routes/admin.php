@@ -21,6 +21,7 @@ use RMS\Shop\Http\Controllers\Admin\ImageSizesController;
 use RMS\Shop\Http\Controllers\Admin\VideoLibraryController;
 use RMS\Shop\Http\Controllers\Admin\AvifController;
 use RMS\Shop\Http\Controllers\Admin\ApiAccessesController;
+use RMS\Shop\Http\Controllers\Admin\AiSuggestionsController;
 
 $ordersControllerClass = (string) config('shop.controllers.admin.orders', \RMS\Shop\Http\Controllers\Admin\OrdersController::class);
 if (!class_exists($ordersControllerClass)) {
@@ -54,6 +55,15 @@ Route::middleware([
         Route::post('api-accesses/{access}/revoke', [ApiAccessesController::class, 'revoke'])->name('api-accesses.revoke');
         Route::post('api-accesses/{access}/activate', [ApiAccessesController::class, 'activate'])->name('api-accesses.activate');
         Route::post('api-accesses/{access}/rotate', [ApiAccessesController::class, 'rotate'])->name('api-accesses.rotate');
+
+        // AI product assistant
+        Route::get('ai', [AiSuggestionsController::class, 'index'])->name('ai.index');
+        Route::get('ai/next', [AiSuggestionsController::class, 'next'])->name('ai.next');
+        Route::post('ai/enqueue', [AiSuggestionsController::class, 'enqueue'])->name('ai.enqueue');
+        Route::get('ai/{suggestion}', [AiSuggestionsController::class, 'show'])->name('ai.show');
+        Route::post('ai/{suggestion}/apply', [AiSuggestionsController::class, 'apply'])->name('ai.apply');
+        Route::post('ai/{suggestion}/reject', [AiSuggestionsController::class, 'reject'])->name('ai.reject');
+        Route::post('ai/{suggestion}/retry', [AiSuggestionsController::class, 'retry'])->name('ai.retry');
         
         // Category tree routes
         Route::get('categories/tree', [CategoriesController::class, 'tree'])->name('categories.tree');
