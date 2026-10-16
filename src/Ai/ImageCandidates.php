@@ -23,6 +23,8 @@ class ImageCandidates
 
     protected const MAX_BYTES = 5 * 1024 * 1024;
 
+    protected const MIN_SIDE = 200;
+
     /**
      * @param  array{product_id?: int|null, catalog_item_id?: int|null}  $target
      * @param  array<int, array{url: string, source_url?: string|null, title?: string|null}>  $images
@@ -65,19 +67,26 @@ class ImageCandidates
         return ['added' => $added, 'skipped' => $skipped, 'failed' => $failed];
     }
 
+    /**
+     * A usable product photo: reachable, JPEG/PNG/WebP, not huge, and not a tiny placeholder.
+     */
     public function isImage(string $url): bool
     {
         try {
-            $response = $this->http()->head($url);
-            if ($response->status() === 405 || $response->status() === 403) {
-                $response = $this->http()->withHeaders(['Range' => 'bytes=0-1023'])->get($url);
-            }
+            $response = $this->http()->get($url);
         } catch (\Throwable) {
             return false;
         }
 
+        $body = (string) $response->body();
+        $size = @getimagesizefromstring($body);
+
         return $response->successful()
-            && isset(self::MIME_EXTENSIONS[$this->mime((string) $response->header('Content-Type'))]);
+            && isset(self::MIME_EXTENSIONS[$this->mime((string) $response->header('Content-Type'))])
+            && strlen($body) <= self::MAX_BYTES
+            && $size !== false
+            && $size[0] >= self::MIN_SIDE
+            && $size[1] >= self::MIN_SIDE;
     }
 
     /**
@@ -101,8 +110,9 @@ class ImageCandidates
         if (strlen($body) > self::MAX_BYTES) {
             throw new RuntimeException('عکس بزرگ‌تر از ۵ مگابایت است.');
         }
-        if (@getimagesizefromstring($body) === false) {
-            throw new RuntimeException('فایل دانلودشده عکس معتبر نیست.');
+        $size = @getimagesizefromstring($body);
+        if ($size === false || $size[0] < self::MIN_SIDE || $size[1] < self::MIN_SIDE) {
+            throw new RuntimeException('فایل دانلودشده عکس معتبر نیست یا خیلی کوچک است.');
         }
 
         $tmp = tempnam(sys_get_temp_dir(), 'shop-ai-img');
@@ -130,7 +140,10 @@ class ImageCandidates
     protected function http()
     {
         return Http::timeout(30)
-            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; RMS-Shop/1.0)'])
+            ->withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+                'Accept' => 'image/webp,image/png,image/jpeg,*/*;q=0.8',
+            ])
             ->withOptions(['allow_redirects' => ['max' => 5]]);
     }
 
