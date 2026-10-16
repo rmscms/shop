@@ -68,7 +68,7 @@ class ProductAiEnricher
             'status' => AiSuggestion::STATUS_READY,
             'driver' => $this->ai->driverName(),
             'model' => $result->model,
-            'payload' => $this->normalize($result->data),
+            'payload' => $this->normalize(['sources' => $result->sources] + $result->data),
             'input_tokens' => $result->inputTokens,
             'output_tokens' => $result->outputTokens,
             'images_sent' => count($images),
@@ -220,6 +220,10 @@ Rules:
 - category_id and brand_id must be ids from the given lists, or null when nothing fits.
 - Features: group them with a short Persian group name (prefer the existing group names given). Reuse existing feature names when they mean the same thing.
 TXT;
+
+        if ($this->ai->searchEnabled()) {
+            $prompt .= "\n- Web search is available: use it to verify specs from the manufacturer page or datasheet (search the exact model or part number), and prefer those over guesses. Say in notes which specs came from the web.";
+        }
 
         $extra = trim((string) config('shop.ai.store_context', ''));
 
@@ -374,6 +378,16 @@ TXT;
         );
         $data['keywords'] = array_values(array_filter(array_map('strval', (array) ($data['keywords'] ?? []))));
         $data['feature_groups'] = array_values(array_filter((array) ($data['feature_groups'] ?? []), 'is_array'));
+
+        // Only web links, so the review page never renders other schemes.
+        $sources = [];
+        foreach ((array) ($data['sources'] ?? []) as $source) {
+            $url = trim((string) ($source['url'] ?? ''));
+            if (preg_match('#^https?://#i', $url)) {
+                $sources[] = ['title' => trim((string) ($source['title'] ?? '')) ?: $url, 'url' => $url];
+            }
+        }
+        $data['sources'] = $sources;
 
         return $data;
     }

@@ -13,7 +13,7 @@ return [
     */
     'enabled' => env('SHOP_AI_ENABLED', true),
 
-    // anthropic or openai (any OpenAI-compatible endpoint)
+    // anthropic, openai (any OpenAI-compatible endpoint) or gemini
     'driver' => env('SHOP_AI_DRIVER', 'anthropic'),
 
     'drivers' => [
@@ -28,6 +28,16 @@ return [
             'model' => env('SHOP_AI_OPENAI_MODEL', 'gpt-4o-mini'),
             'base_url' => env('SHOP_AI_OPENAI_URL', 'https://api.openai.com/v1'),
         ],
+        'gemini' => [
+            'api_key' => env('SHOP_AI_GEMINI_KEY'),
+            'model' => env('SHOP_AI_GEMINI_MODEL', 'gemini-2.5-flash'),
+            // Google blocks some regions (including Iran); point this at a proxy if needed.
+            'base_url' => env('SHOP_AI_GEMINI_URL', 'https://generativelanguage.googleapis.com/v1beta'),
+            // Let the model check specs with Google Search; the pages it used are shown for review.
+            'search' => (bool) env('SHOP_AI_GEMINI_SEARCH', true),
+            // Thinking tokens count toward this limit, so it is higher than the shared default.
+            'max_tokens' => (int) env('SHOP_AI_GEMINI_MAX_TOKENS', 8192),
+        ],
     ],
 
     'max_tokens' => (int) env('SHOP_AI_MAX_TOKENS', 4096),
@@ -39,6 +49,8 @@ return [
     'max_image_kb' => (int) env('SHOP_AI_MAX_IMAGE_KB', 4500),
 
     'queue' => env('SHOP_QUEUE_AI', 'shop-ai'),
+    // Seconds between queued jobs in bulk runs (e.g. 6 keeps a 10 requests/minute free tier happy).
+    'dispatch_spacing' => (int) env('SHOP_AI_DISPATCH_SPACING', 0),
 
     // Extra guidance appended to the prompt, e.g. tone or store niche.
     'store_context' => env('SHOP_AI_STORE_CONTEXT', ''),

@@ -58,7 +58,7 @@ class AiEnrichProductsCommand extends Command
         $bar = $this->output->createProgressBar($products->count());
         $failed = 0;
 
-        foreach ($products as $product) {
+        foreach ($products->values() as $index => $product) {
             $suggestion = $enricher->queue($product);
 
             if ($sync) {
@@ -71,7 +71,7 @@ class AiEnrichProductsCommand extends Command
                     $this->warn("#{$product->id}: ".$e->getMessage());
                 }
             } else {
-                EnrichProductWithAi::dispatch($suggestion->id);
+                EnrichProductWithAi::dispatch($suggestion->id)->delay(now()->addSeconds($ai->dispatchDelay($index)));
             }
 
             $bar->advance();

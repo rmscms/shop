@@ -122,6 +122,20 @@
       </div>
     </form>
 
+    @if(!empty($payload['sources']))
+      <div class="card mb-3">
+        <div class="card-header"><h6 class="mb-0">منابع</h6></div>
+        <div class="card-body small">
+          <div class="text-muted mb-2">صفحه‌هایی که AI برای بررسی مشخصات جستجو کرد. قبل از اعمال، مشخصات را با منبع چک کنید.</div>
+          <ol class="mb-0">
+            @foreach($payload['sources'] as $source)
+              <li><a href="{{ $source['url'] }}" target="_blank" rel="noopener noreferrer">{{ $source['title'] ?: $source['url'] }}</a></li>
+            @endforeach
+          </ol>
+        </div>
+      </div>
+    @endif
+
     <div class="card mb-3">
       <div class="card-header"><h6 class="mb-0">سئو (برای کپی)</h6></div>
       <div class="card-body">

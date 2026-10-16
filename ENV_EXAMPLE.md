@@ -102,7 +102,7 @@ SHOP_QUEUE_DEFAULT=default
 # ============================================
 # AI Product Assistant
 # ============================================
-# anthropic (Claude) or openai (OpenAI or any compatible endpoint)
+# anthropic (Claude), openai (OpenAI or any compatible endpoint) or gemini
 SHOP_AI_DRIVER=anthropic
 SHOP_AI_ANTHROPIC_KEY=
 SHOP_AI_ANTHROPIC_MODEL=claude-sonnet-5-5
@@ -110,7 +110,16 @@ SHOP_AI_OPENAI_KEY=
 SHOP_AI_OPENAI_MODEL=gpt-4o-mini
 # Change for a compatible provider or proxy
 SHOP_AI_OPENAI_URL=https://api.openai.com/v1
+# Gemini (has a free tier). Key from https://aistudio.google.com/apikey
+SHOP_AI_GEMINI_KEY=
+SHOP_AI_GEMINI_MODEL=gemini-2.5-flash
+# Check specs with Google Search; the pages used are listed on the review page
+SHOP_AI_GEMINI_SEARCH=true
+# Google blocks Iranian IPs: run from a server abroad or point this at a proxy
+SHOP_AI_GEMINI_URL=https://generativelanguage.googleapis.com/v1beta
 SHOP_AI_MAX_IMAGES=3
 SHOP_QUEUE_AI=shop-ai
+# Seconds between queued jobs in bulk runs (free tiers are rate limited; 6 = 10/minute)
+SHOP_AI_DISPATCH_SPACING=0
 # Optional: a sentence about your store so the copy fits your niche
 SHOP_AI_STORE_CONTEXT=

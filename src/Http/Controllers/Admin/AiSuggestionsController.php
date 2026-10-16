@@ -122,7 +122,8 @@ class AiSuggestionsController extends ShopAdminController
 
         $count = 0;
         foreach ($query->cursor() as $product) {
-            EnrichProductWithAi::dispatch($enricher->queue($product)->id);
+            EnrichProductWithAi::dispatch($enricher->queue($product)->id)
+                ->delay(now()->addSeconds($ai->dispatchDelay($count)));
             $count++;
         }
 

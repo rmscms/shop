@@ -237,7 +237,10 @@ $meta = PricingService::discountMeta('percent', 10);
 Reads each product's name, text and photos and suggests Persian copy (name, short and full description, SEO title/meta, keywords, image alt), a category and brand from your own lists, and features. Chinese or English source text is translated. Nothing changes on a product until an admin applies the suggestion, field by field.
 
 1. Run migrations (`shop_ai_suggestions` table).
-2. Set the driver and key in `.env` (see `ENV_EXAMPLE.md`): `SHOP_AI_DRIVER=anthropic` with `SHOP_AI_ANTHROPIC_KEY`, or `SHOP_AI_DRIVER=openai` with `SHOP_AI_OPENAI_KEY` (any OpenAI-compatible endpoint via `SHOP_AI_OPENAI_URL`).
+2. Set the driver and key in `.env` (see `ENV_EXAMPLE.md`): `SHOP_AI_DRIVER=anthropic` with `SHOP_AI_ANTHROPIC_KEY`, or `SHOP_AI_DRIVER=openai` with `SHOP_AI_OPENAI_KEY` (any OpenAI-compatible endpoint via `SHOP_AI_OPENAI_URL`), or `SHOP_AI_DRIVER=gemini` with `SHOP_AI_GEMINI_KEY`.
+   - Gemini can check specs with Google Search (`SHOP_AI_GEMINI_SEARCH=true`, the default). The pages it used are listed under **منابع** on the review page.
+   - Google blocks requests from Iranian IPs: run the worker on a server abroad or point `SHOP_AI_GEMINI_URL` at a proxy.
+   - Free tiers are rate limited: set `SHOP_AI_DISPATCH_SPACING` (seconds between queued jobs) for bulk runs.
 3. Start a worker: `php artisan queue:work --queue=shop-ai`
 4. Send products from **Admin → Shop → AI assistant** (`/admin/shop/ai`) or the CLI:
 

@@ -5,6 +5,7 @@ namespace RMS\Shop\Ai\Drivers;
 use Illuminate\Support\Facades\Http;
 use RMS\Shop\Ai\AiException;
 use RMS\Shop\Ai\AiResult;
+use RMS\Shop\Ai\JsonText;
 use RMS\Shop\Contracts\Ai\AiDriver;
 
 /**
@@ -59,7 +60,8 @@ class OpenAiDriver implements AiDriver
 
         $raw = $response->json('choices.0.message.tool_calls.0.function.arguments')
             ?? $response->json('choices.0.message.content');
-        $data = is_string($raw) ? $this->decode($raw) : null;
+        // Compatible endpoints without tool support may answer with plain JSON text.
+        $data = is_string($raw) ? JsonText::decode($raw) : null;
 
         if (!is_array($data)) {
             throw new AiException('پاسخ OpenAI قابل خواندن نبود (finish_reason: '.$response->json('choices.0.finish_reason').').');
@@ -71,26 +73,5 @@ class OpenAiDriver implements AiDriver
             inputTokens: (int) $response->json('usage.prompt_tokens', 0),
             outputTokens: (int) $response->json('usage.completion_tokens', 0),
         );
-    }
-
-    /**
-     * Compatible endpoints without tool support may answer with plain JSON text.
-     */
-    protected function decode(string $raw): ?array
-    {
-        $decoded = json_decode($raw, true);
-        if (is_array($decoded)) {
-            return $decoded;
-        }
-
-        $start = strpos($raw, '{');
-        $end = strrpos($raw, '}');
-        if ($start === false || $end === false || $end <= $start) {
-            return null;
-        }
-
-        $decoded = json_decode(substr($raw, $start, $end - $start + 1), true);
-
-        return is_array($decoded) ? $decoded : null;
     }
 }
