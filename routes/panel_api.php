@@ -24,7 +24,21 @@ $authMiddleware = $guard ? ['auth:' . $guard] : [];
 Route::prefix($prefix)
     ->middleware($middleware)
     ->name('shop.panel_api.')
-    ->group(function () use ($authMiddleware) {
+    ->group(function () use ($authMiddleware, $prefix) {
+        Route::get('/', function () use ($prefix) {
+            return response()->json([
+                'status' => 'ok',
+                'name' => 'Shop Panel API',
+                'prefix' => '/'.trim($prefix, '/'),
+                'auth' => 'Sanctum Bearer from /auth/login',
+                'docs' => url(config('l5-swagger.documentations.default.routes.api', 'api/documentation')),
+                'sample' => [
+                    'GET' => url(trim($prefix, '/').'/products'),
+                    'POST' => url(trim($prefix, '/').'/auth/login'),
+                ],
+            ]);
+        })->name('root');
+
         Route::post('auth/login', [AuthController::class, 'login'])->name('auth.login');
         Route::post('auth/register', [AuthController::class, 'register'])->name('auth.register');
 

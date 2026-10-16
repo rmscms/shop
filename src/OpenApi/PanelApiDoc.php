@@ -6,11 +6,15 @@ use OpenApi\Annotations as OA;
 
 /**
  * @OA\Info(
- *     title="RMS Shop Panel API",
+ *     title="RMS Shop API",
  *     version="1.0.0",
- *     description="REST API used by the RMS customer panel application."
+ *     description="Admin API (`/api/v1/admin/shop`) and Panel API (`/api/v1/panel`)."
  * )
  *
+ * @OA\Server(
+ *     url="/api/v1/admin/shop",
+ *     description="Admin API base URL"
+ * )
  * @OA\Server(
  *     url="/api/v1/panel",
  *     description="Panel API base URL"

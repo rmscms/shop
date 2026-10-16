@@ -8,8 +8,12 @@ use OpenApi\Annotations as OA;
 use RMS\Shop\Http\Resources\Admin\ImageLibraryResource;
 use RMS\Shop\Models\ImageLibrary;
 use RMS\Shop\Models\Product;
+use RMS\Shop\Jobs\ConvertImageToAvif;
+use RMS\Shop\Models\ImageLibraryFolder;
+use RMS\Shop\Services\ImageLibraryFolderService;
 use RMS\Shop\Services\ImageLibraryService;
 use RMS\Shop\Services\ProductImagesService;
+use RMS\Shop\Support\MediaLibrarySchema;
 
 class ImageLibraryController extends BaseController
 {
@@ -267,5 +271,164 @@ class ImageLibraryController extends BaseController
         } catch (\Exception $e) {
             return $this->apiError(['image' => ['خطا در جدا کردن تصویر: ' . $e->getMessage()]], 500);
         }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/admin/shop/image-library/folders/tree",
+     *     tags={"Admin - Media"},
+     *     summary="Image library folder tree",
+     *     security={{"admin":{}}},
+     *     @OA\Response(response=200, description="Tree"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function foldersTree(Request $request)
+    {
+        $selected = $request->input('selected');
+        $selectedId = is_numeric($selected) ? (int) $selected : null;
+
+        return $this->apiSuccess(app(ImageLibraryFolderService::class)->getTreeForPlugin($selectedId));
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/admin/shop/image-library/folders",
+     *     tags={"Admin - Media"},
+     *     summary="Create an image library folder",
+     *     security={{"admin":{}}},
+     *     @OA\Response(response=201, description="Created"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function storeFolder(Request $request)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:190'],
+            'parent_id' => ['nullable', 'integer'],
+        ]);
+
+        try {
+            $folder = app(ImageLibraryFolderService::class)->createFolder(
+                $request->input('parent_id') ? (int) $request->input('parent_id') : null,
+                (string) $request->input('name')
+            );
+
+            return $this->apiSuccess($this->folderRow($folder), [], 201);
+        } catch (\Throwable $e) {
+            return $this->apiError(['folder' => [$e->getMessage()]], 422);
+        }
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/admin/shop/image-library/folders/{folder}",
+     *     tags={"Admin - Media"},
+     *     summary="Rename an image library folder",
+     *     security={{"admin":{}}},
+     *     @OA\Parameter(name="folder", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Updated"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function updateFolder(Request $request, ImageLibraryFolder $folder)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:190'],
+        ]);
+
+        try {
+            $folder = app(ImageLibraryFolderService::class)->updateFolder($folder, (string) $request->input('name'));
+
+            return $this->apiSuccess($this->folderRow($folder));
+        } catch (\Throwable $e) {
+            return $this->apiError(['folder' => [$e->getMessage()]], 422);
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/admin/shop/image-library/folders/{folder}",
+     *     tags={"Admin - Media"},
+     *     summary="Delete an image library folder",
+     *     security={{"admin":{}}},
+     *     @OA\Parameter(name="folder", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Deleted"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function destroyFolder(ImageLibraryFolder $folder)
+    {
+        try {
+            app(ImageLibraryFolderService::class)->deleteFolder($folder);
+
+            return $this->apiSuccess(['deleted' => true]);
+        } catch (\Throwable $e) {
+            return $this->apiError(['folder' => [$e->getMessage()]], 422);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/admin/shop/image-library/{id}/move",
+     *     tags={"Admin - Media"},
+     *     summary="Move an image into a folder",
+     *     security={{"admin":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Moved"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function moveImage(Request $request, int $id)
+    {
+        $image = ImageLibrary::findOrFail($id);
+        $request->validate([
+            'folder_id' => ['nullable', 'integer'],
+        ]);
+
+        try {
+            $targetFolder = ($request->filled('folder_id') && MediaLibrarySchema::hasImageFolders())
+                ? ImageLibraryFolder::query()->findOrFail((int) $request->input('folder_id'))
+                : null;
+
+            $image = ImageLibraryService::moveImage($image, $targetFolder);
+
+            return $this->apiSuccess([
+                'id' => (int) $image->id,
+                'folder_id' => $image->folder_id,
+                'path' => $image->path,
+            ]);
+        } catch (\Throwable $e) {
+            return $this->apiError(['image' => [$e->getMessage()]], 422);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/admin/shop/image-library/{id}/generate-avif",
+     *     tags={"Admin - Media"},
+     *     summary="Queue AVIF conversion for a library image",
+     *     security={{"admin":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Queued"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function generateAvif(int $id)
+    {
+        $image = ImageLibrary::findOrFail($id);
+        ConvertImageToAvif::dispatch($image->path, 85);
+
+        return $this->apiSuccess(['queued' => true, 'image_id' => (int) $image->id]);
+    }
+
+    protected function folderRow(ImageLibraryFolder $folder): array
+    {
+        return [
+            'id' => (int) $folder->id,
+            'name' => $folder->name,
+            'path' => $folder->path,
+            'parent_id' => $folder->parent_id,
+        ];
     }
 }

@@ -1315,6 +1315,11 @@ $this->view->withPlugins(['ckeditor', 'fancytree']);</code></pre>
             'url' => route('admin.shop.settings.edit'),
             'icon' => 'ph-gear',
         ],
+        [
+            'title' => 'دسترسی API',
+            'url' => route('admin.shop.api-accesses.index'),
+            'icon' => 'ph-key',
+        ],
     ]"
 />
 SIDEBAR;

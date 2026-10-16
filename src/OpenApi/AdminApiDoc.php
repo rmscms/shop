@@ -9,8 +9,8 @@ use OpenApi\Annotations as OA;
  *     securityScheme="admin",
  *     type="http",
  *     scheme="bearer",
- *     bearerFormat="JWT",
- *     description="Admin authentication token"
+ *     bearerFormat="API token",
+ *     description="Shop API access token from shop_api_accesses"
  * )
  *
  * @OA\Tag(
@@ -235,6 +235,21 @@ use OpenApi\Annotations as OA;
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time"),
  *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="AdminImageSizeResource",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="Thumbnail"),
+ *     @OA\Property(property="slug", type="string", example="thumb"),
+ *     @OA\Property(property="width", type="integer", nullable=true, example=300),
+ *     @OA\Property(property="height", type="integer", nullable=true, example=300),
+ *     @OA\Property(property="quality", type="integer", example=85),
+ *     @OA\Property(property="active", type="boolean", example=true),
+ *     @OA\Property(property="sort", type="integer", example=0),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )
  */
 class AdminApiDoc

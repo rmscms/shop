@@ -20,6 +20,7 @@ use RMS\Shop\Http\Controllers\Admin\ImageLibraryController;
 use RMS\Shop\Http\Controllers\Admin\ImageSizesController;
 use RMS\Shop\Http\Controllers\Admin\VideoLibraryController;
 use RMS\Shop\Http\Controllers\Admin\AvifController;
+use RMS\Shop\Http\Controllers\Admin\ApiAccessesController;
 
 $ordersControllerClass = (string) config('shop.controllers.admin.orders', \RMS\Shop\Http\Controllers\Admin\OrdersController::class);
 if (!class_exists($ordersControllerClass)) {
@@ -46,6 +47,13 @@ Route::middleware([
         // Settings
         Route::get('settings', [ShopSettingsController::class, 'edit'])->name('settings.edit');
         Route::put('settings', [ShopSettingsController::class, 'update'])->name('settings.update');
+
+        Route::get('api-accesses', [ApiAccessesController::class, 'index'])->name('api-accesses.index');
+        Route::post('api-accesses', [ApiAccessesController::class, 'store'])->name('api-accesses.store');
+        Route::put('api-accesses/{access}', [ApiAccessesController::class, 'update'])->name('api-accesses.update');
+        Route::post('api-accesses/{access}/revoke', [ApiAccessesController::class, 'revoke'])->name('api-accesses.revoke');
+        Route::post('api-accesses/{access}/activate', [ApiAccessesController::class, 'activate'])->name('api-accesses.activate');
+        Route::post('api-accesses/{access}/rotate', [ApiAccessesController::class, 'rotate'])->name('api-accesses.rotate');
         
         // Category tree routes
         Route::get('categories/tree', [CategoriesController::class, 'tree'])->name('categories.tree');

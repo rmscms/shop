@@ -1,6 +1,10 @@
 {{-- Shop Management --}}
-@php
-    $shopChildren = [
+<x-cms::menu-header title="فروشگاه"/>
+
+<x-cms::submenu-item
+    title="کاتالوگ"
+    icon="ph-package"
+    :children="[
         [
             'title' => 'داشبورد فروشگاه',
             'url' => route('admin.shop.dashboard'),
@@ -13,10 +17,8 @@
             'icon' => 'ph-package',
             'routes' => [
                 'admin.shop.products.*',
-                'admin.shop.product-feature-categories.*',
                 'admin.shop.products.features.*',
                 'admin.shop.products.attributes.*',
-                'admin.shop.product-purchase-stats.*',
             ],
         ],
         [
@@ -32,6 +34,19 @@
             'routes' => ['admin.shop.brands.*'],
         ],
         [
+            'title' => 'دسته‌بندی ویژگی‌ها',
+            'url' => route('admin.shop.product-feature-categories.index'),
+            'icon' => 'ph-list-bullets',
+            'routes' => ['admin.shop.product-feature-categories.*'],
+        ],
+    ]"
+/>
+
+<x-cms::submenu-item
+    title="فروش"
+    icon="ph-shopping-bag"
+    :children="[
+        [
             'title' => 'سفارش‌ها',
             'url' => route('admin.shop.orders.index'),
             'icon' => 'ph-shopping-bag',
@@ -42,24 +57,6 @@
             'url' => route('admin.shop.carts.index'),
             'icon' => 'ph-shopping-cart-simple',
             'routes' => ['admin.shop.carts.*'],
-        ],
-        [
-            'title' => 'ارزها',
-            'url' => route('admin.shop.currencies.index'),
-            'icon' => 'ph-coins',
-            'routes' => ['admin.shop.currencies.*'],
-        ],
-        [
-            'title' => 'نرخ ارز',
-            'url' => route('admin.shop.currency-rates.index'),
-            'icon' => 'ph-arrows-left-right',
-            'routes' => ['admin.shop.currency-rates.*'],
-        ],
-        [
-            'title' => 'دسته‌بندی ویژگی‌ها',
-            'url' => route('admin.shop.product-feature-categories.index'),
-            'icon' => 'ph-list-bullets',
-            'routes' => ['admin.shop.product-feature-categories.*'],
         ],
         [
             'title' => 'آمار خرید',
@@ -73,12 +70,13 @@
             'icon' => 'ph-star',
             'routes' => ['admin.shop.user-points.*'],
         ],
-        [
-            'title' => 'تنظیمات شاپ',
-            'url' => route('admin.shop.settings.edit'),
-            'icon' => 'ph-gear',
-            'routes' => ['admin.shop.settings.*'],
-        ],
+    ]"
+/>
+
+<x-cms::submenu-item
+    title="رسانه"
+    icon="ph-images"
+    :children="[
         [
             'title' => 'کتابخانه تصاویر',
             'url' => route('admin.shop.image-library.index'),
@@ -103,11 +101,36 @@
             'icon' => 'ph-images-square',
             'routes' => ['admin.shop.avif.*'],
         ],
-    ];
-@endphp
+    ]"
+/>
 
 <x-cms::submenu-item
-    title="فروشگاه"
-    icon="ph-storefront"
-    :children="$shopChildren"
+    title="سیستم فروشگاه"
+    icon="ph-gear"
+    :children="[
+        [
+            'title' => 'ارزها',
+            'url' => route('admin.shop.currencies.index'),
+            'icon' => 'ph-coins',
+            'routes' => ['admin.shop.currencies.*'],
+        ],
+        [
+            'title' => 'نرخ ارز',
+            'url' => route('admin.shop.currency-rates.index'),
+            'icon' => 'ph-arrows-left-right',
+            'routes' => ['admin.shop.currency-rates.*'],
+        ],
+        [
+            'title' => 'تنظیمات شاپ',
+            'url' => route('admin.shop.settings.edit'),
+            'icon' => 'ph-gear',
+            'routes' => ['admin.shop.settings.*'],
+        ],
+        [
+            'title' => 'دسترسی API',
+            'url' => route('admin.shop.api-accesses.index'),
+            'icon' => 'ph-key',
+            'routes' => ['admin.shop.api-accesses.*'],
+        ],
+    ]"
 />

@@ -6,24 +6,26 @@
     <title>{{ $documentationTitle }}</title>
     <style>
         html, body { margin: 0; height: 100%; }
+        #app { height: 100vh; }
     </style>
 </head>
 <body>
 @php
-    $sources = [];
-    foreach ($urlsToDocs as $title => $url) {
-        $sources[] = [
-            'title' => (string) $title,
-            'slug' => \Illuminate\Support\Str::slug((string) $title) ?: 'docs',
-            'url' => $url,
-        ];
+    $docUrl = $urlToDocs ?? null;
+    if (!$docUrl && !empty($urlsToDocs) && is_array($urlsToDocs)) {
+        $docUrl = reset($urlsToDocs);
     }
-    $scalarConfig = [
-        'sources' => $sources,
-        'persistAuth' => (bool) config('l5-swagger.defaults.ui.authorization.persist_authorization', true),
-    ];
+    $docUrl = preg_replace('/\?.*$/', '', (string) $docUrl) ?: url('/docs');
 @endphp
-<script id="api-reference" type="application/json">{!! json_encode($scalarConfig, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) !!}</script>
+<div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+<script>
+  Scalar.createApiReference('#app', {
+    url: @json($docUrl),
+    persistAuth: @json((bool) config('l5-swagger.defaults.ui.authorization.persist_authorization', true)),
+    layout: 'modern',
+    theme: 'default'
+  });
+</script>
 </body>
 </html>

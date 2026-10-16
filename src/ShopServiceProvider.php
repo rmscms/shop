@@ -41,6 +41,7 @@ class ShopServiceProvider extends ServiceProvider
             $this->commands([
                 \RMS\Shop\Console\Commands\ShopInstallCommand::class,
                 \RMS\Shop\Console\Commands\AvifDirectoryCommand::class,
+                \RMS\Shop\Console\Commands\ShopApiAccessCommand::class,
             ]);
         }
     }
