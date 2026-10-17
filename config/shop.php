@@ -247,7 +247,7 @@ return [
     */
     'frontend_api' => [
         'base_url' => env('SHOP_PANEL_API_URL', env('APP_URL', 'http://127.0.0.1:8000').'/api/v1/panel'),
-        'shop_url' => env('SHOP_FRONT_URL', 'http://127.0.0.1:8001'),
+        'shop_url' => env('SHOP_FRONT_URL', env('APP_URL', 'http://127.0.0.1:8000')),
     ],
 
     /*

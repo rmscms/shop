@@ -8,8 +8,7 @@
     <div class="d-flex gap-2">
       @if(!empty($product) && $product->exists)
         @php
-          $shopHost = config('shop.frontend_api.shop_url', env('SHOP_FRONT_URL', 'http://127.0.0.1:8001'));
-          $productPage = rtrim($shopHost, '/').'/shop/products/'.($product->slug ?? $product->id);
+          $productPage = app(\RMS\Shop\Services\SeoService::class)->url('product', (string) ($product->slug ?: $product->id));
         @endphp
         <a href="{{ $productPage }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
           <i class="ph-eye me-1"></i> نمایش محصول

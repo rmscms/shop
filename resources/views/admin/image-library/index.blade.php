@@ -28,7 +28,7 @@
                     <!-- Pagination -->
                     @if($images->hasPages())
                     <div class="d-flex justify-content-center mt-4">
-                        {{ $images->appends(request()->query())->links() }}
+                        {{ $images->appends(request()->query())->links('shop::admin.partials.pagination') }}
                     </div>
                     @endif
                 </div>

@@ -1,5 +1,17 @@
 /* Image Library Styles */
 
+.shop-pagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    line-height: 1;
+}
+
+.shop-pagination .page-link i {
+    font-size: 0.875rem;
+}
+
 .image-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }

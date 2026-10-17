@@ -204,10 +204,10 @@ function debounce(fn, wait = 250) {
           <div class="card-header bg-light">
             <div class="position-relative">
               <div class="d-flex align-items-center gap-2 mb-2">
-                <input type="text" class="form-control form-control-sm attr-name flex-grow-1" value="${escapeHtml(attr.name)}" placeholder="${tr('shop.attributes.name_placeholder','نام ویژگی')}" data-definition-id="${hasDefinition ? attr.attribute_definition_id : ''}" style="min-width: 60px; height: 30px;">
+                <input type="text" class="form-control form-control-sm attr-name flex-grow-1" value="${escapeHtml(attr.name)}" placeholder="${tr('shop.attributes.name_placeholder','نام ویژگی')}" data-definition-id="${hasDefinition ? attr.attribute_definition_id : ''}" style="min-width: 60px;">
                 <div class="d-flex gap-1">
-                  <button type="button" class="btn btn-outline-secondary btn-sm btn-create-definition" title="ایجاد تعریف جدید" style="width: 30px; height: 30px; padding: 0;"><i class="ph-plus"></i></button>
-                  <button class="btn btn-danger btn-sm btn-del-attr" title="حذف ویژگی" style="width: 30px; height: 30px; padding: 0;"><i class="ph-trash"></i></button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm btn-create-definition" title="ایجاد تعریف جدید" ><i class="ph-plus"></i></button>
+                  <button class="btn btn-danger btn-sm btn-del-attr" title="حذف ویژگی" ><i class="ph-trash"></i></button>
                 </div>
               </div>
               <div class="autocomplete-results list-group d-none" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 9999; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #dee2e6; border-radius: 0.375rem;"></div>
@@ -241,16 +241,16 @@ function debounce(fn, wait = 250) {
           <div class="d-flex align-items-center gap-2 mb-2 position-relative">
             <div class="feature-autocomplete flex-grow-1">
               <div class="input-group input-group-sm">
-                <input type="text" class="form-control form-control-sm attr-name flex-grow-1" value="${escapeHtml(attr.name)}" placeholder="${tr('shop.attributes.name_placeholder','نام ویژگی')}" data-definition-id="${hasDefinition ? attr.attribute_definition_id : ''}" style="min-width: 60px; height: 30px;">
+                <input type="text" class="form-control form-control-sm attr-name flex-grow-1" value="${escapeHtml(attr.name)}" placeholder="${tr('shop.attributes.name_placeholder','نام ویژگی')}" data-definition-id="${hasDefinition ? attr.attribute_definition_id : ''}" style="min-width: 60px;">
                 <div class="d-flex gap-1">
-                  <button type="button" class="btn btn-outline-secondary btn-sm btn-create-definition" title="ایجاد تعریف جدید" style="width: 30px; height: 30px; padding: 0;"><i class="ph-plus"></i></button>
-                  <button class="btn btn-danger btn-sm btn-del-attr" title="حذف ویژگی" style="width: 30px; height: 30px; padding: 0;"><i class="ph-trash"></i></button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm btn-create-definition" title="ایجاد تعریف جدید" ><i class="ph-plus"></i></button>
+                  <button class="btn btn-danger btn-sm btn-del-attr" title="حذف ویژگی" ><i class="ph-trash"></i></button>
                 </div>
               </div>
               <div class="autocomplete-results list-group d-none"></div>
             </div>
           </div>
-          <div class="form-text small ${hasDefinition ? 'text-success' : 'text-muted'} mb-2">
+          <div class="form-text attr-hint small ${hasDefinition ? 'text-success' : 'text-muted'}">
             ${hasDefinition ? `شناسه متصل: #${attr.attribute_definition_id}` : 'برای اتصال به تعریف‌های موجود، حداقل ۳ کاراکتر تایپ کنید.'}
           </div>
           <div class="row g-2 align-items-center mt-2">

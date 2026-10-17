@@ -160,14 +160,18 @@
     if (document.getElementById('rms-ckeditor-style')) return;
     var s = document.createElement('style');
     s.id = 'rms-ckeditor-style';
-    s.textContent = '.ck-editor__editable,.ck-editor__editable_inline{ min-height: var(--rms-ck-min-height, 200px) !important; }';
+    s.textContent = '.ck-editor__editable,.ck-editor__editable_inline{ min-height: var(--rms-ck-min-height, 200px) !important; padding-top: 12px !important; padding-bottom: 12px !important; line-height: 1.9 !important; } .ck-editor__editable p,.ck-editor__editable li,.ck-editor__editable h2,.ck-editor__editable h3{ line-height: 1.9; margin-top: 0; }';
     document.head.appendChild(s);
   }
   function scan(){
     ensureGlobalStyles();
     document.querySelectorAll('textarea.js-ckeditor,[data-editor="ckeditor"]').forEach(initOne);
   }
-  document.addEventListener('DOMContentLoaded', scan);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scan);
+  } else {
+    scan();
+  }
   document.addEventListener('rms:ckeditor:scan', scan);
   window.rmsInitCkEditors = scan;
 })();

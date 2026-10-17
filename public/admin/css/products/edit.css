@@ -2,6 +2,37 @@
     position: relative;
 }
 
+.feature-autocomplete .input-group {
+    flex-wrap: nowrap;
+    align-items: stretch;
+}
+
+.feature-autocomplete .attr-name,
+.feature-autocomplete .value-input {
+    height: auto;
+    min-height: 2.4rem;
+    line-height: 1.6;
+    padding: 0.4rem 0.75rem;
+    overflow: hidden;
+}
+
+.feature-autocomplete .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.4rem;
+    min-height: 2.4rem;
+    padding: 0 0.5rem;
+}
+
+.attr-hint {
+    display: block;
+    clear: both;
+    margin-top: 0.45rem;
+    margin-bottom: 0.35rem;
+    line-height: 1.7;
+}
+
 .feature-autocomplete .autocomplete-results {
     position: absolute;
     top: 100%;

@@ -16,8 +16,9 @@ class ShopServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/admin_api.php', 'shop.admin_api');
         $this->mergeConfigFrom(__DIR__.'/../config/swagger.php', 'shop.swagger');
         $this->mergeConfigFrom(__DIR__.'/../config/ai.php', 'shop.ai');
+        $this->mergeConfigFrom(__DIR__.'/../config/plugins.php', 'plugins');
         $this->mergeConfigFrom(__DIR__.'/../config/seo.php', 'shop.seo');
-        
+
         // Register services
         $this->app->singleton(\RMS\Shop\Services\CartService::class);
         $this->app->singleton(\RMS\Shop\Services\OrderService::class);

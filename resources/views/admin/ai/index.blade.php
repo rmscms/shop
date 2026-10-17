@@ -156,7 +156,7 @@
         </table>
       </div>
       @if($suggestions instanceof \Illuminate\Contracts\Pagination\Paginator && $suggestions->hasPages())
-        <div class="card-footer">{{ $suggestions->links() }}</div>
+        <div class="card-footer">{{ $suggestions->links('shop::admin.partials.pagination') }}</div>
       @endif
     </div>
   @endif

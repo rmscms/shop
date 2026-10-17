@@ -27,7 +27,7 @@ return new class extends Migration
             Schema::create('product_attribute_definition_values', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->foreignId('attribute_definition_id')
-                    ->constrained('product_attribute_definitions')
+                    ->constrained('product_attribute_definitions', indexName: 'padv_definition_fk')
                     ->cascadeOnDelete();
                 $table->string('value');
                 $table->string('slug');

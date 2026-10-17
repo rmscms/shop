@@ -71,7 +71,7 @@
     @endforelse
 
     @if(method_exists($products, 'links'))
-      {{ $products->links() }}
+      {{ $products->links('shop::admin.partials.pagination') }}
     @endif
   @endif
 </div>
