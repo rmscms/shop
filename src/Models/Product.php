@@ -22,10 +22,12 @@ class Product extends Model
         'name', 'slug', 'sku', 'price', 'sale_price', 'active', 'stock_qty', 'category_id', 'brand_id',
         'short_desc', 'description', 'cost_cny', 'sale_price_cny', 'point_per_unit',
         'discount_type', 'discount_value',
+        'meta_title', 'meta_description', 'focus_keyword', 'canonical_url', 'noindex', 'gtin', 'mpn',
     ];
 
     protected $casts = [
         'active' => 'boolean',
+        'noindex' => 'boolean',
         'price' => 'decimal:2',
         'sale_price' => 'decimal:2',
         'cost_cny' => 'decimal:2',

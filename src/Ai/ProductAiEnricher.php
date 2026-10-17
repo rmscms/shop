@@ -12,6 +12,7 @@ use RMS\Shop\Models\Product;
 use RMS\Shop\Models\ProductFeature;
 use RMS\Shop\Models\ProductFeatureCategory;
 use RMS\Shop\Services\ProductFeaturesService;
+use RMS\Shop\Services\SeoService;
 
 /**
  * Builds the product prompt, calls the configured AI driver and turns the
@@ -20,7 +21,7 @@ use RMS\Shop\Services\ProductFeaturesService;
  */
 class ProductAiEnricher
 {
-    public const APPLICABLE_FIELDS = ['name', 'short_desc', 'description', 'category_id', 'brand_id', 'features'];
+    public const APPLICABLE_FIELDS = ['name', 'short_desc', 'description', 'category_id', 'brand_id', 'features', 'seo'];
 
     protected const SUPPORTED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
@@ -126,6 +127,19 @@ class ProductAiEnricher
                 $this->features->saveFeatures($product->id, [
                     'categories' => $this->mergeFeatures($product->id, (array) $payload['feature_groups']),
                 ]);
+            }
+
+            if (in_array('seo', $fields, true)) {
+                // Only filled values; an empty suggestion never clears what the admin wrote.
+                $seo = array_filter([
+                    'meta_title' => $payload['meta_title'] ?? null,
+                    'meta_description' => $payload['meta_description'] ?? null,
+                    'focus_keyword' => $payload['focus_keyword'] ?? null,
+                    'image_alt' => $payload['image_alt'] ?? null,
+                ], fn ($v) => filled($v));
+                if ($seo !== []) {
+                    app(SeoService::class)->saveProductFields($product, $seo);
+                }
             }
 
             $suggestion->forceFill([
@@ -237,6 +251,11 @@ Rules:
 - description: simple HTML using only <p>, <h3>, <ul>, <li>, <strong>. Around 150 to 300 words. Describe what is visible in the photos (material, color, design, usage).
 - category_id and brand_id must be ids from the given lists, or null when nothing fits.
 - Features: group them with a short Persian group name (prefer the existing group names given). Reuse existing feature names when they mean the same thing.
+- SEO, all in Persian:
+  - focus_keyword: the phrase a shopper would type to find this product (e.g. "سیم قلع کش مکانیک").
+  - meta_title: up to 60 characters, the focus keyword near the start, then brand/model. No clickbait, no keyword repetition.
+  - meta_description: 120 to 155 characters, one concrete benefit or use, natural sentence that includes the focus keyword once.
+  - image_alt: a short description of what the main photo shows, including the product name.
 TXT;
 
         if ($this->ai->searchEnabled()) {
@@ -338,9 +357,10 @@ TXT;
                 'name' => $text,
                 'short_desc' => $text,
                 'description' => ['type' => 'string', 'description' => 'Persian HTML description'],
-                'seo_title' => ['type' => 'string', 'description' => 'Up to 60 characters'],
-                'seo_description' => ['type' => 'string', 'description' => 'Up to 160 characters'],
-                'keywords' => ['type' => 'array', 'items' => $text],
+                'focus_keyword' => ['type' => 'string', 'description' => 'Main search phrase in Persian'],
+                'meta_title' => ['type' => 'string', 'description' => 'Up to 60 characters, focus keyword near the start'],
+                'meta_description' => ['type' => 'string', 'description' => '120 to 155 characters'],
+                'keywords' => ['type' => 'array', 'items' => $text, 'description' => 'Related search phrases (internal use)'],
                 'image_alt' => ['type' => 'string', 'description' => 'Persian alt text for the main photo'],
                 'category_id' => ['type' => ['integer', 'null']],
                 'category_reason' => $text,
@@ -367,7 +387,7 @@ TXT;
                 ],
                 'notes' => ['type' => 'string', 'description' => 'Anything the admin should double-check'],
             ],
-            'required' => ['name', 'short_desc', 'description', 'seo_title', 'seo_description', 'keywords', 'category_id', 'brand_id', 'feature_groups'],
+            'required' => ['name', 'short_desc', 'description', 'focus_keyword', 'meta_title', 'meta_description', 'image_alt', 'category_id', 'brand_id', 'feature_groups'],
         ];
     }
 
@@ -384,9 +404,17 @@ TXT;
             $data[$field] = $id && $model::query()->whereKey($id)->exists() ? $id : null;
         }
 
-        foreach (['name', 'short_desc', 'description', 'seo_title', 'seo_description', 'image_alt', 'notes'] as $field) {
+        // Suggestions written before the SEO fields existed used seo_title / seo_description.
+        $data['meta_title'] ??= $data['seo_title'] ?? null;
+        $data['meta_description'] ??= $data['seo_description'] ?? null;
+        unset($data['seo_title'], $data['seo_description']);
+
+        foreach (['name', 'short_desc', 'description', 'focus_keyword', 'meta_title', 'meta_description', 'image_alt', 'notes'] as $field) {
             $data[$field] = trim((string) ($data[$field] ?? ''));
         }
+        $data['meta_title'] = mb_substr($data['meta_title'], 0, 120);
+        $data['meta_description'] = mb_substr($data['meta_description'], 0, 320);
+        $data['focus_keyword'] = mb_substr($data['focus_keyword'], 0, 100);
 
         // Keep a few formatting tags and strip their attributes.
         $data['description'] = preg_replace(

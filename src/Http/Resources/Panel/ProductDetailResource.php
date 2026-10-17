@@ -163,6 +163,9 @@ class ProductDetailResource extends ProductResource
         
         $base['main_video'] = $mainVideo;
 
+        // Everything the storefront needs in <head>: title, description, canonical, robots, OG and JSON-LD.
+        $base['seo'] = app(\RMS\Shop\Services\SeoService::class)->forProduct($this->resource);
+
         return $base;
     }
 }

@@ -462,7 +462,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
         $this->afterAdd($request, $product->id, $product);
 
         // Determine fragment to return to the same tab
-        $allowedTabs = ['tab_basic','tab_pricing','tab_attributes','tab_features','tab_images','tab_video'];
+        $allowedTabs = ['tab_basic','tab_pricing','tab_attributes','tab_features','tab_images','tab_video','tab_seo'];
         $activeTab = (string) $request->input('active_tab', 'tab_basic');
         if (!in_array($activeTab, $allowedTabs, true)) { $activeTab = 'tab_basic'; }
 
@@ -491,7 +491,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
         $this->afterUpdate($request, (int)$id, $product);
 
         // Determine fragment to return to the same tab
-        $allowedTabs = ['tab_basic','tab_pricing','tab_attributes','tab_features','tab_images','tab_video'];
+        $allowedTabs = ['tab_basic','tab_pricing','tab_attributes','tab_features','tab_images','tab_video','tab_seo'];
         $activeTab = (string) $request->input('active_tab', 'tab_basic');
         if (!in_array($activeTab, $allowedTabs, true)) { $activeTab = 'tab_basic'; }
 
@@ -505,6 +505,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
         if ($request->has('attributes_json') || $request->has('combinations_json')) {
             $this->saveAttributesAndCombinations((int)$id, $request);
         }
+        $this->saveSeoFields($request, $model);
     }
 
     protected function afterUpdate(Request $request, string|int $id, Model $model): void
@@ -513,6 +514,32 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
         if ($request->has('attributes_json') || $request->has('combinations_json')) {
             $this->saveAttributesAndCombinations((int)$id, $request);
         }
+        $this->saveSeoFields($request, $model);
+    }
+
+    /**
+     * SEO tab fields arrive as seo[...] with the main form, or alone from the tab's own save button.
+     */
+    private function saveSeoFields(Request $request, Model $product): void
+    {
+        if (!$request->has('seo') || !$product instanceof Product) {
+            return;
+        }
+
+        $fields = validator((array) $request->input('seo', []), \RMS\Shop\Services\SeoService::productFieldRules())->validate();
+        $fields['noindex'] = $request->boolean('seo.noindex');
+        app(\RMS\Shop\Services\SeoService::class)->saveProductFields($product, $fields);
+    }
+
+    public function updateSeoAjax(Request $request, int $productId): \Illuminate\Http\JsonResponse
+    {
+        $product = Product::query()->findOrFail($productId);
+        $this->saveSeoFields($request, $product);
+
+        return response()->json([
+            'ok' => true,
+            'seo' => app(\RMS\Shop\Services\SeoService::class)->forProduct($product->refresh()),
+        ]);
     }
 
     private function saveAttributesAndCombinations(int $productId, Request $request): void

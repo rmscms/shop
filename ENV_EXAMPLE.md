@@ -126,3 +126,21 @@ SHOP_AI_CATALOG_MAX_TOKENS=16000
 SHOP_AI_CATALOG_TIMEOUT=300
 # Optional: a sentence about your store so the copy fits your niche
 SHOP_AI_STORE_CONTEXT=
+
+
+# ============================================
+# SEO
+# ============================================
+# Public storefront address used in canonical URLs, Open Graph and JSON-LD
+SHOP_STOREFRONT_URL=https://example.com
+SHOP_SEO_PRODUCT_PATH=/product/{slug}
+SHOP_SEO_CATEGORY_PATH=/category/{slug}
+SHOP_SEO_BRAND_PATH=/brand/{slug}
+SHOP_SEO_SITE_NAME=
+# e.g. " | Digital Part" (added only when the title still fits in 60 chars)
+SHOP_SEO_TITLE_SUFFIX=
+# Absolute URL or storefront path of a fallback share image
+SHOP_SEO_DEFAULT_IMAGE=
+# Optional merchant details for Google (leave empty to omit)
+SHOP_SEO_SHIPPING_RATE=
+SHOP_SEO_RETURN_DAYS=

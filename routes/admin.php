@@ -100,6 +100,7 @@ Route::middleware([
         // Product custom routes
         Route::post('products/{product}/save-combinations', [ProductsController::class, 'saveCombinations'])->name('products.save-combinations');
         Route::post('products/{product}/basic/update', [ProductsController::class, 'updateBasicAjax'])->name('products.basic.update');
+        Route::post('products/{product}/seo/update', [ProductsController::class, 'updateSeoAjax'])->name('products.seo.update');
         Route::post('products/{product}/pricing/update', [ProductsController::class, 'updatePricingAjax'])->name('products.pricing.update');
         Route::post('products/{product}/save-features', [ProductsController::class, 'saveFeatures'])->name('products.save-features');
 

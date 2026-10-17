@@ -23,6 +23,7 @@ class ImageLibrary extends Model
         'size_bytes',
         'mime_type',
         'folder_id',
+        'alt',
     ];
 
     protected $casts = [

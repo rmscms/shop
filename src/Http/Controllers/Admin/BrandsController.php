@@ -48,6 +48,8 @@ class BrandsController extends ShopAdminController implements HasList, HasForm, 
             Field::textarea('description', trans('shop.brand.description'))->optional(),
             Field::number('sort', trans('shop.brand.sort'))->withDefaultValue(0)->required(),
             Field::boolean('is_active', trans('shop.brand.is_active'))->withDefaultValue(true),
+            Field::string('meta_title', 'عنوان سئو (حداکثر ۶۰ کاراکتر)')->optional(),
+            Field::textarea('meta_description', 'توضیح متا (۱۲۰ تا ۱۵۵ کاراکتر)')->optional(),
         ];
     }
 
@@ -75,6 +77,8 @@ class BrandsController extends ShopAdminController implements HasList, HasForm, 
             'description' => ['nullable', 'string'],
             'sort' => ['required', 'integer', 'min:0'],
             'is_active' => ['boolean'],
+            'meta_title' => ['nullable', 'string', 'max:120'],
+            'meta_description' => ['nullable', 'string', 'max:320'],
         ];
     }
 

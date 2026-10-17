@@ -12,11 +12,13 @@ class Category extends Model
     protected $table = 'categories';
 
     protected $fillable = [
-        'name', 'slug', 'parent_id', 'active', 'sort'
+        'name', 'slug', 'parent_id', 'active', 'sort',
+        'meta_title', 'meta_description', 'seo_content', 'noindex',
     ];
 
     protected $casts = [
         'active' => 'boolean',
+        'noindex' => 'boolean',
         'sort' => 'integer',
     ];
 

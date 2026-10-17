@@ -54,6 +54,7 @@
           <li class="nav-item"><a class="nav-link {{ empty($product) ? 'disabled' : '' }}" @if(!empty($product)) data-bs-toggle="tab" href="#tab_attributes" @else href="javascript:void(0)" @endif><i class="ph-sliders me-2"></i>@lang('shop.tabs.attributes')</a></li>
           <li class="nav-item"><a class="nav-link {{ empty($product) ? 'disabled' : '' }}" @if(!empty($product)) data-bs-toggle="tab" href="#tab_features" @else href="javascript:void(0)" @endif><i class="ph-list me-2"></i>ویژگی‌ها</a></li>
           <li class="nav-item"><a class="nav-link {{ empty($product) ? 'disabled' : '' }}" @if(!empty($product)) data-bs-toggle="tab" href="#tab_images" @else href="javascript:void(0)" @endif><i class="ph-image me-2"></i>@lang('shop.tabs.images')</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab_seo"><i class="ph-magnifying-glass me-2"></i>سئو</a></li>
           <li class="nav-item">
               <a class="nav-link" id="videos-tab" data-bs-toggle="tab" href="#videos" role="tab" aria-controls="videos" aria-selected="false">
                   <i class="ph ph-video-camera me-1"></i> @lang('shop::shop.tabs.videos')
@@ -149,6 +150,8 @@
           </div>
         </div>
       </div>
+
+      @include('shop::admin.products.partials.seo-tab')
 
       @if($enable_pricing_stock ?? true)
       <div id="tab_pricing" class="tab-pane fade p-3">

@@ -283,6 +283,21 @@ Links are checked to return a JPEG, PNG or WebP before they are stored. Photos f
 
 The plan call reads the whole list, so it has its own limits: `SHOP_AI_CATALOG_MAX_TOKENS` (default 16000) and `SHOP_AI_CATALOG_TIMEOUT` (default 300 s). Excel import uses `phpoffice/phpspreadsheet` when the app has it; otherwise save the sheet as CSV.
 
+## SEO
+
+Products, categories and brands carry their own SEO fields (meta title, meta description; products also focus keyword, canonical URL, noindex, GTIN and MPN; categories an intro text). Empty fields fall back to the item's name and text, so every page has usable tags from day one.
+
+- **Admin:** a **سئو** tab on the product form with length counters, keyword checks and a Google result preview (saves on its own or with the form); meta fields on the category and brand forms. The main image's alt text is edited in the same tab.
+- **AI:** the product assistant writes focus keyword, meta title (≤ 60 chars), meta description (120–155 chars) and image alt; tick **سئو** on the review page to store them.
+- **Storefront (headless):** `GET /api/v1/panel/products/{id}` includes a `seo` block, and `GET /api/v1/panel/seo/{products|categories|brands}/{slug}` returns title, description, canonical, robots, Open Graph, Twitter card and JSON-LD for a page. Print them in `<head>`, or in a Blade storefront use `@include('shop::seo.head', ['seo' => app(\RMS\Shop\Services\SeoService::class)->forProduct($product)])`.
+- **JSON-LD:** `Product`, or `ProductGroup` + `hasVariant` + `variesBy` when the product has combinations (Google's variant markup), `Offer` with price, availability and condition, `Brand`, `BreadcrumbList` from the category tree, `CollectionPage` + `ItemList` for categories. Prices are published in rial (`IRR`, toman × 10) because search engines only accept ISO currency codes. No ratings are emitted until real reviews exist.
+- **Sitemap:** `GET /api/v1/panel/seo/sitemap.xml` lists active, indexable products (with images), categories and brands at storefront URLs. Point `robots.txt` on the storefront at it (or proxy it as `/sitemap.xml`).
+- **Rules built in:** inactive or noindex products are published as `noindex,follow` and left out of the sitemap; `og:image` uses the original JPG/PNG (social apps don't show AVIF); the large size variant is added to JSON-LD.
+
+Set the storefront address on the server so canonical URLs and JSON-LD point at the public site: `SHOP_STOREFRONT_URL=https://example.com`, and adjust `SHOP_SEO_PRODUCT_PATH` (default `/product/{slug}`), category and brand paths to match the storefront's routes. See `config/seo.php` for the site name, title suffix, price multiplier, stock policy and optional shipping/return details.
+
+If the host app has published the shop's admin views (`resources/views/vendor/shop/admin/products/edit.blade.php`), add the SEO tab there too: a nav item linking to `#tab_seo` and `@include('shop::admin.products.partials.seo-tab')` inside `.tab-content`.
+
 ## Database Schema
 
 ### Main Tables

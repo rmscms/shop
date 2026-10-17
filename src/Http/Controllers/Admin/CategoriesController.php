@@ -45,6 +45,10 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
                 ->optional(),
             Field::number('sort', trans('shop.common.sort'))->withDefaultValue(0),
             Field::boolean('active', trans('shop.common.active'))->withDefaultValue(true),
+            Field::string('meta_title', 'عنوان سئو (حداکثر ۶۰ کاراکتر)')->optional(),
+            Field::textarea('meta_description', 'توضیح متا (۱۲۰ تا ۱۵۵ کاراکتر)')->optional(),
+            Field::textarea('seo_content', 'متن معرفی دسته (بالای صفحهٔ دسته نمایش داده می‌شود)')->optional(),
+            Field::boolean('noindex', 'در گوگل نمایش داده نشود (noindex)')->withDefaultValue(false),
         ];
     }
 
@@ -74,12 +78,16 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
             'parent_id' => ['nullable', 'integer'],
             'active' => ['boolean'],
             'sort' => ['nullable', 'integer'],
+            'meta_title' => ['nullable', 'string', 'max:120'],
+            'meta_description' => ['nullable', 'string', 'max:320'],
+            'seo_content' => ['nullable', 'string'],
+            'noindex' => ['boolean'],
         ];
     }
 
     public function boolFields(): array
     {
-        return ['active'];
+        return ['active', 'noindex'];
     }
 
     public function tree(Request $request)

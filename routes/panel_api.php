@@ -15,6 +15,7 @@ use RMS\Shop\Http\Controllers\Api\Panel\PaymentDriverController;
 use RMS\Shop\Http\Controllers\Api\Panel\ProductGalleryController;
 use RMS\Shop\Http\Controllers\Api\Panel\ProductMutationController;
 use RMS\Shop\Http\Controllers\Api\Panel\BrandController;
+use RMS\Shop\Http\Controllers\Api\Panel\SeoController;
 
 $prefix = trim(config('shop.panel_api.prefix', 'api/v1/panel'), '/');
 $middleware = config('shop.panel_api.middleware', ['api']);
@@ -47,6 +48,12 @@ Route::prefix($prefix)
         Route::get('brands', [BrandController::class, 'index'])->name('brands.index');
 
         Route::get('categories/tree', [CategoryController::class, 'tree'])->name('categories.tree');
+
+        // SEO for storefront pages (public)
+        Route::get('seo/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
+        Route::get('seo/products/{slug}', [SeoController::class, 'product'])->name('seo.products');
+        Route::get('seo/categories/{slug}', [SeoController::class, 'category'])->name('seo.categories');
+        Route::get('seo/brands/{slug}', [SeoController::class, 'brand'])->name('seo.brands');
         Route::get('addresses/provinces', [AddressController::class, 'provinces'])->name('addresses.provinces');
         Route::get('payment/drivers', [PaymentDriverController::class, 'index'])->name('payment.drivers.index');
         Route::get('currencies', [CurrencyController::class, 'index'])->name('currencies.index');

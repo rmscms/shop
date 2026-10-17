@@ -136,17 +136,31 @@
       </div>
     @endif
 
+    @php($seoTitle = $payload['meta_title'] ?? ($payload['seo_title'] ?? ''))
+    @php($seoDescription = $payload['meta_description'] ?? ($payload['seo_description'] ?? ''))
+    @php($hasSeo = filled($seoTitle) || filled($seoDescription) || filled($payload['focus_keyword'] ?? '') || filled($payload['image_alt'] ?? ''))
     <div class="card mb-3">
-      <div class="card-header"><h6 class="mb-0">سئو (برای کپی)</h6></div>
+      <div class="card-header d-flex align-items-center gap-2">
+        <input type="checkbox" class="form-check-input mt-0" form="ai-apply-form" name="fields[]" value="seo" id="ai-apply-seo"
+               @checked($hasSeo) @disabled(!$editable || !$hasSeo)>
+        <label for="ai-apply-seo" class="mb-0"><h6 class="mb-0">سئو</h6></label>
+        <span class="small text-muted">عنوان، توضیح متا، کلمهٔ کلیدی و alt عکس اصلی روی محصول ذخیره می‌شوند.</span>
+      </div>
       <div class="card-body">
         @foreach([
-          'عنوان سئو' => $payload['seo_title'] ?? '',
-          'توضیح متا' => $payload['seo_description'] ?? '',
-          'کلمات کلیدی' => implode('، ', $payload['keywords'] ?? []),
-          'متن alt عکس' => $payload['image_alt'] ?? '',
-        ] as $label => $value)
+          ['عنوان سئو', $seoTitle, (int) config('shop.seo.title_max', 60)],
+          ['توضیح متا', $seoDescription, (int) config('shop.seo.description_max', 155)],
+          ['کلمهٔ کلیدی اصلی', $payload['focus_keyword'] ?? '', null],
+          ['متن alt عکس اصلی', $payload['image_alt'] ?? '', null],
+          ['عبارت‌های مرتبط (داخلی)', implode('، ', $payload['keywords'] ?? []), null],
+        ] as [$label, $value, $max])
           <div class="mb-2">
-            <label class="form-label small text-muted mb-1">{{ $label }}</label>
+            <label class="form-label small text-muted mb-1 d-flex justify-content-between">
+              <span>{{ $label }}</span>
+              @if($max)
+                <span @class(['text-danger' => mb_strlen($value) > $max])>{{ mb_strlen($value) }} / {{ $max }}</span>
+              @endif
+            </label>
             <div class="input-group">
               <input type="text" class="form-control" readonly value="{{ $value }}">
               <button type="button" class="btn btn-outline-secondary" data-copy="{{ $value }}">کپی</button>
