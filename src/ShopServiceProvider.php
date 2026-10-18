@@ -80,10 +80,13 @@ class ShopServiceProvider extends ServiceProvider
             __DIR__.'/../resources/lang/fa/shop.php' => lang_path('fa/shop.php'),
         ], 'shop-lang');
 
-        // Publish assets (JS/CSS for admin panel)
+        // Publish assets (JS/CSS for admin panel).
+        // public/admin is served directly. Paths under /vendor/ are blocked by Apache.
         $this->publishes([
             __DIR__.'/../public/admin/js' => public_path('vendor/shop/admin/js'),
             __DIR__.'/../public/admin/css' => public_path('vendor/shop/admin/css'),
+            __DIR__.'/../public/admin/js/image-library.js' => public_path('admin/js/image-library.js'),
+            __DIR__.'/../public/admin/css/image-library.css' => public_path('admin/css/image-library.css'),
         ], 'shop-assets');
 
         // Publish plugins separately
@@ -135,11 +138,40 @@ class ShopServiceProvider extends ServiceProvider
             }
         });
 
+        $this->mirrorImageLibraryAssets();
+
         // Load translations
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'shop');
 
         // Load migrations
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+    }
+
+    /**
+     * Apache refuses URLs under /vendor/, so the image library assets must live in public/admin.
+     */
+    private function mirrorImageLibraryAssets(): void
+    {
+        $files = [
+            'js/image-library.js',
+            'css/image-library.css',
+        ];
+
+        foreach ($files as $relative) {
+            $source = __DIR__.'/../public/admin/'.$relative;
+            $target = public_path('admin/'.$relative);
+            if (!is_file($source)) {
+                continue;
+            }
+            if (is_file($target) && filemtime($target) >= filemtime($source) && filesize($target) === filesize($source)) {
+                continue;
+            }
+            $directory = dirname($target);
+            if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+                continue;
+            }
+            copy($source, $target);
+        }
     }
 }
 
