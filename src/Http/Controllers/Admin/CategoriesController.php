@@ -2,8 +2,10 @@
 
 namespace RMS\Shop\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RMS\Core\Contracts\Actions\ChangeBoolField;
+use RMS\Shop\Models\Category;
 use RMS\Core\Contracts\Filter\ShouldFilter;
 use RMS\Core\Contracts\Form\HasForm;
 use RMS\Core\Contracts\List\HasList;
@@ -82,6 +84,7 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
             'meta_description' => ['nullable', 'string', 'max:320'],
             'seo_content' => ['nullable', 'string'],
             'noindex' => ['boolean'],
+            'menu_image_id' => ['nullable', 'integer', 'exists:image_library,id'],
         ];
     }
 
@@ -118,12 +121,35 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
                             'index' => route('admin.shop.categories.index'),
                             'create' => route('admin.shop.categories.create'),
                             'edit' => route('admin.shop.categories.edit', ['category' => '__ID__']),
+                            'menuImage' => route('admin.shop.categories.menu-image', ['category' => '__ID__']),
+                            'picker' => route('admin.shop.image-library.picker'),
                         ],
+                        'csrf' => csrf_token(),
                     ],
                 ],
             ]);
 
         return $this->view();
+    }
+
+    public function updateMenuImage(Request $request, Category $category): JsonResponse
+    {
+        $validated = $request->validate([
+            'menu_image_id' => ['nullable', 'integer', 'exists:image_library,id'],
+        ]);
+
+        $category->menu_image_id = $validated['menu_image_id'] ?? null;
+        $category->save();
+        $category->load('menuImage:id,path,filename');
+
+        return response()->json([
+            'success' => true,
+            'message' => $category->menu_image_id ? 'تصویر منو ذخیره شد' : 'تصویر منو حذف شد',
+            'data' => [
+                'menu_image_id' => $category->menu_image_id,
+                'menu_image_url' => $category->menuImage?->url,
+            ],
+        ]);
     }
 
     public function treeData(Request $request)

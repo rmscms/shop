@@ -4,6 +4,7 @@ namespace RMS\Shop\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Brand extends Model
@@ -14,6 +15,7 @@ class Brand extends Model
         'name',
         'slug',
         'description',
+        'logo_path',
         'is_active',
         'sort',
         'meta_title',
@@ -41,6 +43,15 @@ class Brand extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'brand_id');
+    }
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (empty($this->logo_path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->logo_path);
     }
 }
 

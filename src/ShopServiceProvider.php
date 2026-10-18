@@ -164,6 +164,7 @@ class ShopServiceProvider extends ServiceProvider
             'js/products/features-new.js',
             'js/products/category-tree.js',
             'js/products/image-management.js',
+            'js/products/brand-select.js',
         ];
 
         foreach ($files as $relative) {

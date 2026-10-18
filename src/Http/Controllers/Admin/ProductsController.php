@@ -68,6 +68,8 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
     {
         $categories = Category::query()->orderBy('name')->pluck('name','id')->toArray();
         $brands = $this->getBrandOptions();
+        $brandItems = $this->getBrandSelectItems();
+        $brandList = $this->brandListForView($brands, $brandItems);
         $rate = CurrencyRate::query()->where('base_code','CNY')->where('quote_code','IRT')->orderByDesc('effective_at')->value('sell_rate');
 
         $categoryService = app(CategoryTreeService::class);
@@ -78,13 +80,14 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
         $this->view->usePackageNamespace('shop')
             ->setTheme('admin')
             ->setTpl('products.edit')
-            ->withPlugins([ 'confirm-modal', 'image-uploader', 'ckeditor', 'fancytree'])
+            ->withPlugins([ 'confirm-modal', 'image-uploader', 'ckeditor', 'fancytree', 'choices'])
             ->withCss('admin/css/products/edit.css', true)
             ->withJs('admin/js/products/edit.js', true)
             ->withJs('admin/js/products/attributes.js', true)
             ->withJs('admin/js/products/video.js', true)
             ->withJs('admin/js/products/features.js', true)
             ->withJs('admin/js/products/category-tree.js', true)
+            ->withJs('admin/js/products/brand-select.js', true)
             ->withVariables([
                 'product' => null,
                 'categories' => $categories,
@@ -93,6 +96,8 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
                 'categoryTree' => $categoryTree,
                 'defaultCategoryId' => $defaultCategoryId,
                 'brands' => $brands,
+                'brandItems' => $brandItems,
+                'brandList' => $brandList,
                 'enable_pricing_stock' => $enablePricingStock,
             ])
             ->withJsVariables([
@@ -136,6 +141,8 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
         $categoryTree = $categoryService->getTreeForPlugin($selectedCategoryId ? (int) $selectedCategoryId : null, false);
         $defaultCategoryId = $categoryService->defaultCategoryId();
         $brands = $this->getBrandOptions();
+        $brandItems = $this->getBrandSelectItems();
+        $brandList = $this->brandListForView($brands, $brandItems);
         $attrRows = ProductAttribute::query()
             ->where('product_id', (int)$id)
             ->orderBy('sort')
@@ -215,7 +222,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
         $this->view->usePackageNamespace('shop')
             ->setTheme('admin')
             ->setTpl('products.edit')
-            ->withPlugins([ 'confirm-modal', 'image-uploader', 'ckeditor', 'fancytree'])
+            ->withPlugins([ 'confirm-modal', 'image-uploader', 'ckeditor', 'fancytree', 'choices'])
             ->withCss('admin/css/products/edit.css', true)
             ->withJs('admin/js/products/edit.js', true)
             ->withJs('admin/js/products/attributes.js', true)
@@ -223,6 +230,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
             ->withJs('admin/js/products/features-new.js', true)
             ->withJs('admin/js/products/category-tree.js', true)
             ->withJs('admin/js/products/image-management.js', true)
+            ->withJs('admin/js/products/brand-select.js', true)
 
             ->withVariables([
                 'product' => $product,
@@ -236,6 +244,8 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
                 'categoryTree' => $categoryTree,
                 'defaultCategoryId' => $defaultCategoryId,
                 'brands' => $brands,
+                'brandItems' => $brandItems,
+                'brandList' => $brandList,
                 'enable_pricing_stock' => $enablePricingStock,
             ])
             ->withJsVariables([
@@ -606,6 +616,34 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
     private function getBrandOptions(): array
     {
         return app(\RMS\Shop\Services\BrandService::class)->getOptions();
+    }
+
+    private function getBrandSelectItems(): array
+    {
+        return app(\RMS\Shop\Services\BrandService::class)->getSelectItems();
+    }
+
+    /**
+     * @param  array<int|string, string>  $brands
+     * @param  list<array{id:int,name:string,logo_url:?string}>  $brandItems
+     * @return list<array{id:int,name:string,logo_url:?string}>
+     */
+    private function brandListForView(array $brands, array $brandItems): array
+    {
+        if ($brandItems !== []) {
+            return $brandItems;
+        }
+
+        $list = [];
+        foreach ($brands as $id => $name) {
+            $list[] = [
+                'id' => (int) $id,
+                'name' => (string) $name,
+                'logo_url' => null,
+            ];
+        }
+
+        return $list;
     }
 
     public function saveCombinations(Request $request, int $productId)

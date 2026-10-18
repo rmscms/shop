@@ -12,7 +12,7 @@ class Category extends Model
     protected $table = 'categories';
 
     protected $fillable = [
-        'name', 'slug', 'parent_id', 'active', 'sort',
+        'name', 'slug', 'parent_id', 'active', 'sort', 'menu_image_id',
         'meta_title', 'meta_description', 'seo_content', 'noindex',
     ];
 
@@ -20,6 +20,7 @@ class Category extends Model
         'active' => 'boolean',
         'noindex' => 'boolean',
         'sort' => 'integer',
+        'menu_image_id' => 'integer',
     ];
 
     protected static function booted(): void
@@ -43,6 +44,11 @@ class Category extends Model
         return $this->hasMany(self::class, 'parent_id')->orderBy('sort')->orderBy('name');
     }
 
+    public function menuImage(): BelongsTo
+    {
+        return $this->belongsTo(ImageLibrary::class, 'menu_image_id');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('active', true);
@@ -57,6 +63,10 @@ class Category extends Model
     {
         Cache::forget('shop:categories:tree:active');
         Cache::forget('shop:categories:tree:all');
+        Cache::forget('storefront:menu-images:live');
+        Cache::forget('storefront:menu-images:preview');
+        Cache::forget('storefront:menu-categories:live');
+        Cache::forget('storefront:menu-categories:preview');
     }
 
     public static function ensureDefault(): ?self

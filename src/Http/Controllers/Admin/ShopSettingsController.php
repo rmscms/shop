@@ -40,6 +40,16 @@ class ShopSettingsController extends ShopAdminController
             ."@if(!empty(\$order->tracking_url))\n🔗 لینک رهگیری: {{ \$order->tracking_url }}\n@endif"
         );
 
+        // Storefront: SMS, OTP, Shahkar (Nitron)
+        $shahkarEnabled = (bool) ((int) Setting::get('storefront_shahkar_enabled', env('STOREFRONT_SHAHKAR_ENABLED', true) ? '1' : '0'));
+        $shahkarDriver = (string) Setting::get('storefront_shahkar_driver', env('STOREFRONT_SHAHKAR_DRIVER', 'fake'));
+        $smsDriver = (string) Setting::get('storefront_sms_driver', env('STOREFRONT_SMS_DRIVER', 'log'));
+        $nitronApiKeySet = (string) Setting::get('storefront_nitron_api_key', env('NITRON_SMS_API_KEY', '')) !== '';
+        $nitronBaseUrl = (string) Setting::get('storefront_nitron_base_url', env('NITRON_SMS_BASE_URL', 'https://sms.nitron.pro/api'));
+        $nitronOtpTemplate = (string) Setting::get('storefront_nitron_otp_template_code', env('NITRON_OTP_TEMPLATE_CODE', ''));
+        $nitronOtpParam = (string) Setting::get('storefront_nitron_otp_parameter_key', env('NITRON_OTP_PARAMETER_KEY', 'code'));
+        $otpShowOnScreen = (bool) ((int) Setting::get('storefront_otp_show_on_screen', env('STOREFRONT_OTP_ON_SCREEN', env('APP_ENV') !== 'production') ? '1' : '0'));
+
         $this->view->usePackageNamespace('shop')
             ->setTheme('admin')
             ->setTpl('settings')
@@ -53,6 +63,14 @@ class ShopSettingsController extends ShopAdminController
                 'tg_send_channel' => $tgSendToChannel,
                 'tg_status_send_user' => $tgStatusSendToUser,
                 'whatsapp_order_update_template' => $whatsappOrderUpdateTemplate,
+                'shahkar_enabled' => $shahkarEnabled,
+                'shahkar_driver' => $shahkarDriver,
+                'sms_driver' => $smsDriver,
+                'nitron_api_key_set' => $nitronApiKeySet,
+                'nitron_base_url' => $nitronBaseUrl,
+                'nitron_otp_template_code' => $nitronOtpTemplate,
+                'nitron_otp_parameter_key' => $nitronOtpParam,
+                'otp_show_on_screen' => $otpShowOnScreen,
             ]);
         return $this->view();
     }
@@ -70,6 +88,14 @@ class ShopSettingsController extends ShopAdminController
             'tg_send_channel' => ['sometimes','boolean'],
             'tg_status_send_user' => ['sometimes','boolean'],
             'whatsapp_order_update_template' => ['required','string','max:2000'],
+            'shahkar_enabled' => ['sometimes', 'boolean'],
+            'shahkar_driver' => ['required', 'in:fake,nitron'],
+            'sms_driver' => ['required', 'in:log,nitron'],
+            'nitron_api_key' => ['nullable', 'string', 'max:500'],
+            'nitron_base_url' => ['required', 'string', 'max:500'],
+            'nitron_otp_template_code' => ['nullable', 'string', 'max:200'],
+            'nitron_otp_parameter_key' => ['nullable', 'string', 'max:80'],
+            'otp_show_on_screen' => ['sometimes', 'boolean'],
         ];
         $messages = [
             'required' => 'فیلد :attribute الزامی است.',
@@ -84,6 +110,14 @@ class ShopSettingsController extends ShopAdminController
             'tg_send_channel' => 'ارسال به کانال تلگرام',
             'tg_status_send_user' => 'ارسال به کاربر در تلگرام',
             'whatsapp_order_update_template' => 'تمپلیت واتس‌اپ بروزرسانی سفارش',
+            'shahkar_enabled' => 'فعال بودن شاهکار',
+            'shahkar_driver' => 'درایور شاهکار',
+            'sms_driver' => 'درایور پیامک',
+            'nitron_api_key' => 'کلید API Nitron',
+            'nitron_base_url' => 'آدرس API Nitron',
+            'nitron_otp_template_code' => 'کد تمپلیت OTP',
+            'nitron_otp_parameter_key' => 'کلید پارامتر OTP',
+            'otp_show_on_screen' => 'نمایش کد OTP روی صفحه',
         ];
         $data = $request->validate($rules, $messages, $attributes);
 
@@ -104,6 +138,19 @@ class ShopSettingsController extends ShopAdminController
         Setting::set('shop_telegram_status_send_to_user', $request->boolean('tg_status_send_user') ? '1' : '0');
 
         Setting::set('shop_whatsapp_order_update_template', (string) $data['whatsapp_order_update_template']);
+
+        Setting::set('storefront_shahkar_enabled', $request->boolean('shahkar_enabled') ? '1' : '0');
+        Setting::set('storefront_shahkar_driver', (string) $data['shahkar_driver']);
+        Setting::set('storefront_sms_driver', (string) $data['sms_driver']);
+        Setting::set('storefront_nitron_base_url', rtrim((string) $data['nitron_base_url'], '/'));
+        Setting::set('storefront_nitron_otp_template_code', (string) ($data['nitron_otp_template_code'] ?? ''));
+        Setting::set('storefront_nitron_otp_parameter_key', (string) ($data['nitron_otp_parameter_key'] ?? 'code'));
+        Setting::set('storefront_otp_show_on_screen', $request->boolean('otp_show_on_screen') ? '1' : '0');
+
+        $apiKey = trim((string) $request->input('nitron_api_key', ''));
+        if ($apiKey !== '') {
+            Setting::set('storefront_nitron_api_key', $apiKey);
+        }
 
         Setting::clearCache();
 

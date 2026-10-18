@@ -171,6 +171,7 @@ return [
 
     'brand' => [
         'name' => 'نام برند',
+        'logo' => 'لوگوی برند',
         'slug' => 'لینک برند',
         'description' => 'توضیحات',
         'is_active' => 'وضعیت',

@@ -2,9 +2,10 @@
 
 namespace RMS\Shop\Services;
 
-use RMS\Shop\Models\Category;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+use RMS\Shop\Models\Category;
 
 class CategoryTreeService
 {
@@ -68,7 +69,9 @@ class CategoryTreeService
             $query->where('active', true);
         }
 
-        return $query->get(['id', 'name', 'slug', 'parent_id', 'active', 'sort']);
+        return $query
+            ->with('menuImage:id,path,filename')
+            ->get(['id', 'name', 'slug', 'parent_id', 'active', 'sort', 'menu_image_id']);
     }
 
     protected function ensureDefaultCategory(): ?Category
@@ -100,6 +103,8 @@ class CategoryTreeService
                     'active' => (bool) $cat->active,
                     'sort' => (int) $cat->sort,
                     'depth' => $depth,
+                    'menu_image_id' => $cat->menu_image_id ? (int) $cat->menu_image_id : null,
+                    'menu_image_url' => $cat->menuImage?->url,
                 ],
             ];
 

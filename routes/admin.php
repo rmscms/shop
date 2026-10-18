@@ -80,6 +80,7 @@ Route::middleware([
         // Category tree routes
         Route::get('categories/tree', [CategoriesController::class, 'tree'])->name('categories.tree');
         Route::get('categories/tree/data', [CategoriesController::class, 'treeData'])->name('categories.tree.data');
+        Route::put('categories/{category}/menu-image', [CategoriesController::class, 'updateMenuImage'])->name('categories.menu-image');
 
         // Categories. Static list routes (clear-filter, export) must be registered
         // before the resource, or {category} swallows them.
@@ -192,6 +193,7 @@ Route::middleware([
         Route::resource('user-points', UserPointsController::class)->only(['index']);
 
         // Image Library
+        Route::get('image-library/picker', [ImageLibraryController::class, 'pickerImages'])->name('image-library.picker');
         Route::post('image-library/upload', [ImageLibraryController::class, 'upload'])->name('image-library.upload');
         Route::get('image-library/folders/tree', [ImageLibraryController::class, 'foldersTree'])->name('image-library.folders.tree');
         Route::post('image-library/folders', [ImageLibraryController::class, 'storeFolder'])->name('image-library.folders.store');

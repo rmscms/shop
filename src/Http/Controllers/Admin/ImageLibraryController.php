@@ -244,6 +244,33 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
     /**
      * Get images for product modal (with pagination and smart search)
      */
+    /**
+     * Paginated image library for generic pickers (category menu, etc.).
+     */
+    public function pickerImages(Request $request): JsonResponse
+    {
+        $search = (string) $request->get('search', '');
+        $perPage = 20;
+        $paginatedImages = ImageLibraryService::searchImages($search, $perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $paginatedImages->map(static fn ($image) => [
+                'id' => $image->id,
+                'filename' => $image->filename,
+                'url' => $image->url,
+                'avif_url' => $image->avif_url,
+            ]),
+            'pagination' => [
+                'current_page' => $paginatedImages->currentPage(),
+                'last_page' => $paginatedImages->lastPage(),
+                'per_page' => $paginatedImages->perPage(),
+                'total' => $paginatedImages->total(),
+                'has_more' => $paginatedImages->hasMorePages(),
+            ],
+        ]);
+    }
+
     public function getProductImages(Product $product, Request $request): JsonResponse
     {
         // Get search query and page

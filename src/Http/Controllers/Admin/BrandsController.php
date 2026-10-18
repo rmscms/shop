@@ -2,17 +2,21 @@
 
 namespace RMS\Shop\Http\Controllers\Admin;
 
-use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
 use RMS\Core\Contracts\Filter\ShouldFilter;
 use RMS\Core\Contracts\Form\HasForm;
 use RMS\Core\Contracts\List\HasList;
+use RMS\Core\Contracts\Upload\HasUploadConfig;
 use RMS\Core\Data\Field;
+use RMS\Core\Data\UploadConfig;
+use RMS\Core\Traits\Controllers\UploadFileControllerHelper;
 use RMS\Shop\Models\Brand;
 
-class BrandsController extends ShopAdminController implements HasList, HasForm, ShouldFilter
+class BrandsController extends ShopAdminController implements HasList, HasForm, ShouldFilter, HasUploadConfig
 {
+    use UploadFileControllerHelper;
+
     public function table(): string
     {
         return 'shop_brands';
@@ -45,6 +49,9 @@ class BrandsController extends ShopAdminController implements HasList, HasForm, 
         return [
             Field::string('name', trans('shop.brand.name'))->required(),
             Field::string('slug', trans('shop.brand.slug'))->optional(),
+            Field::image('logo_path', trans('shop.brand.logo'))
+                ->withHint('JPG, PNG, WebP — حداکثر ۲ مگابایت')
+                ->optional(),
             Field::textarea('description', trans('shop.brand.description'))->optional(),
             Field::number('sort', trans('shop.brand.sort'))->withDefaultValue(0)->required(),
             Field::boolean('is_active', trans('shop.brand.is_active'))->withDefaultValue(true),
@@ -57,6 +64,7 @@ class BrandsController extends ShopAdminController implements HasList, HasForm, 
     {
         return [
             Field::make('id')->withTitle(trans('shop.common.id'))->sortable()->width('70px'),
+            Field::image('logo_path', trans('shop.brand.logo'))->thumbnail(36, 36)->width('70px'),
             Field::make('name')->withTitle(trans('shop.brand.name'))->searchable()->sortable(),
             Field::make('slug')->withTitle(trans('shop.brand.slug'))->sortable()->width('160px'),
             Field::number('sort')->withTitle(trans('shop.brand.sort'))->width('90px'),
@@ -74,6 +82,7 @@ class BrandsController extends ShopAdminController implements HasList, HasForm, 
         return [
             'name' => ['required', 'string', 'max:190'],
             'slug' => ['nullable', 'string', 'max:190', 'unique:shop_brands,slug,'.request()->route('brand')],
+            'logo_path' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
             'description' => ['nullable', 'string'],
             'sort' => ['required', 'integer', 'min:0'],
             'is_active' => ['boolean'],
@@ -85,6 +94,18 @@ class BrandsController extends ShopAdminController implements HasList, HasForm, 
     public function boolFields(): array
     {
         return ['is_active'];
+    }
+
+    public function getUploadConfig(): array
+    {
+        return [
+            'logo_path' => UploadConfig::create('logo_path')
+                ->path('uploads/brands/logos')
+                ->types(['jpg', 'jpeg', 'png', 'webp'])
+                ->maxSize(2048)
+                ->ajaxUpload(true)
+                ->listThumbnailSize(36, 36),
+        ];
     }
 
     public function renderProductsCount($row): string
@@ -99,4 +120,3 @@ class BrandsController extends ShopAdminController implements HasList, HasForm, 
         return (string) ((int) ($value ?? 0));
     }
 }
-
