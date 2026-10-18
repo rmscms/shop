@@ -18,7 +18,15 @@
     let uploadFilesInput;
     let uploadPreview;
     let uploadPreviewImages;
+    let uploadDropzone;
+    let uploadBrowse;
+    let uploadSummary;
+    let uploadTotal;
     let startUploadBtn;
+    let uploadQueue = [];
+    let uploadSeq = 0;
+    let uploadBusy = false;
+    const maxUploadBytes = 10 * 1024 * 1024;
 
     // Delete modal elements
     let deleteImagePreview;
@@ -48,6 +56,10 @@
         uploadFilesInput = document.getElementById('upload-files');
         uploadPreview = document.getElementById('upload-preview');
         uploadPreviewImages = document.getElementById('upload-preview-images');
+        uploadDropzone = document.getElementById('upload-dropzone');
+        uploadBrowse = document.getElementById('upload-browse');
+        uploadSummary = document.getElementById('upload-summary');
+        uploadTotal = document.getElementById('upload-total');
         startUploadBtn = document.getElementById('start-upload-btn');
 
         deleteImagePreview = document.getElementById('delete-image-preview');
@@ -84,15 +96,41 @@
             });
         }
 
-        // Upload
-        if (uploadBtn && uploadInput) {
-            uploadBtn.addEventListener('click', () => uploadInput.click());
+        if (uploadBtn && uploadModal) {
+            uploadBtn.addEventListener('click', () => uploadModal.show());
+        }
+
+        if (uploadInput) {
             uploadInput.addEventListener('change', handleFileSelection);
         }
 
-        // Upload modal
+        if (uploadBrowse && uploadFilesInput) {
+            uploadBrowse.addEventListener('click', () => uploadFilesInput.click());
+        }
+
         if (uploadFilesInput) {
-            uploadFilesInput.addEventListener('change', handleUploadFileSelection);
+            uploadFilesInput.addEventListener('change', function () {
+                addUploadFiles(uploadFilesInput.files);
+                uploadFilesInput.value = '';
+            });
+        }
+
+        if (uploadDropzone) {
+            ['dragenter', 'dragover'].forEach(function (eventName) {
+                uploadDropzone.addEventListener(eventName, function (event) {
+                    event.preventDefault();
+                    uploadDropzone.classList.add('is-dragover');
+                });
+            });
+            ['dragleave', 'drop'].forEach(function (eventName) {
+                uploadDropzone.addEventListener(eventName, function (event) {
+                    event.preventDefault();
+                    uploadDropzone.classList.remove('is-dragover');
+                });
+            });
+            uploadDropzone.addEventListener('drop', function (event) {
+                addUploadFiles(event.dataTransfer ? event.dataTransfer.files : []);
+            });
         }
 
         if (startUploadBtn) {
@@ -127,174 +165,217 @@
         window.location.href = url.toString();
     }
 
-    // File selection for main upload button
     function handleFileSelection(e) {
-        if (!uploadFilesInput) {
-            return;
-        }
-
-        const files = Array.from(e.target.files);
-        if (files.length > 0) {
-            uploadFilesInput.files = e.target.files;
-            handleUploadFileSelection({ target: uploadFilesInput });
-            if (uploadModal) {
-                uploadModal.show();
-            }
+        addUploadFiles(e.target.files);
+        e.target.value = '';
+        if (uploadModal) {
+            uploadModal.show();
         }
     }
 
-    // Handle upload file selection
-    function handleUploadFileSelection(e) {
-        if (!uploadPreview || !uploadPreviewImages || !startUploadBtn) {
-            return;
-        }
-
-        const files = Array.from(e.target.files);
-
-        if (files.length === 0) {
-            uploadPreview.classList.add('d-none');
-            startUploadBtn.disabled = true;
-            return;
-        }
-
-        // Show preview
-        uploadPreview.classList.remove('d-none');
-        uploadPreviewImages.innerHTML = '';
-
-        files.forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const previewItem = createUploadPreviewItem(e.target.result, file.name, index);
-                uploadPreviewImages.appendChild(previewItem);
+    function addUploadFiles(fileList) {
+        Array.from(fileList || []).forEach(function (file) {
+            const item = {
+                id: ++uploadSeq,
+                file: file,
+                status: 'ready',
+                progress: 0,
+                error: '',
+                previewUrl: file.type && file.type.indexOf('image/') === 0 ? URL.createObjectURL(file) : ''
             };
-            reader.readAsDataURL(file);
-        });
 
-        startUploadBtn.disabled = false;
-    }
-
-    // Create upload preview item
-    function createUploadPreviewItem(src, filename, index) {
-        const col = document.createElement('div');
-        col.className = 'col-6 col-md-4 col-lg-3';
-
-        col.innerHTML = `
-            <div class="upload-preview-item">
-                <img src="${src}" alt="${filename}">
-                <button type="button" class="remove-btn" data-index="${index}" title="حذف">
-                    <i class="ph-x"></i>
-                </button>
-                <div class="progress">
-                    <div class="progress-bar" style="width: 0%"></div>
-                </div>
-                <small class="text-center d-block mt-1 text-truncate" title="${filename}">${filename}</small>
-            </div>
-        `;
-
-        // Remove button event
-        col.querySelector('.remove-btn').addEventListener('click', function() {
-            col.remove();
-            updateFileListAfterRemove(index);
-        });
-
-        return col;
-    }
-
-    // Update file list after removing a file
-    function updateFileListAfterRemove(removedIndex) {
-        if (!uploadFilesInput || !uploadPreview || !startUploadBtn) {
-            return;
-        }
-
-        const dt = new DataTransfer();
-        const files = Array.from(uploadFilesInput.files);
-
-        files.forEach((file, index) => {
-            if (index !== removedIndex) {
-                dt.items.add(file);
+            const allowedType = /^image\/(jpeg|png|webp|avif)$/.test(file.type) || /\.(jpe?g|png|webp|avif)$/i.test(file.name);
+            if (!allowedType) {
+                item.status = 'invalid';
+                item.error = 'فرمت مجاز نیست';
+            } else if (file.size > maxUploadBytes) {
+                item.status = 'invalid';
+                item.error = 'بیشتر از ۱۰ مگابایت است';
             }
+
+            uploadQueue.push(item);
         });
 
-        uploadFilesInput.files = dt.files;
-
-        if (uploadFilesInput.files.length === 0) {
-            uploadPreview.classList.add('d-none');
-            startUploadBtn.disabled = true;
-        }
+        renderUploadQueue();
     }
 
-    // Start upload process
-    async function startUpload() {
-        if (!uploadFilesInput || !uploadPreview || !uploadPreviewImages || !startUploadBtn) {
+    function renderUploadQueue() {
+        if (!uploadPreview || !uploadPreviewImages) {
             return;
         }
 
-        const files = Array.from(uploadFilesInput.files);
-        if (files.length === 0) return;
+        const ready = uploadQueue.filter(function (item) { return item.status === 'ready' || item.status === 'error'; });
+        const invalid = uploadQueue.filter(function (item) { return item.status === 'invalid'; });
+        const readyBytes = ready.reduce(function (sum, item) { return sum + item.file.size; }, 0);
 
+        uploadPreview.classList.toggle('d-none', uploadQueue.length === 0);
+        if (uploadSummary) {
+            uploadSummary.classList.toggle('d-none', uploadQueue.length === 0);
+            uploadSummary.textContent = uploadQueue.length
+                ? ready.length + ' فایل آماده' + (invalid.length ? ' · ' + invalid.length + ' فایل رد شد' : '')
+                : '';
+        }
+        if (uploadTotal) {
+            uploadTotal.textContent = ready.length ? formatBytes(readyBytes) : '';
+        }
+        if (startUploadBtn) {
+            startUploadBtn.disabled = uploadBusy || ready.length === 0;
+            if (!uploadBusy) {
+                startUploadBtn.textContent = ready.length > 1 ? 'آپلود ' + ready.length + ' تصویر' : 'شروع آپلود';
+            }
+        }
+
+        uploadPreviewImages.innerHTML = '';
+        uploadQueue.forEach(function (item) {
+            uploadPreviewImages.appendChild(createUploadQueueItem(item));
+        });
+    }
+
+    function createUploadQueueItem(item) {
+        const row = document.createElement('div');
+        row.className = 'upload-queue-item'
+            + (item.status === 'invalid' || item.status === 'error' ? ' is-invalid' : '')
+            + (item.status === 'done' ? ' is-done' : '');
+        row.innerHTML = ''
+            + '<img alt="" src="' + (item.previewUrl || '') + '">'
+            + '<div class="upload-queue-meta">'
+            + '<strong title="' + escapeHtml(item.file.name) + '">' + escapeHtml(item.file.name) + '</strong>'
+            + '<span class="' + (item.error ? 'is-error' : '') + '">' + escapeHtml(item.error || statusLabel(item) + ' · ' + formatBytes(item.file.size)) + '</span>'
+            + '<div class="progress"><div class="progress-bar" style="width:' + item.progress + '%"></div></div>'
+            + '</div>'
+            + (item.status === 'uploading' || item.status === 'done' ? '' : '<button type="button" class="remove-btn" title="حذف از صف"><i class="ph-x"></i></button>');
+
+        const removeBtn = row.querySelector('.remove-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function () {
+                removeUploadItem(item.id);
+            });
+        }
+
+        return row;
+    }
+
+    function statusLabel(item) {
+        if (item.status === 'uploading') return 'در حال آپلود';
+        if (item.status === 'done') return 'آپلود شد';
+        if (item.status === 'error') return 'خطا';
+        return 'آماده';
+    }
+
+    function removeUploadItem(id) {
+        const item = uploadQueue.find(function (entry) { return entry.id === id; });
+        if (item && item.previewUrl) {
+            URL.revokeObjectURL(item.previewUrl);
+        }
+        uploadQueue = uploadQueue.filter(function (entry) { return entry.id !== id; });
+        renderUploadQueue();
+    }
+
+    async function startUpload() {
+        const pending = uploadQueue.filter(function (item) {
+            return item.status === 'ready' || item.status === 'error';
+        });
+        if (!pending.length || uploadBusy) {
+            return;
+        }
+
+        uploadBusy = true;
         startUploadBtn.disabled = true;
         startUploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> در حال آپلود...';
 
-        const previewItems = uploadPreviewImages.querySelectorAll('.upload-preview-item');
-
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const previewItem = previewItems[i];
+        for (let i = 0; i < pending.length; i++) {
+            const item = pending[i];
+            item.status = 'uploading';
+            item.error = '';
+            item.progress = 0;
+            renderUploadQueue();
 
             try {
-                await uploadSingleFile(file, previewItem);
+                await uploadSingleFile(item.file, function (percent) {
+                    item.progress = percent;
+                    const bar = uploadPreviewImages && uploadPreviewImages.children[uploadQueue.indexOf(item)];
+                    const progress = bar && bar.querySelector('.progress-bar');
+                    if (progress) {
+                        progress.style.width = percent + '%';
+                    }
+                });
+                item.status = 'done';
+                item.progress = 100;
+                item.error = '';
             } catch (error) {
-                console.error('Upload failed:', error);
-                showErrorToast(`خطا در آپلود ${file.name}: ${error.message}`);
+                item.status = 'error';
+                item.error = error.message || 'آپلود نشد';
             }
+            renderUploadQueue();
         }
 
-        // Reset form and reload page
-        if (uploadModal) {
-            uploadModal.hide();
-        }
-        uploadFilesInput.value = '';
-        uploadPreview.classList.add('d-none');
-        startUploadBtn.disabled = false;
-        startUploadBtn.innerHTML = 'شروع آپلود';
+        uploadBusy = false;
+        const failed = uploadQueue.some(function (item) { return item.status === 'error'; });
+        const uploaded = uploadQueue.some(function (item) { return item.status === 'done'; });
 
-        // Reload to show new images
-        window.location.reload();
+        if (!failed && uploaded) {
+            window.location.reload();
+            return;
+        }
+
+        renderUploadQueue();
+        if (failed) {
+            showErrorToast('بعضی فایل‌ها آپلود نشدند. همان‌ها را دوباره بفرستید.');
+        }
     }
 
-    // Upload single file
-    async function uploadSingleFile(file, previewItem) {
-        const formData = new FormData();
-        formData.append('image', file);
+    function uploadSingleFile(file, onProgress) {
+        return new Promise(function (resolve, reject) {
+            if (!uploadRoute) {
+                reject(new Error('مسیر آپلود تنظیم نشده است'));
+                return;
+            }
 
-        const progressBar = previewItem.querySelector('.progress-bar');
-
-        if (!uploadRoute) {
-            throw new Error('upload route not configured');
-        }
-
-        const response = await fetch(uploadRoute, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': config.csrf,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
+            const xhr = new XMLHttpRequest();
+            const formData = new FormData();
+            formData.append('image', file);
+            xhr.open('POST', uploadRoute);
+            xhr.setRequestHeader('X-CSRF-TOKEN', config.csrf);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('Accept', 'application/json');
+            xhr.upload.onprogress = function (event) {
+                if (event.lengthComputable && onProgress) {
+                    onProgress(Math.round((event.loaded / event.total) * 100));
+                }
+            };
+            xhr.onerror = function () {
+                reject(new Error('ارتباط قطع شد'));
+            };
+            xhr.onload = function () {
+                let result = {};
+                try {
+                    result = JSON.parse(xhr.responseText || '{}');
+                } catch (e) {
+                    result = {};
+                }
+                if (xhr.status >= 200 && xhr.status < 300 && result.success) {
+                    resolve(result);
+                    return;
+                }
+                const validation = result.errors && result.errors.image && result.errors.image[0];
+                reject(new Error(validation || result.message || 'آپلود نشد'));
+            };
+            xhr.send(formData);
         });
+    }
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
+    function formatBytes(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
 
-        const result = await response.json();
-
-        if (!result.success) {
-            throw new Error(result.message || 'Upload failed');
-        }
-
-        // Update progress
-        progressBar.style.width = '100%';
-        previewItem.style.opacity = '0.6';
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
     }
 
     // Handle image card clicks

@@ -124,8 +124,13 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
     public function upload(Request $request): JsonResponse
     {
         $request->validate([
-            'image' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:5120'],
+            'image' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:10240'],
             'folder_id' => ['nullable', 'integer'],
+        ], [
+            'image.required' => 'فایلی دریافت نشد. سقف آپلود PHP را هم بررسی کنید.',
+            'image.image' => 'فقط فایل تصویری مجاز است.',
+            'image.mimes' => 'فقط JPG، PNG، WebP و AVIF مجاز است.',
+            'image.max' => 'حجم هر تصویر حداکثر ۱۰ مگابایت است.',
         ]);
 
         try {

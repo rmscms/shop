@@ -124,7 +124,7 @@ class ImageLibraryController extends BaseController
     public function store(Request $request)
     {
         $request->validate([
-            'image' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:5120'],
+            'image' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:10240'],
         ]);
 
         try {

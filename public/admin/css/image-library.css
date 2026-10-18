@@ -36,6 +36,126 @@
     line-height: 1.2;
 }
 
+/* Multi upload */
+.upload-dropzone {
+    border: 1.5px dashed var(--bs-border-color, #c5ced9);
+    border-radius: 16px;
+    padding: 28px 16px;
+    text-align: center;
+    background: var(--bs-tertiary-bg, rgba(0, 0, 0, 0.03));
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.upload-dropzone i {
+    display: block;
+    font-size: 36px;
+    margin-bottom: 8px;
+    color: var(--bs-primary, #1674c4);
+}
+
+.upload-dropzone strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.upload-dropzone p {
+    margin: 0 0 12px;
+    color: var(--bs-secondary-color, #6c757d);
+    font-size: 13px;
+}
+
+.upload-dropzone small {
+    display: block;
+    margin-top: 10px;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.upload-dropzone.is-dragover {
+    border-color: var(--bs-primary, #1674c4);
+    background: rgba(22, 116, 196, 0.12);
+}
+
+.upload-summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.upload-queue-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 12px;
+    background: var(--bs-body-bg, #fff);
+}
+
+.upload-queue-item.is-invalid {
+    border-color: rgba(220, 53, 69, 0.55);
+}
+
+.upload-queue-item.is-done {
+    opacity: 0.72;
+}
+
+.upload-queue-item img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex: none;
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.upload-queue-meta {
+    min-width: 0;
+    flex: 1;
+}
+
+.upload-queue-meta strong {
+    display: block;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.upload-queue-meta span {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.upload-queue-meta .is-error {
+    color: #dc3545;
+}
+
+.upload-queue-item .progress {
+    height: 4px;
+    margin-top: 8px;
+}
+
+.upload-queue-item .remove-btn {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--bs-secondary-color, #6c757d);
+    flex: none;
+}
+
+.upload-queue-item .remove-btn:hover {
+    background: rgba(220, 53, 69, 0.12);
+    color: #dc3545;
+}
+
 /* Upload preview */
 .upload-preview-item {
     position: relative;
