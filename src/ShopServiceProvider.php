@@ -172,7 +172,7 @@ class ShopServiceProvider extends ServiceProvider
             if (!is_file($source)) {
                 continue;
             }
-            if (is_file($target) && filemtime($target) >= filemtime($source) && filesize($target) === filesize($source)) {
+            if (is_file($target) && filemtime($target) >= filemtime($source)) {
                 continue;
             }
             $directory = dirname($target);
