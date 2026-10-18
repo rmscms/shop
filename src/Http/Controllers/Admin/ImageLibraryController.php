@@ -174,10 +174,6 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
         try {
             $image = ImageLibrary::findOrFail($id);
 
-            if (!$image->canBeDeleted()) {
-                return back()->withErrors('این تصویر قابل حذف نیست زیرا در محصولاتی استفاده شده است');
-            }
-
             $deleted = ImageLibraryService::deleteImage($image);
 
             if ($deleted) {
@@ -197,13 +193,6 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
     {
         try {
             $image = ImageLibrary::findOrFail($id);
-
-            if (!$image->canBeDeleted()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'این تصویر قابل حذف نیست زیرا در محصولاتی استفاده شده است'
-                ], 422);
-            }
 
             $deleted = ImageLibraryService::deleteImage($image);
 

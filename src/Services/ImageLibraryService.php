@@ -114,21 +114,22 @@ class ImageLibraryService
     }
 
     /**
-     * Delete image from library (only if no assignments)
+     * Delete an image, its files, and its product assignments.
      */
     public static function deleteImage(ImageLibrary $image): bool
     {
-        if (!$image->canBeDeleted()) {
-            return false;
+        $disk = Storage::disk('public');
+        foreach ($image->variants as $variant) {
+            if ($variant->path) {
+                $disk->delete($variant->path);
+            }
         }
 
         $path = $image->path;
-        $disk = Storage::disk('public');
         $disk->delete($path);
         $disk->delete(ImageLibrary::resolveAvifPath($path));
 
-        // Delete from database
-        return $image->delete();
+        return (bool) $image->delete();
     }
 
     /**

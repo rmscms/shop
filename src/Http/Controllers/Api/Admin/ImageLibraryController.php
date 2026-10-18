@@ -162,10 +162,6 @@ class ImageLibraryController extends BaseController
         try {
             $image = ImageLibrary::findOrFail($id);
 
-            if (!$image->canBeDeleted()) {
-                return $this->apiError(['image' => ['این تصویر قابل حذف نیست زیرا در محصولاتی استفاده شده است']], 422);
-            }
-
             $deleted = ImageLibraryService::deleteImage($image);
 
             if ($deleted) {
