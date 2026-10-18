@@ -81,21 +81,22 @@ Route::middleware([
         Route::get('categories/tree', [CategoriesController::class, 'tree'])->name('categories.tree');
         Route::get('categories/tree/data', [CategoriesController::class, 'treeData'])->name('categories.tree.data');
 
-        // Categories
-        Route::resource('categories', CategoriesController::class);
+        // Categories. Static list routes (clear-filter, export) must be registered
+        // before the resource, or {category} swallows them.
         RouteHelper::adminResource(CategoriesController::class, 'categories');
+        Route::resource('categories', CategoriesController::class);
 
         // Brands
-        Route::resource('brands', BrandsController::class);
         RouteHelper::adminResource(BrandsController::class, 'brands');
+        Route::resource('brands', BrandsController::class);
 
         // Image Sizes
-        Route::resource('image-sizes', ImageSizesController::class);
         RouteHelper::adminResource(ImageSizesController::class, 'image-sizes');
+        Route::resource('image-sizes', ImageSizesController::class);
 
         // Products
-        Route::resource('products', ProductsController::class);
         RouteHelper::adminResource(ProductsController::class, 'products');
+        Route::resource('products', ProductsController::class);
 
         // Product custom routes
         Route::post('products/{product}/save-combinations', [ProductsController::class, 'saveCombinations'])->name('products.save-combinations');
@@ -135,13 +136,13 @@ Route::middleware([
         Route::post('products/attributes/definitions', [ProductAttributeLookupController::class, 'storeDefinition'])->name('products.attributes.definitions.store');
         Route::post('products/attributes/values', [ProductAttributeLookupController::class, 'storeValue'])->name('products.attributes.values.store');
         // Orders (limited to index, show only)
-        Route::resource('orders', $ordersControllerClass, [
+        RouteHelper::adminResource($ordersControllerClass, 'orders', [
             'export' => true,
             'sort' => false,
             'toggle_active' => false,
             'batch_actions' => [],
         ]);
-        RouteHelper::adminResource($ordersControllerClass, 'orders', [
+        Route::resource('orders', $ordersControllerClass, [
             'export' => true,
             'sort' => false,
             'toggle_active' => false,
@@ -163,32 +164,32 @@ Route::middleware([
         Route::post('orders/{order}/retry-sync', [$ordersControllerClass, 'retrySync'])->name('orders.retry-sync');
         Route::post('orders/{order}/retry-payment', [$ordersControllerClass, 'retryPayment'])->name('orders.retry-payment');
         // Basic resources
-        Route::resource('carts', CartsController::class)->only(['index', 'show', 'destroy']);
         RouteHelper::adminResource(CartsController::class, 'carts', [
             'export' => false,
             'sort' => false,
         ]);
+        Route::resource('carts', CartsController::class)->only(['index', 'show', 'destroy']);
 
-        Route::resource('currencies', CurrenciesController::class);
         RouteHelper::adminResource(CurrenciesController::class, 'currencies');
+        Route::resource('currencies', CurrenciesController::class);
 
-        Route::resource('currency-rates', CurrencyRatesController::class);
         RouteHelper::adminResource(CurrencyRatesController::class, 'currency-rates');
+        Route::resource('currency-rates', CurrencyRatesController::class);
 
-        Route::resource('product-feature-categories', ProductFeatureCategoriesController::class);
         RouteHelper::adminResource(ProductFeatureCategoriesController::class, 'product-feature-categories');
+        Route::resource('product-feature-categories', ProductFeatureCategoriesController::class);
 
-        Route::resource('product-purchase-stats', ProductPurchaseStatsController::class)->only(['index']);
         RouteHelper::adminResource(ProductPurchaseStatsController::class, 'product-purchase-stats', [
             'toggle_active' => false,
             'batch_actions' => [],
         ]);
+        Route::resource('product-purchase-stats', ProductPurchaseStatsController::class)->only(['index']);
 
-        Route::resource('user-points', UserPointsController::class)->only(['index']);
         RouteHelper::adminResource(UserPointsController::class, 'user-points', [
             'toggle_active' => false,
             'batch_actions' => [],
         ]);
+        Route::resource('user-points', UserPointsController::class)->only(['index']);
 
         // Image Library
         Route::post('image-library/upload', [ImageLibraryController::class, 'upload'])->name('image-library.upload');
@@ -198,8 +199,8 @@ Route::middleware([
         Route::delete('image-library/folders/{folder}', [ImageLibraryController::class, 'destroyFolder'])->name('image-library.folders.destroy');
         Route::post('image-library/images/{image}/move', [ImageLibraryController::class, 'moveImage'])->name('image-library.images.move');
         Route::delete('image-library/{image}/ajax', [ImageLibraryController::class, 'ajaxDestroy'])->name('image-library.ajax-destroy');
-        Route::resource('image-library', ImageLibraryController::class);
         RouteHelper::adminResource(ImageLibraryController::class, 'image-library');
+        Route::resource('image-library', ImageLibraryController::class);
         Route::post('image-library/{id}/assign', [ImageLibraryController::class, 'assign'])->name('image-library.assign');
         Route::post('image-library/{id}/detach', [ImageLibraryController::class, 'detach'])->name('image-library.detach');
         Route::post('image-library/{id}/generate-avif', [ImageLibraryController::class, 'generateAvif'])->name('image-library.generate-avif');
@@ -238,8 +239,8 @@ Route::middleware([
         Route::put('video-library/folders/{folder}', [VideoLibraryController::class, 'updateFolder'])->name('video-library.folders.update');
         Route::delete('video-library/folders/{folder}', [VideoLibraryController::class, 'destroyFolder'])->name('video-library.folders.destroy');
         Route::post('video-library/videos/{video}/move', [VideoLibraryController::class, 'moveVideo'])->name('video-library.videos.move');
-        Route::resource('video-library', VideoLibraryController::class);
         RouteHelper::adminResource(VideoLibraryController::class, 'video-library');
+        Route::resource('video-library', VideoLibraryController::class);
         Route::post('video-library/{id}/assign', [VideoLibraryController::class, 'assign'])->name('video-library.assign');
         Route::post('video-library/{id}/detach', [VideoLibraryController::class, 'detach'])->name('video-library.detach');
 
