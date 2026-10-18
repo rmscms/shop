@@ -82,14 +82,19 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
         $this->title = __('shop.image_library.title');
 
         $search = $request->get('search');
-        $images = ImageLibraryService::searchImages($search);
+        $allowedPerPage = [50, 100, 300];
+        $perPage = (int) $request->integer('per_page', 50);
+        if (! in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 50;
+        }
+        $images = ImageLibraryService::searchImages($search, $perPage);
 
         $this->view->usePackageNamespace('shop')
             ->setTheme('admin')
             ->setTpl('image-library.index')
             ->withCss('admin/css/image-library.css', true)
             ->withJs('admin/js/image-library.js', true)
-            ->withVariables(compact('images', 'search'))
+            ->withVariables(compact('images', 'search', 'perPage'))
             ->withJsVariables([
                 'ImageLibraryConfig' => [
                     'csrf' => csrf_token(),
