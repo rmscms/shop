@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="{{ asset(config('cms.admin_theme') . '/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset(config('cms.admin_theme') . '/css/fonts/font-face.css') }}">
     <link rel="stylesheet" href="{{ asset(config('cms.admin_theme') . '/css/icons/phosphor/styles.min.css') }}">
-    <link rel="stylesheet" href="{{ route('shop.admin-login-css') }}">
+    <link rel="stylesheet" href="{{ asset(config('cms.admin_theme') . '/css/login.css') }}">
 
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
@@ -78,13 +78,13 @@
 
     $tagline = \Illuminate\Support\Facades\Lang::has('auth.tagline')
         ? trans('auth.tagline')
-        : trans('shop::admin_login.tagline');
+        : trans('shop::shop.admin_login.tagline');
     $slogan = \Illuminate\Support\Facades\Lang::has('auth.slogan')
         ? trans('auth.slogan')
-        : trans('shop::admin_login.slogan');
+        : trans('shop::shop.admin_login.slogan');
     $loginPlaceholder = \Illuminate\Support\Facades\Lang::has('auth.email_or_username_placeholder')
         ? trans('auth.email_or_username_placeholder')
-        : trans('shop::admin_login.email_or_username_placeholder');
+        : trans('shop::shop.admin_login.email_or_username_placeholder');
 @endphp
 
 <div class="login-page">

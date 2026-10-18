@@ -343,17 +343,19 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
                 ->sortable(false)
                 ->customMethod('renderListThumb'),
             // Bind ID explicitly to base alias to avoid collisions (e.g., categories.id)
-            Field::make('id', 'a.id')->withTitle(trans('shop.common.id'))->sortable()->width('80px'),
-            Field::make('name')->withTitle(trans('shop.product.name'))->searchable()->sortable(),
-            Field::make('sku')->withTitle(trans('shop.product.sku'))->searchable()->sortable()->width('140px'),
+            Field::make('id', 'a.id')->withTitle(trans('shop.common.id'))->sortable()->filterKey('a.id')->width('80px'),
+            Field::make('name')->withTitle(trans('shop.product.name'))->searchable()->sortable()->filterKey('a.name'),
+            Field::make('sku')->withTitle(trans('shop.product.sku'))->searchable()->sortable()->filterKey('a.sku')->width('140px'),
             Field::select('category_id')->withTitle(trans('shop.product.category'))
                 ->setOptions(['' => trans('shop.common.all')] + $this->getCategoryOptions())
                 ->filterType(Field::SELECT)
+                ->filterKey('a.category_id')
                 ->customMethod('renderCategoryName')
                 ->width('160px'),
             Field::select('brand_id')->withTitle(trans('shop.brand.name'))
                 ->setOptions(['' => trans('shop.common.all')] + $this->getBrandOptions())
                 ->filterType(Field::SELECT)
+                ->filterKey('a.brand_id')
                 ->customMethod('renderBrandName')
                 ->width('160px'),
             Field::make('price_irt', 'price')
@@ -371,8 +373,8 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
                 ->searchable(false)
                 ->sortable(false)
                 ->width('160px'),
-            Field::boolean('active')->withTitle(trans('shop.product.active'))->sortable()->width('100px'),
-            Field::date('created_at')->withTitle(trans('shop.common.created_at'))->sortable()->width('140px'),
+            Field::boolean('active')->withTitle(trans('shop.product.active'))->sortable()->filterKey('a.active')->width('100px'),
+            Field::date('created_at')->withTitle(trans('shop.common.created_at'))->sortable()->filterKey('a.created_at')->width('140px'),
         ];
     }
 
