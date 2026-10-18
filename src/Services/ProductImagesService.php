@@ -6,8 +6,10 @@ use RMS\Shop\Models\Product;
 use RMS\Shop\Models\ProductCombination;
 use RMS\Shop\Models\ProductCombinationImage;
 use RMS\Shop\Models\ProductCombinationValue;
+use RMS\Shop\Models\ImageAssignment;
 use RMS\Shop\Models\ImageLibrary;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -145,14 +147,28 @@ class ProductImagesService
     }
 
     /**
-     * Detach image from product
+     * Detach image from product (and from this product's combinations).
+     * Keeps the file in the image library.
      */
     public static function detachFromProduct(int $productId, int $imageId): bool
     {
         $product = Product::findOrFail($productId);
         $image = ImageLibrary::findOrFail($imageId);
-        
-        return ImageLibraryService::detachImage($image, $product);
+
+        $detachedFromProduct = ImageLibraryService::detachImage($image, $product);
+
+        // Storefront gallery also shows combination-linked shots; clear those too.
+        ImageAssignment::query()
+            ->where('image_id', $image->id)
+            ->where('assignable_type', ProductCombination::class)
+            ->whereIn('assignable_id', function ($query) use ($product) {
+                $query->select('id')
+                    ->from('product_combinations')
+                    ->where('product_id', $product->id);
+            })
+            ->delete();
+
+        return $detachedFromProduct;
     }
 
     /**
@@ -167,12 +183,27 @@ class ProductImagesService
     }
 
     /**
-     * Update sort order for product images
+     * Update sort order for product images.
+     * items: [{ id: image_id, sort: int }, ...]
      */
     public static function updateSort(int $productId, array $sortData): bool
     {
         $product = Product::findOrFail($productId);
-        
-        return ImageLibraryService::updateSort($product, $sortData);
+
+        try {
+            DB::transaction(function () use ($product, $sortData) {
+                foreach ($sortData as $item) {
+                    ImageAssignment::query()
+                        ->where('image_id', (int) $item['id'])
+                        ->where('assignable_type', Product::class)
+                        ->where('assignable_id', $product->id)
+                        ->update(['sort' => (int) $item['sort']]);
+                }
+            });
+
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }
