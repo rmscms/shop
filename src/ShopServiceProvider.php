@@ -155,6 +155,15 @@ class ShopServiceProvider extends ServiceProvider
         $files = [
             'js/image-library.js',
             'css/image-library.css',
+            'css/products/edit.css',
+            'js/products/edit.js',
+            'js/products/attributes.js',
+            'js/products/video.js',
+            'js/products/videos.js',
+            'js/products/features.js',
+            'js/products/features-new.js',
+            'js/products/category-tree.js',
+            'js/products/image-management.js',
         ];
 
         foreach ($files as $relative) {

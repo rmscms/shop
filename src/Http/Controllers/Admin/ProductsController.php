@@ -79,12 +79,12 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
             ->setTheme('admin')
             ->setTpl('products.edit')
             ->withPlugins([ 'confirm-modal', 'image-uploader', 'ckeditor', 'fancytree'])
-            ->withCss('vendor/shop/admin/css/products/edit.css', true)
-            ->withJs('vendor/shop/admin/js/products/edit.js', true)
-            ->withJs('vendor/shop/admin/js/products/attributes.js', true)
-            ->withJs('vendor/shop/admin/js/products/video.js', true)
-            ->withJs('vendor/shop/admin/js/products/features.js', true)
-            ->withJs('vendor/shop/admin/js/products/category-tree.js', true)
+            ->withCss('admin/css/products/edit.css', true)
+            ->withJs('admin/js/products/edit.js', true)
+            ->withJs('admin/js/products/attributes.js', true)
+            ->withJs('admin/js/products/video.js', true)
+            ->withJs('admin/js/products/features.js', true)
+            ->withJs('admin/js/products/category-tree.js', true)
             ->withVariables([
                 'product' => null,
                 'categories' => $categories,
@@ -216,13 +216,13 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
             ->setTheme('admin')
             ->setTpl('products.edit')
             ->withPlugins([ 'confirm-modal', 'image-uploader', 'ckeditor', 'fancytree'])
-            ->withCss('vendor/shop/admin/css/products/edit.css', true)
-            ->withJs('vendor/shop/admin/js/products/edit.js', true)
-            ->withJs('vendor/shop/admin/js/products/attributes.js', true)
-            ->withJs('vendor/shop/admin/js/products/videos.js', true)
-            ->withJs('vendor/shop/admin/js/products/features-new.js', true)
-            ->withJs('vendor/shop/admin/js/products/category-tree.js', true)
-            ->withJs('vendor/shop/admin/js/products/image-management.js', true)
+            ->withCss('admin/css/products/edit.css', true)
+            ->withJs('admin/js/products/edit.js', true)
+            ->withJs('admin/js/products/attributes.js', true)
+            ->withJs('admin/js/products/videos.js', true)
+            ->withJs('admin/js/products/features-new.js', true)
+            ->withJs('admin/js/products/category-tree.js', true)
+            ->withJs('admin/js/products/image-management.js', true)
 
             ->withVariables([
                 'product' => $product,
