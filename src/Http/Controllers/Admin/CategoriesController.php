@@ -14,6 +14,80 @@ use RMS\Shop\Services\CategoryTreeService;
 
 class CategoriesController extends ShopAdminController implements HasList, HasForm, ShouldFilter, ChangeBoolField
 {
+    protected function processCustomFields(Request &$request): void
+    {
+        foreach (['parent_id', 'menu_image_id'] as $nullable) {
+            if ($request->input($nullable) === '' || $request->input($nullable) === null) {
+                $request->merge([$nullable => null]);
+            }
+        }
+    }
+
+    public function create(Request $request)
+    {
+        $defaultParentId = $request->integer('parent_id') ?: null;
+        if ($defaultParentId && ! Category::query()->whereKey($defaultParentId)->exists()) {
+            $defaultParentId = null;
+        }
+
+        $this->title('افزودن دسته‌بندی');
+
+        $this->view->usePackageNamespace('shop')
+            ->setTheme('admin')
+            ->setTpl('categories.edit')
+            ->withPlugins(['choices'])
+            ->withCss('admin/css/categories/edit.css', true)
+            ->withJs('admin/js/categories/edit.js', true)
+            ->withVariables($this->categoryFormVariables(null, $defaultParentId))
+            ->withJsVariables([
+                'RMS' => [
+                    'ADMIN_SHOP_CATEGORY_FORM' => [
+                        'picker' => route('admin.shop.image-library.picker'),
+                    ],
+                ],
+            ]);
+
+        return $this->view();
+    }
+
+    public function edit(Request $request, $id)
+    {
+        /** @var Category|null $category */
+        $category = Category::query()->with('menuImage:id,path,filename')->find((int) $id);
+        abort_if(! $category, 404);
+
+        $this->title($category->name ?: 'ویرایش دسته');
+
+        $this->view->usePackageNamespace('shop')
+            ->setTheme('admin')
+            ->setTpl('categories.edit')
+            ->withPlugins(['choices'])
+            ->withCss('admin/css/categories/edit.css', true)
+            ->withJs('admin/js/categories/edit.js', true)
+            ->withVariables($this->categoryFormVariables($category, null))
+            ->withJsVariables([
+                'RMS' => [
+                    'ADMIN_SHOP_CATEGORY_FORM' => [
+                        'picker' => route('admin.shop.image-library.picker'),
+                    ],
+                ],
+            ]);
+
+        return $this->view();
+    }
+
+    private function categoryFormVariables(?Category $category, ?int $defaultParentId): array
+    {
+        $excludeId = $category?->id;
+        $parentOptions = ['' => trans('shop.common.none')] + $this->getCategoryOptions($excludeId);
+
+        return [
+            'category' => $category,
+            'parentOptions' => $parentOptions,
+            'defaultParentId' => $defaultParentId,
+        ];
+    }
+
     public function table(): string
     {
         return 'categories';
@@ -105,7 +179,7 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
             ->setTheme('admin')
             ->setTpl('categories.tree')
             ->withPlugins(['fancytree'])
-            ->withJs('vendor/shop/admin/js/categories/tree.js', true)
+            ->withJs('admin/js/categories/tree.js', true)
             ->withVariables([
                 'treeData' => $treeData,
                 'defaultCategoryId' => $defaultId,
@@ -171,8 +245,13 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
         ]);
     }
 
-    private function getCategoryOptions(): array
+    private function getCategoryOptions(?int $excludeId = null): array
     {
-        return app(CategoryTreeService::class)->flatOptions(false);
+        $options = app(CategoryTreeService::class)->flatOptions(false);
+        if ($excludeId) {
+            unset($options[$excludeId]);
+        }
+
+        return $options;
     }
 }
