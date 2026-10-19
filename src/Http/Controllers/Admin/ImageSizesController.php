@@ -2,12 +2,15 @@
 
 namespace RMS\Shop\Http\Controllers\Admin;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use RMS\Core\Contracts\Actions\ChangeBoolField;
 use RMS\Core\Contracts\Filter\ShouldFilter;
 use RMS\Core\Contracts\Form\HasForm;
 use RMS\Core\Contracts\List\HasList;
 use RMS\Core\Data\Field;
+use RMS\Shop\Services\ImageSizeService;
 
 class ImageSizesController extends ShopAdminController implements HasList, HasForm, ShouldFilter, ChangeBoolField
 {
@@ -29,6 +32,13 @@ class ImageSizesController extends ShopAdminController implements HasList, HasFo
     public function routeParameter(): string
     {
         return 'image_size';
+    }
+
+    public function setTplList(): void
+    {
+        $this->view
+            ->usePackageNamespace('shop')
+            ->setTpl('image-sizes.list');
     }
 
     public function getFieldsForm(): array
@@ -60,9 +70,17 @@ class ImageSizesController extends ShopAdminController implements HasList, HasFo
 
     public function rules(): array
     {
+        $ignoreId = $this->getRouteKey() ?? request('id');
+
         return [
             'name' => ['required', 'string', 'max:190'],
-            'slug' => ['required', 'string', 'max:190'],
+            'slug' => [
+                'required',
+                'string',
+                'max:190',
+                'alpha_dash',
+                Rule::unique('image_sizes', 'slug')->ignore($ignoreId),
+            ],
             'width' => ['nullable', 'integer', 'min:1'],
             'height' => ['nullable', 'integer', 'min:1'],
             'quality' => ['required', 'integer', 'min:1', 'max:100'],
@@ -74,5 +92,25 @@ class ImageSizesController extends ShopAdminController implements HasList, HasFo
     public function boolFields(): array
     {
         return ['active'];
+    }
+
+    /**
+     * Queue regeneration of size variants for all library images.
+     */
+    public function regenerate(Request $request): RedirectResponse
+    {
+        $force = $request->boolean('force', true);
+        $queued = ImageSizeService::regenerateAll($force);
+
+        return back()->with('success', trans('shop.image_size.regenerate_queued', [
+            'count' => $queued,
+        ]));
+    }
+
+    private function getRouteKey(): ?string
+    {
+        $param = request()->route()?->parameter($this->routeParameter());
+
+        return $param !== null ? (string) $param : null;
     }
 }

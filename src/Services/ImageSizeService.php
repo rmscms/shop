@@ -2,10 +2,11 @@
 
 namespace RMS\Shop\Services;
 
+use Illuminate\Support\Facades\Storage;
+use RMS\Shop\Jobs\GenerateImageSizeVariant;
 use RMS\Shop\Models\ImageLibrary;
 use RMS\Shop\Models\ImageSize;
 use RMS\Shop\Models\ImageSizeVariant;
-use RMS\Shop\Jobs\GenerateImageSizeVariant;
 
 class ImageSizeService
 {
@@ -23,6 +24,58 @@ class ImageSizeService
                 // Dispatch job to generate variant
                 GenerateImageSizeVariant::dispatch($image->id, $size->id);
             }
+        }
+    }
+
+    /**
+     * Queue regeneration for every library image × active size.
+     * When $force is true, existing size variants are removed first so
+     * dimension/quality changes actually rebuild files.
+     */
+    public static function regenerateAll(bool $force = true): int
+    {
+        $activeSizes = ImageSize::getActiveSizes();
+        if ($activeSizes->isEmpty()) {
+            return 0;
+        }
+
+        $queued = 0;
+
+        ImageLibrary::query()
+            ->orderBy('id')
+            ->chunkById(50, function ($images) use ($activeSizes, $force, &$queued) {
+                foreach ($images as $image) {
+                    foreach ($activeSizes as $size) {
+                        if ($force) {
+                            static::deleteVariant($image, $size);
+                        }
+
+                        if (static::shouldGenerateVariant($image, $size)) {
+                            GenerateImageSizeVariant::dispatch($image->id, $size->id);
+                            $queued++;
+                        }
+                    }
+                }
+            });
+
+        return $queued;
+    }
+
+    /**
+     * Remove DB row and disk file for one image/size variant.
+     */
+    public static function deleteVariant(ImageLibrary $image, ImageSize $size): void
+    {
+        $variants = ImageSizeVariant::query()
+            ->where('image_id', $image->id)
+            ->where('image_size_id', $size->id)
+            ->get();
+
+        foreach ($variants as $variant) {
+            if (!empty($variant->path) && Storage::disk('public')->exists($variant->path)) {
+                Storage::disk('public')->delete($variant->path);
+            }
+            $variant->delete();
         }
     }
 

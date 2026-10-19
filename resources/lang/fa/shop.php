@@ -147,6 +147,11 @@ return [
         'width' => 'عرض',
         'height' => 'ارتفاع',
         'quality' => 'کیفیت',
+        'regenerate' => 'بازسازی همه سایزها',
+        'regenerate_help' => 'بعد از تغییر عرض/ارتفاع/کیفیت، variantهای AVIF همه تصاویر را دوباره در صف بگذارید. صف shop-avif باید در حال اجرا باشد.',
+        'regenerate_confirm_title' => 'بازسازی سایز تصاویر',
+        'regenerate_confirm_body' => 'variantهای فعلی سایزهای فعال حذف و دوباره ساخته می‌شوند. این کار ممکن است چند دقیقه طول بکشد.',
+        'regenerate_queued' => ':count کار بازسازی در صف قرار گرفت.',
     ],
 
     'image_library' => [

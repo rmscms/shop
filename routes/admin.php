@@ -92,6 +92,7 @@ Route::middleware([
         Route::resource('brands', BrandsController::class);
 
         // Image Sizes
+        Route::post('image-sizes/regenerate', [ImageSizesController::class, 'regenerate'])->name('image-sizes.regenerate');
         RouteHelper::adminResource(ImageSizesController::class, 'image-sizes');
         Route::resource('image-sizes', ImageSizesController::class);
 
