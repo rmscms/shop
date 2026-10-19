@@ -254,6 +254,7 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
                 'data' => [
                     'id' => $image->id,
                     'filename' => $image->filename,
+                    'original_name' => $image->original_name,
                     'url' => $image->url,
                     'avif_url' => $image->avif_url,
                     'size_formatted' => $image->formatted_size,
@@ -361,6 +362,7 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
             'data' => $paginatedImages->getCollection()->map(static fn ($image) => [
                 'id' => $image->id,
                 'filename' => $image->filename,
+                'original_name' => $image->original_name,
                 'url' => $image->url,
                 'avif_url' => $image->avif_url,
                 'folder_id' => $image->folder_id,

@@ -55,7 +55,15 @@ class ImageLibraryController extends BaseController
                 ->where('mime_type', (string) $request->input('mime_type'));
 
             if ($search !== '') {
-                $query->where('filename', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('filename', 'like', "%{$search}%");
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('image_library', 'original_name')) {
+                        $q->orWhere('original_name', 'like', "%{$search}%");
+                    }
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('image_library', 'alt')) {
+                        $q->orWhere('alt', 'like', "%{$search}%");
+                    }
+                });
             }
             if ($unfiledOnly && MediaLibrarySchema::hasImageFolderColumn()) {
                 $query->whereNull('folder_id');

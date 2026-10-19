@@ -19,6 +19,7 @@ class ImageLibrary extends Model
 
     protected $fillable = [
         'filename',
+        'original_name',
         'path',
         'size_bytes',
         'mime_type',

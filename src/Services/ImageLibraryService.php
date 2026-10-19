@@ -9,6 +9,7 @@ use RMS\Shop\Models\Product;
 use RMS\Shop\Models\ProductCombination;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use RMS\Shop\Jobs\ConvertImageToAvif;
 use RMS\Shop\Services\ImageSizeService;
@@ -28,7 +29,15 @@ class ImageLibraryService
             $folder = $folderOrFilename;
         }
 
-        $filename = $filename ?: Str::uuid() . '.' . strtolower($file->getClientOriginalExtension());
+        $originalName = null;
+        if (is_object($file) && method_exists($file, 'getClientOriginalName')) {
+            $originalName = trim((string) $file->getClientOriginalName()) ?: null;
+        }
+
+        $extension = is_object($file) && method_exists($file, 'getClientOriginalExtension')
+            ? strtolower((string) $file->getClientOriginalExtension())
+            : 'jpg';
+        $filename = $filename ?: Str::uuid().'.'.$extension;
 
         $origDir = static::origDirectoryForFolder($folder);
         $avifDir = static::avifDirectoryForFolder($folder);
@@ -45,6 +54,14 @@ class ImageLibraryService
             'size_bytes' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
         ];
+
+        if (Schema::hasColumn('image_library', 'original_name') && $originalName) {
+            $payload['original_name'] = $originalName;
+        }
+
+        if (Schema::hasColumn('image_library', 'alt') && empty($payload['alt'] ?? null) && $originalName) {
+            $payload['alt'] = pathinfo($originalName, PATHINFO_FILENAME);
+        }
 
         if (MediaLibrarySchema::hasImageFolderColumn()) {
             $payload['folder_id'] = $folder?->id;
@@ -171,10 +188,19 @@ class ImageLibraryService
             ->where('name', 'like', "%{$search}%")
             ->pluck('id');
 
+        $nameMatch = function ($query) use ($search) {
+            $query->where('filename', 'like', "%{$search}%");
+            if (Schema::hasColumn('image_library', 'original_name')) {
+                $query->orWhere('original_name', 'like', "%{$search}%");
+            }
+            if (Schema::hasColumn('image_library', 'alt')) {
+                $query->orWhere('alt', 'like', "%{$search}%");
+            }
+        };
+
         if ($productIds->isEmpty()) {
-            // No products found, search by filename instead
             $builder = ImageLibrary::query()
-                ->where('filename', 'like', "%{$search}%")
+                ->where($nameMatch)
                 ->withCount('assignments')
                 ->orderBy('created_at', 'desc');
             static::applyImageFolderFilter($builder, $folderId, $unfiledOnly);
@@ -182,11 +208,13 @@ class ImageLibraryService
             return $builder->paginate($perPage);
         }
 
-        // Get images assigned to these products
+        // Images assigned to matching products, or matching name/original_name/alt
         $builder = ImageLibrary::query()
-            ->whereHas('assignments', function ($query) use ($productIds) {
-                $query->where('assignable_type', \RMS\Shop\Models\Product::class)
-                      ->whereIn('assignable_id', $productIds);
+            ->where(function ($query) use ($productIds, $nameMatch) {
+                $query->whereHas('assignments', function ($q) use ($productIds) {
+                    $q->where('assignable_type', \RMS\Shop\Models\Product::class)
+                        ->whereIn('assignable_id', $productIds);
+                })->orWhere($nameMatch);
             })
             ->withCount('assignments')
             ->orderBy('created_at', 'desc');
