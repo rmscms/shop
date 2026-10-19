@@ -64,7 +64,9 @@ class BrandsController extends ShopAdminController implements HasList, HasForm, 
     {
         return [
             Field::make('id')->withTitle(trans('shop.common.id'))->sortable()->width('70px'),
-            Field::image('logo_path', trans('shop.brand.logo'))->thumbnail(36, 36)->width('70px'),
+            Field::make('logo_path')->withTitle(trans('shop.brand.logo'))
+                ->type(Field::IMAGE)
+                ->width('70px'),
             Field::make('name')->withTitle(trans('shop.brand.name'))->searchable()->sortable(),
             Field::make('slug')->withTitle(trans('shop.brand.slug'))->sortable()->width('160px'),
             Field::number('sort')->withTitle(trans('shop.brand.sort'))->width('90px'),

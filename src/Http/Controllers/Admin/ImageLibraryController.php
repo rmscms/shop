@@ -52,7 +52,9 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
         return [
             Field::string('id', 'ID')->sortable(),
             Field::string('filename', trans('shop.image_library.filename'))->sortable(),
-            Field::image('path', trans('shop.image_library.image'))->thumbnail(50, 50),
+            Field::make('path')->withTitle(trans('shop.image_library.image'))
+                ->type(Field::IMAGE)
+                ->width('70px'),
             Field::string('formatted_size', trans('shop.image_library.size')),
             Field::string('mime_type', trans('shop.image_library.mime_type')),
             Field::number('assignments_count', trans('shop.image_library.usage_count')),
