@@ -37,12 +37,15 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
             ->setTpl('categories.edit')
             ->withPlugins(['choices'])
             ->withCss('admin/css/categories/edit.css', true)
-            ->withJs('admin/js/image-library-picker-folders.js', true)
+            ->withCss('admin/css/image-library-picker.css', true)
+            ->withCss('admin/css/image-library.css', true)
+            ->withJs('admin/js/image-library-picker.js', true)
             ->withJs('admin/js/categories/edit.js', true)
             ->withVariables($this->categoryFormVariables(null, $defaultParentId))
             ->withJsVariables([
                 'ADMIN_SHOP_CATEGORY_FORM' => [
                     'picker' => route('admin.shop.image-library.picker'),
+                    'foldersTree' => route('admin.shop.image-library.folders.tree'),
                 ],
             ]);
 
@@ -62,12 +65,15 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
             ->setTpl('categories.edit')
             ->withPlugins(['choices'])
             ->withCss('admin/css/categories/edit.css', true)
-            ->withJs('admin/js/image-library-picker-folders.js', true)
+            ->withCss('admin/css/image-library-picker.css', true)
+            ->withCss('admin/css/image-library.css', true)
+            ->withJs('admin/js/image-library-picker.js', true)
             ->withJs('admin/js/categories/edit.js', true)
             ->withVariables($this->categoryFormVariables($category, null))
             ->withJsVariables([
                 'ADMIN_SHOP_CATEGORY_FORM' => [
                     'picker' => route('admin.shop.image-library.picker'),
+                    'foldersTree' => route('admin.shop.image-library.folders.tree'),
                 ],
             ]);
 
@@ -177,7 +183,9 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
             ->setTheme('admin')
             ->setTpl('categories.tree')
             ->withPlugins(['fancytree'])
-            ->withJs('admin/js/image-library-picker-folders.js', true)
+            ->withCss('admin/css/image-library-picker.css', true)
+            ->withCss('admin/css/image-library.css', true)
+            ->withJs('admin/js/image-library-picker.js', true)
             ->withJs('admin/js/categories/tree.js', true)
             ->withVariables([
                 'treeData' => $treeData,
@@ -195,6 +203,7 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
                         'edit' => route('admin.shop.categories.edit', ['category' => '__ID__']),
                         'menuImage' => route('admin.shop.categories.menu-image', ['category' => '__ID__']),
                         'picker' => route('admin.shop.image-library.picker'),
+                        'foldersTree' => route('admin.shop.image-library.folders.tree'),
                     ],
                     'csrf' => csrf_token(),
                 ],
