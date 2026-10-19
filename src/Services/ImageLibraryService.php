@@ -271,12 +271,15 @@ class ImageLibraryService
     /**
      * Attach storefront slide/promo usage counts (settings JSON).
      *
-     * @param  \Illuminate\Contracts\Pagination\LengthAwarePaginator  $paginator
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * @param  \Illuminate\Contracts\Pagination\LengthAwarePaginator|\Illuminate\Support\Collection|iterable  $images
+     * @return mixed
      */
-    public static function decorateUsageCounts($paginator)
+    public static function decorateUsageCounts($images)
     {
-        $collection = $paginator->getCollection();
+        $collection = $images instanceof \Illuminate\Contracts\Pagination\Paginator
+            ? $images->getCollection()
+            : collect($images);
+
         $slideMap = [];
         $promoMap = [];
 
@@ -301,7 +304,10 @@ class ImageLibraryService
             // Settings optional
         }
 
-        $collection->each(function (ImageLibrary $image) use ($slideMap, $promoMap) {
+        $collection->each(function ($image) use ($slideMap, $promoMap) {
+            if (! $image instanceof ImageLibrary) {
+                return;
+            }
             if (! isset($image->categories_count)) {
                 $image->categories_count = 0;
             }
@@ -309,7 +315,7 @@ class ImageLibraryService
             $image->promo_count = $promoMap[$image->id] ?? 0;
         });
 
-        return $paginator;
+        return $images;
     }
 
     /**
