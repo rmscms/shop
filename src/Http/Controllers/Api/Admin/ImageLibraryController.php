@@ -46,20 +46,27 @@ class ImageLibraryController extends BaseController
     public function index(Request $request)
     {
         $perPage = min(100, max(1, (int) $request->integer('per_page', 20)));
-        $search = $request->input('search', '');
-
-        $query = ImageLibrary::query()
-            ->selectRaw('image_library.*, (SELECT COUNT(*) FROM image_assignments WHERE image_assignments.image_id = image_library.id) as assignments_count');
-
-        if ($search) {
-            $query->where('filename', 'like', "%{$search}%");
-        }
+        $search = (string) $request->input('search', '');
+        [$folderId, $unfiledOnly] = $this->folderFilterFromRequest($request);
 
         if ($request->filled('mime_type')) {
-            $query->where('mime_type', $request->input('mime_type'));
-        }
+            $query = ImageLibrary::query()
+                ->selectRaw('image_library.*, (SELECT COUNT(*) FROM image_assignments WHERE image_assignments.image_id = image_library.id) as assignments_count')
+                ->where('mime_type', (string) $request->input('mime_type'));
 
-        $images = $query->orderByDesc('id')->paginate($perPage);
+            if ($search !== '') {
+                $query->where('filename', 'like', "%{$search}%");
+            }
+            if ($unfiledOnly && MediaLibrarySchema::hasImageFolders()) {
+                $query->whereNull('folder_id');
+            } elseif ($folderId && MediaLibrarySchema::hasImageFolders()) {
+                $query->where('folder_id', $folderId);
+            }
+
+            $images = $query->orderByDesc('id')->paginate($perPage);
+        } else {
+            $images = ImageLibraryService::searchImages($search, $perPage, $folderId, $unfiledOnly);
+        }
 
         $data = ImageLibraryResource::collection($images->items())->toArray($request);
 
@@ -125,11 +132,16 @@ class ImageLibraryController extends BaseController
     {
         $request->validate([
             'image' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:10240'],
+            'folder_id' => ['nullable', 'integer'],
         ]);
 
         try {
             $file = $request->file('image');
-            $image = ImageLibraryService::uploadImage($file);
+            $folder = null;
+            if ($request->filled('folder_id') && MediaLibrarySchema::hasImageFolders()) {
+                $folder = ImageLibraryFolder::query()->findOrFail((int) $request->input('folder_id'));
+            }
+            $image = ImageLibraryService::uploadImage($file, $folder);
 
             return $this->apiSuccess((new ImageLibraryResource($image))->toArray(request()), [], 201);
         } catch (\Exception $e) {
@@ -426,5 +438,25 @@ class ImageLibraryController extends BaseController
             'path' => $folder->path,
             'parent_id' => $folder->parent_id,
         ];
+    }
+
+    /**
+     * @return array{0: ?int, 1: bool}
+     */
+    private function folderFilterFromRequest(Request $request): array
+    {
+        if (! MediaLibrarySchema::hasImageFolders()) {
+            return [null, false];
+        }
+
+        if ($request->boolean('unfiled_only')) {
+            return [null, true];
+        }
+
+        if ($request->filled('folder_id')) {
+            return [(int) $request->input('folder_id'), false];
+        }
+
+        return [null, false];
     }
 }

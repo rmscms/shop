@@ -11,9 +11,11 @@ use RMS\Core\Contracts\List\HasList;
 use RMS\Shop\Http\Controllers\Admin\ShopAdminController;
 use RMS\Core\Data\Field;
 use RMS\Shop\Models\ImageLibrary;
+use RMS\Shop\Models\ImageLibraryFolder;
 use RMS\Shop\Models\Product;
 use RMS\Shop\Services\ImageLibraryFolderService;
 use RMS\Shop\Services\ImageLibraryService;
+use RMS\Shop\Support\MediaLibrarySchema;
 
 class ImageLibraryController extends ShopAdminController implements HasList, HasForm, ShouldFilter
 {
@@ -89,21 +91,56 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
         if (! in_array($perPage, $allowedPerPage, true)) {
             $perPage = 50;
         }
-        $images = ImageLibraryService::searchImages($search, $perPage);
+
+        [$folderId, $unfiledOnly] = $this->folderFilterFromRequest($request);
+        $images = ImageLibraryService::searchImages($search, $perPage, $folderId, $unfiledOnly);
+
+        $foldersEnabled = MediaLibrarySchema::hasImageFolders();
+        $folderService = app(ImageLibraryFolderService::class);
+        $currentFolder = ($foldersEnabled && $folderId)
+            ? ImageLibraryFolder::query()->find($folderId)
+            : null;
+        $breadcrumbs = $foldersEnabled
+            ? ($unfiledOnly
+                ? [['id' => null, 'name' => 'بدون پوشه', 'path' => '']]
+                : ($currentFolder
+                    ? $folderService->breadcrumbs($currentFolder)
+                    : [['id' => null, 'name' => 'همه تصاویر', 'path' => '']]))
+            : [];
+        $folderOptions = $foldersEnabled ? $folderService->flatOptions() : [];
 
         $this->view->usePackageNamespace('shop')
             ->setTheme('admin')
             ->setTpl('image-library.index')
             ->withCss('admin/css/image-library.css', true)
             ->withJs('admin/js/image-library.js', true)
-            ->withVariables(compact('images', 'search', 'perPage'))
+            ->withVariables([
+                'images' => $images,
+                'search' => $search,
+                'perPage' => $perPage,
+                'folderId' => $folderId,
+                'unfiledOnly' => $unfiledOnly,
+                'foldersEnabled' => $foldersEnabled,
+                'breadcrumbs' => $breadcrumbs,
+                'folderOptions' => $folderOptions,
+            ])
             ->withJsVariables([
                 'ImageLibraryConfig' => [
                     'csrf' => csrf_token(),
+                    'folderId' => $folderId,
+                    'unfiledOnly' => $unfiledOnly,
+                    'foldersEnabled' => $foldersEnabled,
+                    'folderOptions' => $folderOptions,
                     'routes' => [
                         'upload' => route('admin.shop.image-library.upload'),
                         'destroy' => route('admin.shop.image-library.ajax-destroy', '__ID__'),
                         'generateAvif' => route('admin.shop.image-library.generate-avif', '__ID__'),
+                        'foldersTree' => route('admin.shop.image-library.folders.tree'),
+                        'foldersStore' => route('admin.shop.image-library.folders.store'),
+                        'foldersUpdate' => route('admin.shop.image-library.folders.update', ['folder' => '__ID__']),
+                        'foldersDestroy' => route('admin.shop.image-library.folders.destroy', ['folder' => '__ID__']),
+                        'imagesMove' => route('admin.shop.image-library.images.move', ['image' => '__ID__']),
+                        'index' => route('admin.shop.image-library.index'),
                     ],
                 ],
             ]);
@@ -253,7 +290,8 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
     {
         $search = (string) $request->get('search', '');
         $perPage = 20;
-        $paginatedImages = ImageLibraryService::searchImages($search, $perPage);
+        [$folderId, $unfiledOnly] = $this->folderFilterFromRequest($request);
+        $paginatedImages = ImageLibraryService::searchImages($search, $perPage, $folderId, $unfiledOnly);
 
         return response()->json([
             'success' => true,
@@ -262,7 +300,11 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
                 'filename' => $image->filename,
                 'url' => $image->url,
                 'avif_url' => $image->avif_url,
+                'folder_id' => $image->folder_id,
             ])->values()->all(),
+            'folders' => MediaLibrarySchema::hasImageFolders()
+                ? app(ImageLibraryFolderService::class)->flatOptions()
+                : [],
             'pagination' => [
                 'current_page' => $paginatedImages->currentPage(),
                 'last_page' => $paginatedImages->lastPage(),
@@ -275,37 +317,58 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
 
     public function getProductImages(Product $product, Request $request): JsonResponse
     {
-        // Get search query and page
         $search = $request->get('search', '');
-        $page = $request->get('page', 1);
         $perPage = 20;
+        [$folderId, $unfiledOnly] = $this->folderFilterFromRequest($request);
+        $paginatedImages = ImageLibraryService::searchImages($search, $perPage, $folderId, $unfiledOnly);
 
-        // Get paginated images from library
-        $paginatedImages = ImageLibraryService::searchImages($search, $perPage);
-
-        // Get already assigned image IDs for this product
         $assignedIds = $product->assignedImages()->pluck('image_library.id')->toArray();
 
         return response()->json([
             'success' => true,
-            'data' => $paginatedImages->map(function ($image) use ($assignedIds) {
+            'data' => $paginatedImages->getCollection()->map(function ($image) use ($assignedIds) {
                 return [
                     'id' => $image->id,
                     'filename' => $image->filename,
                     'url' => $image->url,
                     'avif_url' => $image->avif_url,
+                    'folder_id' => $image->folder_id,
                     'is_assigned' => in_array($image->id, $assignedIds),
                     'assignments_count' => $image->assignments_count,
                 ];
-            }),
+            })->values()->all(),
+            'folders' => MediaLibrarySchema::hasImageFolders()
+                ? app(ImageLibraryFolderService::class)->flatOptions()
+                : [],
             'pagination' => [
                 'current_page' => $paginatedImages->currentPage(),
                 'last_page' => $paginatedImages->lastPage(),
                 'per_page' => $paginatedImages->perPage(),
                 'total' => $paginatedImages->total(),
                 'has_more' => $paginatedImages->hasMorePages(),
-            ]
+            ],
         ]);
+    }
+
+    /**
+     * @return array{0: ?int, 1: bool}
+     */
+    private function folderFilterFromRequest(Request $request): array
+    {
+        if (! MediaLibrarySchema::hasImageFolders()) {
+            return [null, false];
+        }
+
+        $unfiledOnly = $request->boolean('unfiled_only');
+        if ($unfiledOnly) {
+            return [null, true];
+        }
+
+        if ($request->filled('folder_id')) {
+            return [(int) $request->input('folder_id'), false];
+        }
+
+        return [null, false];
     }
 
     /**

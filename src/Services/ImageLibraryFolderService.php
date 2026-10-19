@@ -36,15 +36,30 @@ class ImageLibraryFolderService
         $unfiledCount = $includeCounts
             ? ImageLibrary::query()->whereNull('folder_id')->count()
             : 0;
+        $allCount = $includeCounts
+            ? ImageLibrary::query()->count()
+            : 0;
 
         $tree = [[
+            'key' => 'all',
+            'title' => 'همه تصاویر'.($includeCounts ? ' ('.$allCount.')' : ''),
+            'folder' => true,
+            'expanded' => true,
+            'selected' => $selectedId === null,
+            'data' => [
+                'id' => null,
+                'type' => 'all',
+                'path' => '',
+            ],
+        ], [
             'key' => 'unfiled',
             'title' => 'بدون پوشه'.($includeCounts ? ' ('.$unfiledCount.')' : ''),
             'folder' => true,
             'expanded' => true,
+            'selected' => false,
             'data' => [
                 'id' => null,
-                'type' => 'virtual',
+                'type' => 'unfiled',
                 'path' => '',
             ],
         ]];
@@ -53,10 +68,33 @@ class ImageLibraryFolderService
         $tree = array_merge($tree, $children);
 
         if ($selectedId) {
+            $tree[0]['selected'] = false;
             $this->markSelected($tree, (string) $selectedId);
         }
 
         return $tree;
+    }
+
+    /**
+     * Flat list for move/select dropdowns: [['id' => int, 'name' => string, 'path' => string], ...]
+     */
+    public function flatOptions(): array
+    {
+        if (! MediaLibrarySchema::hasImageFolders()) {
+            return [];
+        }
+
+        return ImageLibraryFolder::query()
+            ->orderBy('path')
+            ->orderBy('name')
+            ->get(['id', 'name', 'path'])
+            ->map(fn (ImageLibraryFolder $folder) => [
+                'id' => $folder->id,
+                'name' => $folder->name,
+                'path' => $folder->path,
+                'label' => str_replace('/', ' / ', $folder->path),
+            ])
+            ->all();
     }
 
     public function breadcrumbs(?ImageLibraryFolder $folder): array

@@ -229,6 +229,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
             ->withJs('admin/js/products/videos.js', true)
             ->withJs('admin/js/products/features-new.js', true)
             ->withJs('admin/js/products/category-tree.js', true)
+            ->withJs('admin/js/image-library-picker-folders.js', true)
             ->withJs('admin/js/products/image-management.js', true)
             ->withJs('admin/js/products/brand-select.js', true)
 

@@ -24,6 +24,7 @@ class ImageLibraryResource extends JsonResource
             'filename' => (string) $this->filename,
             'path' => (string) $this->path,
             'url' => $url,
+            'folder_id' => $this->folder_id !== null ? (int) $this->folder_id : null,
             'mime_type' => (string) $this->mime_type,
             'size_bytes' => (int) ($this->size_bytes ?? 0),
             'formatted_size' => $this->formatted_size ?? null,

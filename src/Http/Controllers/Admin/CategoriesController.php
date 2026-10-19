@@ -37,6 +37,7 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
             ->setTpl('categories.edit')
             ->withPlugins(['choices'])
             ->withCss('admin/css/categories/edit.css', true)
+            ->withJs('admin/js/image-library-picker-folders.js', true)
             ->withJs('admin/js/categories/edit.js', true)
             ->withVariables($this->categoryFormVariables(null, $defaultParentId))
             ->withJsVariables([
@@ -61,6 +62,7 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
             ->setTpl('categories.edit')
             ->withPlugins(['choices'])
             ->withCss('admin/css/categories/edit.css', true)
+            ->withJs('admin/js/image-library-picker-folders.js', true)
             ->withJs('admin/js/categories/edit.js', true)
             ->withVariables($this->categoryFormVariables($category, null))
             ->withJsVariables([
@@ -175,6 +177,7 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
             ->setTheme('admin')
             ->setTpl('categories.tree')
             ->withPlugins(['fancytree'])
+            ->withJs('admin/js/image-library-picker-folders.js', true)
             ->withJs('admin/js/categories/tree.js', true)
             ->withVariables([
                 'treeData' => $treeData,
