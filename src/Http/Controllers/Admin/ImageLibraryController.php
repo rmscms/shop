@@ -140,6 +140,8 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
                         'foldersUpdate' => route('admin.shop.image-library.folders.update', ['folder' => '__ID__']),
                         'foldersDestroy' => route('admin.shop.image-library.folders.destroy', ['folder' => '__ID__']),
                         'imagesMove' => route('admin.shop.image-library.images.move', ['image' => '__ID__']),
+                        'imagesBulkDestroy' => route('admin.shop.image-library.images.bulk-destroy'),
+                        'imagesBulkPreview' => route('admin.shop.image-library.images.bulk-preview'),
                         'index' => route('admin.shop.image-library.index'),
                         'gallery' => route('admin.shop.image-library.gallery'),
                     ],
@@ -773,5 +775,100 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
                 'message' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    /**
+     * Preview how many images would be deleted (folder or selected ids).
+     */
+    public function bulkPreview(Request $request): JsonResponse
+    {
+        try {
+            $ids = $this->resolveBulkImageIds($request);
+            $usage = ImageLibrary::query()
+                ->whereIn('id', $ids)
+                ->withCount('assignments')
+                ->get(['id']);
+            $inUse = $usage->where('assignments_count', '>', 0)->count();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'count' => count($ids),
+                    'in_use' => $inUse,
+                    'ids' => $ids,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Bulk-delete images after a double client-side confirmation.
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $request->validate([
+            'confirm' => ['accepted'],
+            'confirm_phrase' => ['required', 'in:حذف'],
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['integer'],
+            'folder_id' => ['nullable', 'integer'],
+            'unfiled_only' => ['nullable', 'boolean'],
+        ]);
+
+        try {
+            $ids = $this->resolveBulkImageIds($request);
+            if ($ids === []) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'تصویری برای حذف پیدا نشد',
+                ], 422);
+            }
+
+            $result = ImageLibraryService::bulkDeleteImages($ids);
+
+            return response()->json([
+                'success' => $result['failed'] === 0,
+                'message' => $result['deleted'].' تصویر حذف شد'
+                    .($result['failed'] ? ('، '.$result['failed'].' ناموفق') : ''),
+                'data' => $result,
+            ], $result['failed'] && ! $result['deleted'] ? 500 : 200);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * @return list<int>
+     */
+    protected function resolveBulkImageIds(Request $request): array
+    {
+        if ($request->filled('ids') && is_array($request->input('ids'))) {
+            return array_values(array_unique(array_filter(array_map('intval', $request->input('ids')))));
+        }
+
+        if (! MediaLibrarySchema::hasImageFolderColumn()) {
+            throw new \RuntimeException('پوشه‌بندی تصاویر فعال نیست.');
+        }
+
+        $builder = ImageLibrary::query()->select('id');
+        if ($request->boolean('unfiled_only')) {
+            $builder->whereNull('folder_id');
+        } elseif ($request->filled('folder_id')) {
+            $folderId = (int) $request->input('folder_id');
+            ImageLibraryFolder::query()->findOrFail($folderId);
+            $builder->where('folder_id', $folderId);
+        } else {
+            throw new \RuntimeException('برای حذف گروهی، پوشه یا لیست تصاویر را مشخص کنید. حذف از «همه تصاویر» مجاز نیست.');
+        }
+
+        return $builder->pluck('id')->map(fn ($id) => (int) $id)->all();
     }
 }

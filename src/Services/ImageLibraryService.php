@@ -150,6 +150,40 @@ class ImageLibraryService
     }
 
     /**
+     * @param  list<int>  $ids
+     * @return array{deleted: int, failed: int, errors: list<string>}
+     */
+    public static function bulkDeleteImages(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        $deleted = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($ids as $id) {
+            try {
+                $image = ImageLibrary::query()->with('variants')->find($id);
+                if (! $image) {
+                    $failed++;
+                    $errors[] = "Image {$id} not found";
+                    continue;
+                }
+                if (static::deleteImage($image)) {
+                    $deleted++;
+                } else {
+                    $failed++;
+                    $errors[] = "Image {$id} delete failed";
+                }
+            } catch (\Throwable $e) {
+                $failed++;
+                $errors[] = "Image {$id}: ".$e->getMessage();
+            }
+        }
+
+        return compact('deleted', 'failed', 'errors');
+    }
+
+    /**
      * Get images assigned to a product
      */
     public static function getProductImages(Product $product): \Illuminate\Database\Eloquent\Collection
