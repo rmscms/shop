@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
+use RMS\Shop\Models\Category;
 use RMS\Shop\Models\Product;
 use RMS\Shop\Models\ProductCombination;
 use RMS\Shop\Models\ImageAssignment;
@@ -43,6 +46,12 @@ class ImageLibrary extends Model
     public function assignments()
     {
         return $this->hasMany(ImageAssignment::class, 'image_id');
+    }
+
+    /** Categories that use this image as menu photo. */
+    public function menuCategories(): HasMany
+    {
+        return $this->hasMany(Category::class, 'menu_image_id');
     }
 
     /**
@@ -122,11 +131,45 @@ class ImageLibrary extends Model
     }
 
     /**
-     * Check if image can be deleted (no assignments)
+     * Check if image can be deleted (no product / category / storefront usage)
      */
     public function canBeDeleted(): bool
     {
-        return $this->assignments->count() === 0;
+        if ($this->assignments()->exists()) {
+            return false;
+        }
+
+        if (Schema::hasColumn('categories', 'menu_image_id') && $this->menuCategories()->exists()) {
+            return false;
+        }
+
+        if (isset($this->slides_count) || isset($this->promo_count)) {
+            return (int) ($this->slides_count ?? 0) < 1 && (int) ($this->promo_count ?? 0) < 1;
+        }
+
+        return ! self::isUsedInStorefrontSettings((int) $this->id);
+    }
+
+    public static function isUsedInStorefrontSettings(int $imageId): bool
+    {
+        if ($imageId < 1 || ! class_exists(\RMS\Core\Models\Setting::class)) {
+            return false;
+        }
+
+        try {
+            foreach (['storefront_hero_slides', 'storefront_home_promo_cards'] as $key) {
+                $rows = json_decode((string) (\RMS\Core\Models\Setting::get($key) ?? '[]'), true) ?: [];
+                foreach ($rows as $row) {
+                    if ((int) ($row['image_id'] ?? 0) === $imageId) {
+                        return true;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        return false;
     }
 
     /**

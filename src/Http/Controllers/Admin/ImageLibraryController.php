@@ -784,11 +784,27 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
     {
         try {
             $ids = $this->resolveBulkImageIds($request);
-            $usage = ImageLibrary::query()
-                ->whereIn('id', $ids)
-                ->withCount('assignments')
-                ->get(['id']);
-            $inUse = $usage->where('assignments_count', '>', 0)->count();
+            $usage = ImageLibraryService::decorateUsageCounts(
+                new \Illuminate\Pagination\LengthAwarePaginator(
+                    ImageLibrary::query()
+                        ->whereIn('id', $ids)
+                        ->withCount(array_values(array_filter([
+                            'assignments',
+                            \Illuminate\Support\Facades\Schema::hasColumn('categories', 'menu_image_id')
+                                ? 'menuCategories as categories_count'
+                                : null,
+                        ])))
+                        ->get(),
+                    count($ids),
+                    max(count($ids), 1)
+                )
+            )->getCollection();
+            $inUse = $usage->filter(function (ImageLibrary $image) {
+                return (int) ($image->assignments_count ?? 0) > 0
+                    || (int) ($image->categories_count ?? 0) > 0
+                    || (int) ($image->slides_count ?? 0) > 0
+                    || (int) ($image->promo_count ?? 0) > 0;
+            })->count();
 
             return response()->json([
                 'success' => true,

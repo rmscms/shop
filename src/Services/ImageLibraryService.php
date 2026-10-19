@@ -209,12 +209,12 @@ class ImageLibraryService
         if (empty($search)) {
             // Default: Show unassigned images first (newest to oldest)
             $builder = ImageLibrary::query()
-                ->withCount('assignments')
+                ->withCount(static::usageWithCountRelations())
                 ->orderByRaw('(SELECT COUNT(*) FROM image_assignments WHERE image_assignments.image_id = image_library.id) ASC')
                 ->orderBy('created_at', 'desc');
             static::applyImageFolderFilter($builder, $folderId, $unfiledOnly);
 
-            return $builder->paginate($perPage);
+            return static::decorateUsageCounts($builder->paginate($perPage));
         }
 
         // Search by product name - find products first
@@ -235,11 +235,11 @@ class ImageLibraryService
         if ($productIds->isEmpty()) {
             $builder = ImageLibrary::query()
                 ->where($nameMatch)
-                ->withCount('assignments')
+                ->withCount(static::usageWithCountRelations())
                 ->orderBy('created_at', 'desc');
             static::applyImageFolderFilter($builder, $folderId, $unfiledOnly);
 
-            return $builder->paginate($perPage);
+            return static::decorateUsageCounts($builder->paginate($perPage));
         }
 
         // Images assigned to matching products, or matching name/original_name/alt
@@ -250,11 +250,66 @@ class ImageLibraryService
                         ->whereIn('assignable_id', $productIds);
                 })->orWhere($nameMatch);
             })
-            ->withCount('assignments')
+            ->withCount(static::usageWithCountRelations())
             ->orderBy('created_at', 'desc');
         static::applyImageFolderFilter($builder, $folderId, $unfiledOnly);
 
-        return $builder->paginate($perPage);
+        return static::decorateUsageCounts($builder->paginate($perPage));
+    }
+
+    /** @return list<string> */
+    protected static function usageWithCountRelations(): array
+    {
+        $relations = ['assignments'];
+        if (Schema::hasTable('categories') && Schema::hasColumn('categories', 'menu_image_id')) {
+            $relations[] = 'menuCategories as categories_count';
+        }
+
+        return $relations;
+    }
+
+    /**
+     * Attach storefront slide/promo usage counts (settings JSON).
+     *
+     * @param  \Illuminate\Contracts\Pagination\LengthAwarePaginator  $paginator
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public static function decorateUsageCounts($paginator)
+    {
+        $collection = $paginator->getCollection();
+        $slideMap = [];
+        $promoMap = [];
+
+        try {
+            if (class_exists(\RMS\Core\Models\Setting::class)) {
+                $slides = json_decode((string) (\RMS\Core\Models\Setting::get('storefront_hero_slides') ?? '[]'), true) ?: [];
+                foreach ($slides as $slide) {
+                    $id = (int) ($slide['image_id'] ?? 0);
+                    if ($id > 0) {
+                        $slideMap[$id] = ($slideMap[$id] ?? 0) + 1;
+                    }
+                }
+                $promos = json_decode((string) (\RMS\Core\Models\Setting::get('storefront_home_promo_cards') ?? '[]'), true) ?: [];
+                foreach ($promos as $card) {
+                    $id = (int) ($card['image_id'] ?? 0);
+                    if ($id > 0) {
+                        $promoMap[$id] = ($promoMap[$id] ?? 0) + 1;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Settings optional
+        }
+
+        $collection->each(function (ImageLibrary $image) use ($slideMap, $promoMap) {
+            if (! isset($image->categories_count)) {
+                $image->categories_count = 0;
+            }
+            $image->slides_count = $slideMap[$image->id] ?? 0;
+            $image->promo_count = $promoMap[$image->id] ?? 0;
+        });
+
+        return $paginator;
     }
 
     /**
