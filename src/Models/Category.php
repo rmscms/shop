@@ -67,6 +67,9 @@ class Category extends Model
         Cache::forget('storefront:menu-images:preview');
         Cache::forget('storefront:menu-categories:live');
         Cache::forget('storefront:menu-categories:preview');
+        // digitalpart-site ShellComposer keys (v2 = no parent image inheritance)
+        Cache::forget('storefront:menu-categories:v2:live');
+        Cache::forget('storefront:menu-categories:v2:preview');
     }
 
     public static function ensureDefault(): ?self
