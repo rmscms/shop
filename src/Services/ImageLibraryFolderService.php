@@ -33,7 +33,8 @@ class ImageLibraryFolderService
             ->orderBy('name')
             ->get();
 
-        $unfiledCount = $includeCounts
+        $canCountByFolder = $includeCounts && MediaLibrarySchema::hasImageFolderColumn();
+        $unfiledCount = $canCountByFolder
             ? ImageLibrary::query()->whereNull('folder_id')->count()
             : 0;
         $allCount = $includeCounts
@@ -53,7 +54,7 @@ class ImageLibraryFolderService
             ],
         ], [
             'key' => 'unfiled',
-            'title' => 'بدون پوشه'.($includeCounts ? ' ('.$unfiledCount.')' : ''),
+            'title' => 'بدون پوشه'.($canCountByFolder ? ' ('.$unfiledCount.')' : ''),
             'folder' => true,
             'expanded' => true,
             'selected' => false,
@@ -64,7 +65,7 @@ class ImageLibraryFolderService
             ],
         ]];
 
-        $children = $this->buildBranch($folders, null, $includeCounts);
+        $children = $this->buildBranch($folders, null, $canCountByFolder);
         $tree = array_merge($tree, $children);
 
         if ($selectedId) {
@@ -184,7 +185,9 @@ class ImageLibraryFolderService
             ->where('parent_id', $parentId)
             ->values()
             ->map(function (ImageLibraryFolder $folder) use ($folders, $includeCounts) {
-                $count = $includeCounts ? $folder->images()->count() : 0;
+                $count = ($includeCounts && MediaLibrarySchema::hasImageFolderColumn())
+                    ? $folder->images()->count()
+                    : 0;
                 $children = $this->buildBranch($folders, $folder->id, $includeCounts);
 
                 return [

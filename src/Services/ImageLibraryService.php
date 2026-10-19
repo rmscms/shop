@@ -46,7 +46,7 @@ class ImageLibraryService
             'mime_type' => $file->getMimeType(),
         ];
 
-        if (MediaLibrarySchema::hasImageFolders()) {
+        if (MediaLibrarySchema::hasImageFolderColumn()) {
             $payload['folder_id'] = $folder?->id;
         }
 
@@ -348,17 +348,19 @@ class ImageLibraryService
     public static function moveImage(ImageLibrary $image, ?ImageLibraryFolder $targetFolder): ImageLibrary
     {
         return DB::transaction(function () use ($image, $targetFolder) {
-            if (MediaLibrarySchema::hasImageFolders()) {
+            if (MediaLibrarySchema::hasImageFolderColumn()) {
                 $image->update(['folder_id' => $targetFolder?->id]);
             }
 
-            return static::syncImageStoragePath($image->fresh(['folder']));
+            return static::syncImageStoragePath($image->fresh(
+                MediaLibrarySchema::hasImageFolderColumn() ? ['folder'] : []
+            ));
         });
     }
 
     public static function syncImageStoragePath(ImageLibrary $image): ImageLibrary
     {
-        $folder = MediaLibrarySchema::hasImageFolders() ? $image->folder : null;
+        $folder = MediaLibrarySchema::hasImageFolderColumn() ? $image->folder : null;
         $origDir = static::origDirectoryForFolder($folder);
         $newPath = $origDir.'/'.$image->filename;
 
@@ -404,7 +406,7 @@ class ImageLibraryService
 
     protected static function applyImageFolderFilter($builder, ?int $folderId, bool $unfiledOnly): void
     {
-        if (! MediaLibrarySchema::hasImageFolders()) {
+        if (! MediaLibrarySchema::hasImageFolderColumn()) {
             return;
         }
 

@@ -34,13 +34,14 @@ class VideoLibraryFolderService
             ->orderBy('name')
             ->get();
 
-        $unfiledCount = $includeCounts
+        $canCountByFolder = $includeCounts && MediaLibrarySchema::hasVideoFolderColumn();
+        $unfiledCount = $canCountByFolder
             ? VideoLibrary::query()->whereNull('folder_id')->count()
             : 0;
 
         $tree = [[
             'key' => 'unfiled',
-            'title' => 'بدون پوشه'.($includeCounts ? ' ('.$unfiledCount.')' : ''),
+            'title' => 'بدون پوشه'.($canCountByFolder ? ' ('.$unfiledCount.')' : ''),
             'folder' => true,
             'expanded' => true,
             'data' => [

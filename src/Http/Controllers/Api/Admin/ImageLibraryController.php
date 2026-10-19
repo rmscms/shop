@@ -57,9 +57,9 @@ class ImageLibraryController extends BaseController
             if ($search !== '') {
                 $query->where('filename', 'like', "%{$search}%");
             }
-            if ($unfiledOnly && MediaLibrarySchema::hasImageFolders()) {
+            if ($unfiledOnly && MediaLibrarySchema::hasImageFolderColumn()) {
                 $query->whereNull('folder_id');
-            } elseif ($folderId && MediaLibrarySchema::hasImageFolders()) {
+            } elseif ($folderId && MediaLibrarySchema::hasImageFolderColumn()) {
                 $query->where('folder_id', $folderId);
             }
 

@@ -33,7 +33,7 @@ class VideoLibraryService
             $payload['title'] = $title;
         }
 
-        if (MediaLibrarySchema::hasVideoFolders()) {
+        if (MediaLibrarySchema::hasVideoFolderColumn()) {
             $payload['folder_id'] = $folder?->id;
         }
 
@@ -47,17 +47,19 @@ class VideoLibraryService
     public function moveVideo(VideoLibrary $video, ?VideoLibraryFolder $targetFolder): VideoLibrary
     {
         return DB::transaction(function () use ($video, $targetFolder) {
-            if (MediaLibrarySchema::hasVideoFolders()) {
+            if (MediaLibrarySchema::hasVideoFolderColumn()) {
                 $video->update(['folder_id' => $targetFolder?->id]);
             }
 
-            return $this->syncVideoStoragePath($video->fresh(['folder']));
+            return $this->syncVideoStoragePath($video->fresh(
+                MediaLibrarySchema::hasVideoFolderColumn() ? ['folder'] : []
+            ));
         });
     }
 
     public function syncVideoStoragePath(VideoLibrary $video): VideoLibrary
     {
-        $folder = MediaLibrarySchema::hasVideoFolders() ? $video->folder : null;
+        $folder = MediaLibrarySchema::hasVideoFolderColumn() ? $video->folder : null;
         $origDir = static::origDirectoryForFolder($folder);
         $newPath = $origDir.'/'.$video->filename;
 
@@ -199,7 +201,7 @@ class VideoLibraryService
 
     protected function applyVideoFolderFilter($query, ?int $folderId, bool $unfiledOnly): void
     {
-        if (! MediaLibrarySchema::hasVideoFolders()) {
+        if (! MediaLibrarySchema::hasVideoFolderColumn()) {
             return;
         }
 
