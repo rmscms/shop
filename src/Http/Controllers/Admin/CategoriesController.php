@@ -40,10 +40,8 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
             ->withJs('admin/js/categories/edit.js', true)
             ->withVariables($this->categoryFormVariables(null, $defaultParentId))
             ->withJsVariables([
-                'RMS' => [
-                    'ADMIN_SHOP_CATEGORY_FORM' => [
-                        'picker' => route('admin.shop.image-library.picker'),
-                    ],
+                'ADMIN_SHOP_CATEGORY_FORM' => [
+                    'picker' => route('admin.shop.image-library.picker'),
                 ],
             ]);
 
@@ -66,10 +64,8 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
             ->withJs('admin/js/categories/edit.js', true)
             ->withVariables($this->categoryFormVariables($category, null))
             ->withJsVariables([
-                'RMS' => [
-                    'ADMIN_SHOP_CATEGORY_FORM' => [
-                        'picker' => route('admin.shop.image-library.picker'),
-                    ],
+                'ADMIN_SHOP_CATEGORY_FORM' => [
+                    'picker' => route('admin.shop.image-library.picker'),
                 ],
             ]);
 
@@ -186,20 +182,18 @@ class CategoriesController extends ShopAdminController implements HasList, HasFo
                 'fallbackLabel' => (string) config('shop.categories.fallback_label', 'بدون دسته'),
             ])
             ->withJsVariables([
-                'RMS' => [
-                    'ADMIN_SHOP_CATEGORIES' => [
-                        'treeData' => $treeData,
-                        'defaultCategoryId' => $defaultId,
-                        'treeEndpoint' => route('admin.shop.categories.tree.data'),
-                        'routes' => [
-                            'index' => route('admin.shop.categories.index'),
-                            'create' => route('admin.shop.categories.create'),
-                            'edit' => route('admin.shop.categories.edit', ['category' => '__ID__']),
-                            'menuImage' => route('admin.shop.categories.menu-image', ['category' => '__ID__']),
-                            'picker' => route('admin.shop.image-library.picker'),
-                        ],
-                        'csrf' => csrf_token(),
+                'ADMIN_SHOP_CATEGORIES' => [
+                    'treeData' => $treeData,
+                    'defaultCategoryId' => $defaultId,
+                    'treeEndpoint' => route('admin.shop.categories.tree.data'),
+                    'routes' => [
+                        'index' => route('admin.shop.categories.index'),
+                        'create' => route('admin.shop.categories.create'),
+                        'edit' => route('admin.shop.categories.edit', ['category' => '__ID__']),
+                        'menuImage' => route('admin.shop.categories.menu-image', ['category' => '__ID__']),
+                        'picker' => route('admin.shop.image-library.picker'),
                     ],
+                    'csrf' => csrf_token(),
                 ],
             ]);
 

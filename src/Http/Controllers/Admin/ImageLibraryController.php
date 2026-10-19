@@ -255,12 +255,12 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
 
         return response()->json([
             'success' => true,
-            'data' => $paginatedImages->map(static fn ($image) => [
+            'data' => $paginatedImages->getCollection()->map(static fn ($image) => [
                 'id' => $image->id,
                 'filename' => $image->filename,
                 'url' => $image->url,
                 'avif_url' => $image->avif_url,
-            ]),
+            ])->values()->all(),
             'pagination' => [
                 'current_page' => $paginatedImages->currentPage(),
                 'last_page' => $paginatedImages->lastPage(),
