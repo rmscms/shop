@@ -28,7 +28,7 @@ class ImageSizesController extends ShopAdminController implements HasList, HasFo
 
     public function routeParameter(): string
     {
-        return 'image-size';
+        return 'image_size';
     }
 
     public function getFieldsForm(): array
