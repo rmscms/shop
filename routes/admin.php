@@ -194,6 +194,7 @@ Route::middleware([
 
         // Image Library
         Route::get('image-library/picker', [ImageLibraryController::class, 'pickerImages'])->name('image-library.picker');
+        Route::get('image-library/gallery', [ImageLibraryController::class, 'gallery'])->name('image-library.gallery');
         Route::post('image-library/upload', [ImageLibraryController::class, 'upload'])->name('image-library.upload');
         Route::get('image-library/folders/tree', [ImageLibraryController::class, 'foldersTree'])->name('image-library.folders.tree');
         Route::post('image-library/folders', [ImageLibraryController::class, 'storeFolder'])->name('image-library.folders.store');

@@ -141,11 +141,74 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
                         'foldersDestroy' => route('admin.shop.image-library.folders.destroy', ['folder' => '__ID__']),
                         'imagesMove' => route('admin.shop.image-library.images.move', ['image' => '__ID__']),
                         'index' => route('admin.shop.image-library.index'),
+                        'gallery' => route('admin.shop.image-library.gallery'),
                     ],
                 ],
             ]);
 
         return $this->view();
+    }
+
+    /**
+     * AJAX fragment for gallery grid + pagination + breadcrumbs (no full page reload).
+     */
+    public function gallery(Request $request): JsonResponse
+    {
+        $search = $request->get('search');
+        $allowedPerPage = [50, 100, 300];
+        $perPage = (int) $request->integer('per_page', 50);
+        if (! in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 50;
+        }
+
+        [$folderId, $unfiledOnly] = $this->folderFilterFromRequest($request);
+        $images = ImageLibraryService::searchImages($search, $perPage, $folderId, $unfiledOnly);
+
+        $foldersEnabled = MediaLibrarySchema::hasImageFolders();
+        $folderService = app(ImageLibraryFolderService::class);
+        $currentFolder = ($foldersEnabled && $folderId)
+            ? ImageLibraryFolder::query()->find($folderId)
+            : null;
+        $breadcrumbs = $foldersEnabled
+            ? ($unfiledOnly
+                ? [['id' => null, 'name' => 'بدون پوشه', 'path' => '', 'key' => 'unfiled']]
+                : ($currentFolder
+                    ? collect($folderService->breadcrumbs($currentFolder))
+                        ->map(static function (array $crumb) {
+                            $crumb['key'] = $crumb['id'] !== null ? (string) $crumb['id'] : 'all';
+
+                            return $crumb;
+                        })
+                        ->all()
+                    : [['id' => null, 'name' => 'همه تصاویر', 'path' => '', 'key' => 'all']]))
+            : [];
+
+        $query = array_filter([
+            'search' => $search ?: null,
+            'per_page' => $perPage,
+            'folder_id' => $folderId,
+            'unfiled_only' => $unfiledOnly ? 1 : null,
+        ], static fn ($v) => $v !== null && $v !== '');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'grid_html' => view('shop::admin.image-library.partials.images-grid', [
+                    'images' => $images,
+                    'foldersEnabled' => $foldersEnabled,
+                ])->render(),
+                'pagination_html' => $images->hasPages()
+                    ? (string) $images->appends($query)->links('shop::admin.partials.pagination')
+                    : '',
+                'breadcrumbs' => $breadcrumbs,
+                'folder_id' => $folderId,
+                'unfiled_only' => $unfiledOnly,
+                'search' => $search,
+                'per_page' => $perPage,
+                'page' => $images->currentPage(),
+                'total' => $images->total(),
+            ],
+        ]);
     }
 
     public function filters(): array
