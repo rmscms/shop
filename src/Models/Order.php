@@ -5,6 +5,7 @@ namespace RMS\Shop\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use RMS\Shop\Support\Geo\IranProvinces;
 
 class Order extends Model
 {
@@ -12,16 +13,52 @@ class Order extends Model
 
     protected $fillable = [
         'user_id', 'user_address_id', 'status', 'subtotal', 'discount', 'shipping_cost', 'total', 'paid_at', 'refunded_at',
-        'shipping_name', 'shipping_mobile', 'shipping_postal_code', 'shipping_address', 'customer_note',
+        'shipping_name', 'shipping_province_id', 'shipping_province', 'shipping_city',
+        'shipping_mobile', 'shipping_postal_code', 'shipping_address', 'customer_note',
         'payment_driver', 'payment_reference',
         'tracking_code', 'tracking_url', 'finance_id',
     ];
 
     protected $casts = [
         'finance_id' => 'integer',
+        'shipping_province_id' => 'integer',
         'paid_at' => 'datetime',
         'refunded_at' => 'datetime',
     ];
+
+    public function address(): BelongsTo
+    {
+        return $this->belongsTo(UserAddress::class, 'user_address_id');
+    }
+
+    /** Province name snapshot, with fallbacks for older orders. */
+    public function shippingProvinceName(): ?string
+    {
+        if (filled($this->shipping_province)) {
+            return (string) $this->shipping_province;
+        }
+
+        $fromId = IranProvinces::label($this->shipping_province_id);
+        if ($fromId) {
+            return $fromId;
+        }
+
+        $addr = $this->relationLoaded('address') ? $this->address : $this->address()->first();
+        if ($addr) {
+            return $addr->province ?: IranProvinces::label($addr->province_id);
+        }
+
+        return null;
+    }
+
+    /** "استان، شهر" for UI / PDF lines. */
+    public function shippingPlaceLabel(): string
+    {
+        return trim(implode('، ', array_filter([
+            $this->shippingProvinceName(),
+            filled($this->shipping_city) ? (string) $this->shipping_city : null,
+        ])));
+    }
 
     /**
      * Unified order statuses for use across admin/panel/frontend.

@@ -19,6 +19,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use RMS\PDF\PDFFacade as PDF;
 use RMS\PDF\{Seller, Buyer, Invoice};
+use RMS\Shop\Support\Geo\IranProvinces;
 
 class OrdersController extends ShopAdminController implements HasList, ShouldFilter, HasStats, ShouldExport
 {
@@ -210,10 +211,10 @@ class OrdersController extends ShopAdminController implements HasList, ShouldFil
             ],
         ]);
 
-        // Buyer from order shipping
+        // Buyer from order shipping (province + city + street)
         $buyer = new Buyer([
             'name' => $order->shipping_name ?: ($order->user_name ?? ''),
-            'address' => $order->shipping_address ?: '',
+            'address' => $this->shippingAddressLine($order),
             'postal_code' => $order->shipping_postal_code ?: '',
             'phone' => $order->shipping_mobile ?: '',
         ]);
@@ -285,7 +286,7 @@ class OrdersController extends ShopAdminController implements HasList, ShouldFil
             'name' => (string)($order->shipping_name ?: ($order->user_name ?? '')),
             'phone' => (string)($order->shipping_mobile ?: ''),
             'postal_code' => (string)($order->shipping_postal_code ?? ''),
-            'address' => (string)($order->shipping_address ?? ''),
+            'address' => $this->shippingAddressLine($order),
         ];
         $sender = [
             'company' => (string) config('company.name', config('app.name')),
@@ -438,5 +439,20 @@ BLADE;
         $points = $reqPoints > 0 ? $reqPoints : $calc;
         \RMS\Shop\Services\OrderAdminService::applyPoints((int)$id, (int)$points);
         return back()->with('success', 'امتیازها اعمال شد');
+    }
+
+    /** Province + city + street for invoice / postal label. */
+    protected function shippingAddressLine(object $order): string
+    {
+        $province = trim((string) ($order->shipping_province ?? ''));
+        if ($province === '') {
+            $province = (string) (IranProvinces::label($order->shipping_province_id ?? null) ?? '');
+        }
+
+        return trim(implode('، ', array_filter([
+            $province !== '' ? $province : null,
+            filled($order->shipping_city ?? null) ? (string) $order->shipping_city : null,
+            filled($order->shipping_address ?? null) ? (string) $order->shipping_address : null,
+        ])));
     }
 }
