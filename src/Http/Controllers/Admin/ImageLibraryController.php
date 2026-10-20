@@ -145,7 +145,9 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
                         'imagesBulkPreview' => route('admin.shop.image-library.images.bulk-preview'),
                         'index' => route('admin.shop.image-library.index'),
                         'gallery' => route('admin.shop.image-library.gallery'),
-                        'storefrontHome' => route('admin.storefront.home.edit'),
+                        'storefrontHome' => \Illuminate\Support\Facades\Route::has('admin.storefront.home.edit')
+                            ? route('admin.storefront.home.edit')
+                            : null,
                     ],
                 ],
             ]);
@@ -494,7 +496,9 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
         $promos = [];
         try {
             if (class_exists(\RMS\Core\Models\Setting::class)) {
-                $homeEdit = route('admin.storefront.home.edit');
+                $homeEdit = \Illuminate\Support\Facades\Route::has('admin.storefront.home.edit')
+                    ? route('admin.storefront.home.edit')
+                    : null;
                 foreach (json_decode((string) (\RMS\Core\Models\Setting::get('storefront_hero_slides') ?? '[]'), true) ?: [] as $i => $slide) {
                     if ((int) ($slide['image_id'] ?? 0) === (int) $image->id) {
                         $slides[] = [
