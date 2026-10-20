@@ -67,7 +67,8 @@ class ImageLibrary extends Model
      */
     public function products()
     {
-        return $this->morphedByMany(Product::class, 'assignable', 'image_assignments')
+        // Pivot column is image_id (not image_library_id from getForeignKey()).
+        return $this->morphedByMany(Product::class, 'assignable', 'image_assignments', 'image_id')
             ->withPivot(['is_main', 'sort']);
     }
 
@@ -76,7 +77,7 @@ class ImageLibrary extends Model
      */
     public function productCombinations()
     {
-        return $this->morphedByMany(ProductCombination::class, 'assignable', 'image_assignments')
+        return $this->morphedByMany(ProductCombination::class, 'assignable', 'image_assignments', 'image_id')
             ->withPivot(['is_main', 'sort']);
     }
 
