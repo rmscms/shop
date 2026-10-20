@@ -450,10 +450,9 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
         $productsById = [];
 
         $image->loadMissing([
-            'products:id,name,sku',
-            'productCombinations:id,product_id,sku',
-            'productCombinations.product:id,name,sku',
-            'menuCategories:id,name,slug',
+            'products',
+            'productCombinations.product',
+            'menuCategories',
         ]);
 
         foreach ($image->products as $product) {
