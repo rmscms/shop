@@ -70,9 +70,12 @@ class OrderViewService
 
     public static function adminShow(int $orderId): array
     {
-        $order = DB::table('orders as o')->leftJoin('users as u','u.id','=','o.user_id')
-            ->select('o.*','u.name as user_name')->where('o.id',$orderId)->first();
-        abort_if(!$order,404);
+        $order = \RMS\Shop\Models\Order::query()->with('address')->find($orderId);
+        abort_if(!$order, 404);
+        $order->setAttribute(
+            'user_name',
+            DB::table('users')->where('id', (int) $order->user_id)->value('name')
+        );
         [$items, $pointsSum] = self::buildItemsAndPoints($orderId);
         $statusMap = \RMS\Shop\Models\Order::statuses();
         $info = $statusMap[$order->status] ?? (object)['label'=>$order->status, 'class'=>'bg-secondary'];
