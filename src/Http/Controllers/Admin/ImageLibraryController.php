@@ -395,14 +395,21 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
 
         $assignedIds = $product->assignedImages()->pluck('image_library.id')->toArray();
 
+        $images = $paginatedImages->getCollection();
+        $images->load(['variants.size']);
+
         return response()->json([
             'success' => true,
-            'data' => $paginatedImages->getCollection()->map(function ($image) use ($assignedIds) {
+            'data' => $images->map(function ($image) use ($assignedIds) {
+                $thumb = $image->previewUrl('thumb');
+
                 return [
                     'id' => $image->id,
                     'filename' => $image->filename,
                     'url' => $image->url,
                     'avif_url' => $image->avif_url,
+                    'thumb_url' => $thumb,
+                    'preview_url' => $thumb,
                     'folder_id' => $image->folder_id,
                     'is_assigned' => in_array($image->id, $assignedIds),
                     'assignments_count' => $image->assignments_count,

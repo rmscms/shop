@@ -132,6 +132,50 @@ class ImageLibrary extends Model
     }
 
     /**
+     * URL for a generated size slug (thumb / medium / large). Prefer AVIF size files.
+     */
+    public function sizeUrl(string $slug): ?string
+    {
+        $slug = strtolower(trim($slug));
+        if ($slug === '') {
+            return null;
+        }
+
+        if ($this->relationLoaded('variants')) {
+            $variant = $this->variants->first(function ($row) use ($slug) {
+                $rowSlug = $row->relationLoaded('size')
+                    ? ($row->size->slug ?? null)
+                    : ($row->size()->value('slug'));
+
+                return $rowSlug === $slug;
+            });
+
+            return $variant?->url;
+        }
+
+        $variant = $this->variants()
+            ->whereHas('size', fn ($q) => $q->where('slug', $slug))
+            ->first();
+
+        return $variant?->url;
+    }
+
+    /**
+     * Lightweight preview for admin grids (thumb → medium → library avif → original).
+     */
+    public function previewUrl(string $preferred = 'thumb'): string
+    {
+        foreach (array_unique([$preferred, 'thumb', 'medium']) as $slug) {
+            $url = $this->sizeUrl($slug);
+            if ($url) {
+                return $url;
+            }
+        }
+
+        return $this->avif_url ?: $this->url;
+    }
+
+    /**
      * Check if image can be deleted (no product / category / storefront usage)
      */
     public function canBeDeleted(): bool

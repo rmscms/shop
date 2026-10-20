@@ -132,7 +132,12 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
     {
         /** @var Product|null $product */
         $product = Product::query()
-            ->with(['images','videos','combinations.values.value.attribute'])
+            ->with([
+                'images',
+                'videos',
+                'combinations.values.value.attribute',
+                'assignedImages.variants.size',
+            ])
             ->find((int)$id);
         abort_if(!$product, 404);
         $categories = Category::query()->orderBy('name')->pluck('name','id')->toArray();
