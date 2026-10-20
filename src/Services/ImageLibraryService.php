@@ -315,7 +315,75 @@ class ImageLibraryService
             $image->promo_count = $promoMap[$image->id] ?? 0;
         });
 
+        static::attachUniqueProductCounts($collection);
+
         return $images;
+    }
+
+    /**
+     * Badge "محصول N" must match the usages modal: unique parent products,
+     * not raw image_assignments rows (a product + its combinations would inflate the count).
+     *
+     * @param  \Illuminate\Support\Collection  $collection
+     */
+    protected static function attachUniqueProductCounts($collection): void
+    {
+        $ids = $collection
+            ->filter(fn ($image) => $image instanceof ImageLibrary)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        $productType = Product::class;
+        $comboType = ProductCombination::class;
+        /** @var array<int, array<int, true>> $map */
+        $map = [];
+
+        $direct = DB::table('image_assignments')
+            ->whereIn('image_id', $ids)
+            ->where('assignable_type', $productType)
+            ->get(['image_id', 'assignable_id']);
+
+        foreach ($direct as $row) {
+            $map[(int) $row->image_id][(int) $row->assignable_id] = true;
+        }
+
+        $fromCombos = DB::table('image_assignments as ia')
+            ->join('product_combinations as pc', 'pc.id', '=', 'ia.assignable_id')
+            ->whereIn('ia.image_id', $ids)
+            ->where('ia.assignable_type', $comboType)
+            ->get(['ia.image_id', 'pc.product_id']);
+
+        foreach ($fromCombos as $row) {
+            $map[(int) $row->image_id][(int) $row->product_id] = true;
+        }
+
+        $allProductIds = collect($map)
+            ->flatMap(fn (array $set) => array_keys($set))
+            ->unique()
+            ->values();
+
+        $alive = $allProductIds->isEmpty()
+            ? collect()
+            : Product::query()->whereIn('id', $allProductIds)->pluck('id')->flip();
+
+        foreach ($collection as $image) {
+            if (! $image instanceof ImageLibrary) {
+                continue;
+            }
+            $count = 0;
+            foreach (($map[(int) $image->id] ?? []) as $productId => $_) {
+                if ($alive->has($productId)) {
+                    $count++;
+                }
+            }
+            $image->products_count = $count;
+        }
     }
 
     /**
