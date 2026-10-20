@@ -140,10 +140,12 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
                         'foldersUpdate' => route('admin.shop.image-library.folders.update', ['folder' => '__ID__']),
                         'foldersDestroy' => route('admin.shop.image-library.folders.destroy', ['folder' => '__ID__']),
                         'imagesMove' => route('admin.shop.image-library.images.move', ['image' => '__ID__']),
+                        'imagesUsages' => route('admin.shop.image-library.images.usages', ['image' => '__ID__']),
                         'imagesBulkDestroy' => route('admin.shop.image-library.images.bulk-destroy'),
                         'imagesBulkPreview' => route('admin.shop.image-library.images.bulk-preview'),
                         'index' => route('admin.shop.image-library.index'),
                         'gallery' => route('admin.shop.image-library.gallery'),
+                        'storefrontHome' => route('admin.storefront.home.edit'),
                     ],
                 ],
             ]);
@@ -436,6 +438,99 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
         }
 
         return [null, false];
+    }
+
+    /**
+     * List products / categories / slides that use this image (for usage badge click).
+     */
+    public function usages(ImageLibrary $image): JsonResponse
+    {
+        $productsById = [];
+
+        $image->loadMissing([
+            'products:id,name,sku',
+            'productCombinations:id,product_id,sku',
+            'productCombinations.product:id,name,sku',
+            'menuCategories:id,name,slug',
+        ]);
+
+        foreach ($image->products as $product) {
+            $productsById[$product->id] = [
+                'id' => $product->id,
+                'name' => (string) $product->name,
+                'sku' => (string) ($product->sku ?? ''),
+                'via' => 'محصول',
+                'edit_url' => route('admin.shop.products.edit', $product),
+            ];
+        }
+
+        foreach ($image->productCombinations as $combo) {
+            $product = $combo->product;
+            if (!$product) {
+                continue;
+            }
+            if (isset($productsById[$product->id])) {
+                if ($productsById[$product->id]['via'] === 'محصول') {
+                    $productsById[$product->id]['via'] = 'محصول + ترکیب';
+                }
+                continue;
+            }
+            $productsById[$product->id] = [
+                'id' => $product->id,
+                'name' => (string) $product->name,
+                'sku' => (string) ($product->sku ?? $combo->sku ?? ''),
+                'via' => 'ترکیب',
+                'edit_url' => route('admin.shop.products.edit', $product),
+            ];
+        }
+
+        $categories = $image->menuCategories->map(fn ($cat) => [
+            'id' => $cat->id,
+            'name' => (string) $cat->name,
+            'edit_url' => route('admin.shop.categories.edit', $cat),
+        ])->values()->all();
+
+        $slides = [];
+        $promos = [];
+        try {
+            if (class_exists(\RMS\Core\Models\Setting::class)) {
+                $homeEdit = route('admin.storefront.home.edit');
+                foreach (json_decode((string) (\RMS\Core\Models\Setting::get('storefront_hero_slides') ?? '[]'), true) ?: [] as $i => $slide) {
+                    if ((int) ($slide['image_id'] ?? 0) === (int) $image->id) {
+                        $slides[] = [
+                            'index' => $i,
+                            'title' => (string) ($slide['title'] ?? ('اسلاید '.($i + 1))),
+                            'edit_url' => $homeEdit,
+                        ];
+                    }
+                }
+                foreach (json_decode((string) (\RMS\Core\Models\Setting::get('storefront_home_promo_cards') ?? '[]'), true) ?: [] as $i => $card) {
+                    if ((int) ($card['image_id'] ?? 0) === (int) $image->id) {
+                        $promos[] = [
+                            'index' => $i,
+                            'title' => (string) ($card['title'] ?? ('پرومو '.($i + 1))),
+                            'edit_url' => $homeEdit,
+                        ];
+                    }
+                }
+            }
+        } catch (\Throwable) {
+        }
+
+        $label = $image->original_name ?: $image->filename;
+
+        return response()->json([
+            'success' => true,
+            'image' => [
+                'id' => $image->id,
+                'label' => $label,
+                'url' => $image->url,
+            ],
+            'products' => array_values($productsById),
+            'categories' => $categories,
+            'slides' => $slides,
+            'promos' => $promos,
+        ]);
     }
 
     /**

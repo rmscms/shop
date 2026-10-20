@@ -202,6 +202,7 @@ Route::middleware([
         Route::put('image-library/folders/{folder}', [ImageLibraryController::class, 'updateFolder'])->name('image-library.folders.update');
         Route::delete('image-library/folders/{folder}', [ImageLibraryController::class, 'destroyFolder'])->name('image-library.folders.destroy');
         Route::post('image-library/images/{image}/move', [ImageLibraryController::class, 'moveImage'])->name('image-library.images.move');
+        Route::get('image-library/images/{image}/usages', [ImageLibraryController::class, 'usages'])->name('image-library.images.usages');
         Route::post('image-library/images/bulk-preview', [ImageLibraryController::class, 'bulkPreview'])->name('image-library.images.bulk-preview');
         Route::post('image-library/images/bulk-destroy', [ImageLibraryController::class, 'bulkDestroy'])->name('image-library.images.bulk-destroy');
         Route::delete('image-library/{image}/ajax', [ImageLibraryController::class, 'ajaxDestroy'])->name('image-library.ajax-destroy');
