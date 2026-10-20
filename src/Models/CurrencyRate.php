@@ -13,7 +13,8 @@ class CurrencyRate extends Model
     ];
 
     protected $casts = [
-        'sell_rate' => 'decimal:6',
+        // Avoid forcing trailing zeros (IRT has 0 decimals; display formats per quote).
+        'sell_rate' => 'float',
         'effective_at' => 'datetime',
     ];
 }
