@@ -28,6 +28,7 @@ class ProductResource extends JsonResource
             'discount_type' => $this->discount_type,
             'discount_value' => $this->discount_value ? (float) $this->discount_value : null,
             'stock_qty' => (int) ($this->stock_qty ?? 0),
+            'max_cart_qty' => (int) ($this->max_cart_qty ?? 0),
             'point_per_unit' => (int) ($this->point_per_unit ?? 0),
             'active' => (bool) $this->active,
             'short_desc' => $this->short_desc,

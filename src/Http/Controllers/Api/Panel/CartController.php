@@ -87,10 +87,13 @@ class CartController extends BaseController
                 ->findOrFail($data['combination_id']);
         }
 
+        $addQty = (int) $data['qty'];
+        $this->assertMaxCartQty($cartKey, $product, $addQty);
+
         $this->storage->addItem($cartKey, [
             'product_id' => (int) $product->id,
             'combination_id' => $combination?->id,
-            'qty' => (int) $data['qty'],
+            'qty' => $addQty,
         ]);
 
         $payload = $this->manager->buildCartPayload($cartKey);
@@ -134,9 +137,13 @@ class CartController extends BaseController
         ]);
 
         $items = $this->storage->getItems($cartKey);
-        if (!collect($items)->contains(fn ($line) => $line['line_id'] === $lineId)) {
+        $existing = collect($items)->first(fn ($line) => $line['line_id'] === $lineId);
+        if (!$existing) {
             abort(404, 'Line not found');
         }
+
+        $product = Product::query()->findOrFail((int) $existing['product_id']);
+        $this->assertMaxCartQty($cartKey, $product, (int) $data['qty'], $lineId);
 
         $this->storage->updateLine($cartKey, $lineId, (int) $data['qty']);
 
@@ -197,6 +204,26 @@ class CartController extends BaseController
         ]);
 
         return $validator->validate();
+    }
+
+    /**
+     * Enforce products.max_cart_qty (0 = unlimited) across all lines of the same product.
+     *
+     * @throws ValidationException
+     */
+    protected function assertMaxCartQty(string $cartKey, Product $product, int $lineQty, ?string $excludeLineId = null): void
+    {
+        $max = $product->maxCartQty();
+        if ($max === 0) {
+            return;
+        }
+
+        $others = $this->storage->productQty($cartKey, (int) $product->id, $excludeLineId);
+        if (($others + $lineQty) > $max) {
+            throw ValidationException::withMessages([
+                'qty' => ['حداکثر '.$max.' عدد از این محصول در سبد مجاز است.'],
+            ]);
+        }
     }
 }
 

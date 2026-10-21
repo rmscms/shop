@@ -86,6 +86,7 @@ class ProductService
         // integers
         if (array_key_exists('stock_qty', $out)) { $out['stock_qty'] = (int)($out['stock_qty'] ?? 0); }
         if (array_key_exists('point_per_unit', $out)) { $out['point_per_unit'] = (int)($out['point_per_unit'] ?? 0); }
+        if (array_key_exists('max_cart_qty', $out)) { $out['max_cart_qty'] = max(0, (int)($out['max_cart_qty'] ?? 0)); }
         if (array_key_exists('brand_id', $out)) {
             $out['brand_id'] = $out['brand_id'] !== null && $out['brand_id'] !== ''
                 ? (int) $out['brand_id']

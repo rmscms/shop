@@ -34,6 +34,7 @@ class ProductResource extends JsonResource
             'sale_price' => $salePrice,
             'sale_price_cny' => $salePriceCny,
             'stock_qty' => (int) ($this->stock_qty ?? 0),
+            'max_cart_qty' => (int) ($this->max_cart_qty ?? 0),
             'active' => (bool) $this->active,
             'category' => $this->whenLoaded('category', function () use ($request) {
                 return (new CategoryBriefResource($this->category))->toArray($request);

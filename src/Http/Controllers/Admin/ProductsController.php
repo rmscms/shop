@@ -345,6 +345,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
             Field::price('sale_price_cny', trans('shop.product.sale_price_cny'))->optional(),
             Field::number('stock_qty', trans('shop.combinations.stock'))->withDefaultValue(0)->required(),
             Field::number('point_per_unit', trans('shop.product.point_per_unit'))->withDefaultValue(0)->required(),
+            Field::number('max_cart_qty', trans('shop.product.max_cart_qty'))->withDefaultValue(0)->optional(),
 
             Field::boolean('active', trans('shop.product.active'))->withDefaultValue(true),
         ];
@@ -420,6 +421,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
             'sale_price_cny' => ['nullable','numeric'],
             'stock_qty' => ['nullable','integer','min:0'],
             'point_per_unit' => ['nullable','integer','min:0'],
+            'max_cart_qty' => ['nullable','integer','min:0'],
             'discount_type' => ['nullable','in:percent,amount'],
             'discount_value' => ['nullable','numeric','min:0'],
             'active' => ['boolean'],
@@ -440,6 +442,7 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
             'sale_price_cny' => trans('shop.product.sale_price_cny'),
             'stock_qty' => trans('shop.combinations.stock'),
             'point_per_unit' => trans('shop.product.point_per_unit'),
+            'max_cart_qty' => trans('shop.product.max_cart_qty'),
             'active' => trans('shop.product.active'),
             'short_desc' => 'توضیح کوتاه',
             'description' => 'توضیحات محصول',

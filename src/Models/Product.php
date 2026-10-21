@@ -19,7 +19,7 @@ class Product extends Model
     protected $table = 'products';
 
     protected $fillable = [
-        'name', 'slug', 'sku', 'price', 'sale_price', 'active', 'stock_qty', 'category_id', 'brand_id',
+        'name', 'slug', 'sku', 'price', 'sale_price', 'active', 'stock_qty', 'max_cart_qty', 'category_id', 'brand_id',
         'short_desc', 'description', 'cost_cny', 'sale_price_cny', 'point_per_unit',
         'discount_type', 'discount_value',
         'meta_title', 'meta_description', 'focus_keyword', 'canonical_url', 'noindex', 'gtin', 'mpn',
@@ -34,8 +34,42 @@ class Product extends Model
         'sale_price_cny' => 'decimal:2',
         'discount_value' => 'decimal:2',
         'stock_qty' => 'integer',
+        'max_cart_qty' => 'integer',
         'point_per_unit' => 'integer',
     ];
+
+    /**
+     * Max units of this product allowed in one cart (all combinations combined).
+     * 0 = unlimited.
+     */
+    public function maxCartQty(): int
+    {
+        return max(0, (int) ($this->max_cart_qty ?? 0));
+    }
+
+    /**
+     * Whether a proposed total qty for this product in one cart is allowed.
+     */
+    public function allowsCartQty(int $totalQty): bool
+    {
+        $max = $this->maxCartQty();
+
+        return $max === 0 || $totalQty <= $max;
+    }
+
+    /**
+     * Remaining units that can still be added for this product in a cart.
+     * null = unlimited.
+     */
+    public function remainingCartQty(int $currentProductQtyInCart): ?int
+    {
+        $max = $this->maxCartQty();
+        if ($max === 0) {
+            return null;
+        }
+
+        return max(0, $max - max(0, $currentProductQtyInCart));
+    }
 
     // Relations
     public function category(): BelongsTo { return $this->belongsTo(Category::class, 'category_id'); }

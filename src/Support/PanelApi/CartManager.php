@@ -97,6 +97,22 @@ class CartManager
 
             $qty = min($qty, $availableStock);
 
+            // Soft clamp to product max_cart_qty across lines of the same product already accepted.
+            $maxCart = $product->maxCartQty();
+            if ($maxCart > 0) {
+                $already = 0;
+                foreach ($lines as $prev) {
+                    if ((int) ($prev['product_id'] ?? 0) === $productId) {
+                        $already += (int) ($prev['qty'] ?? 0);
+                    }
+                }
+                $room = max(0, $maxCart - $already);
+                if ($room <= 0) {
+                    continue;
+                }
+                $qty = min($qty, $room);
+            }
+
             $unitPriceCny = $this->resolveUnitPriceCny($product, $combination);
             $context = 'product:'.$productId.':'.($combinationId ?: 'base');
             $unitPrice = $unitPriceCny !== null

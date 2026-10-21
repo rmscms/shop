@@ -22,6 +22,7 @@ class UpdatePricingRequest extends FormRequest
             'discount_value' => ['nullable','numeric','min:0'],
             'stock_qty' => ['nullable','integer','min:0'],
             'point_per_unit' => ['nullable','integer','min:0'],
+            'max_cart_qty' => ['nullable','integer','min:0'],
         ];
     }
 
@@ -34,6 +35,7 @@ class UpdatePricingRequest extends FormRequest
             'sale_price_cny' => trans('shop.product.sale_price_cny'),
             'discount_type' => trans('shop.product.discount_type'),
             'discount_value' => trans('shop.product.discount_value'),
+            'max_cart_qty' => trans('shop.product.max_cart_qty'),
         ];
     }
 }

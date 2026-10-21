@@ -24,6 +24,7 @@ use RMS\Shop\Http\Controllers\Admin\ApiAccessesController;
 use RMS\Shop\Http\Controllers\Admin\AiSuggestionsController;
 use RMS\Shop\Http\Controllers\Admin\AiCatalogController;
 use RMS\Shop\Http\Controllers\Admin\AiImagesController;
+use RMS\Shop\Http\Controllers\Admin\BulkPricingController;
 
 $ordersControllerClass = (string) config('shop.controllers.admin.orders', \RMS\Shop\Http\Controllers\Admin\OrdersController::class);
 if (!class_exists($ordersControllerClass)) {
@@ -106,6 +107,11 @@ Route::middleware([
         Route::post('products/{product}/seo/update', [ProductsController::class, 'updateSeoAjax'])->name('products.seo.update');
         Route::post('products/{product}/pricing/update', [ProductsController::class, 'updatePricingAjax'])->name('products.pricing.update');
         Route::post('products/{product}/save-features', [ProductsController::class, 'saveFeatures'])->name('products.save-features');
+
+        // Bulk pricing (cost/sale CNY + stock + max_cart_qty)
+        Route::get('bulk-pricing', [BulkPricingController::class, 'index'])->name('bulk-pricing.index');
+        Route::get('bulk-pricing/data', [BulkPricingController::class, 'data'])->name('bulk-pricing.data');
+        Route::post('bulk-pricing/save', [BulkPricingController::class, 'save'])->name('bulk-pricing.save');
 
         // Product images (specific routes before parametric ones)
         Route::get('products/{product}/images/list', [ProductsController::class, 'listImages'])->name('products.images.list');

@@ -84,6 +84,24 @@ class CartStorage
         return $items;
     }
 
+    /**
+     * Total qty for one product across all lines (optionally excluding a line_id).
+     */
+    public function productQty(string $cartKey, int $productId, ?string $excludeLineId = null): int
+    {
+        $sum = 0;
+        foreach ($this->getItems($cartKey) as $line) {
+            if ($excludeLineId !== null && ($line['line_id'] ?? null) === $excludeLineId) {
+                continue;
+            }
+            if ((int) ($line['product_id'] ?? 0) === $productId) {
+                $sum += (int) ($line['qty'] ?? 0);
+            }
+        }
+
+        return $sum;
+    }
+
     public function removeLine(string $cartKey, string $lineId): array
     {
         $items = $this->getItems($cartKey);
