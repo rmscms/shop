@@ -129,6 +129,7 @@ class ImageLibraryController extends ShopAdminController implements HasList, Has
                     'csrf' => csrf_token(),
                     'folderId' => $folderId,
                     'unfiledOnly' => $unfiledOnly,
+                    'perPage' => $perPage,
                     'foldersEnabled' => $foldersEnabled,
                     'folderOptions' => $folderOptions,
                     'routes' => [
