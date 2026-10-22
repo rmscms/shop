@@ -150,14 +150,29 @@ class OrdersController extends ShopAdminController implements HasList, ShouldFil
     public function show(Request $request, int $id)
     {
         $data = \RMS\Shop\Services\OrderViewService::adminShow((int)$id);
-        // Live user finance snapshot for badges and actions
-        $userCredit = 0; $userDebt = 0;
+        // Live user finance snapshot for badges and actions (credit/debt are optional columns).
+        $userCredit = 0;
+        $userDebt = 0;
         try {
-            $u = DB::table('users')->where('id', (int)$data['order']->user_id)->first(['credit','debt']);
-            $currentDebt = (int) DB::table('finances')->where('user_id', (int)$data['order']->user_id)->where('paid', 0)->where('down', false)->sum('amount');
-            $userCredit = (int)($u->credit ?? 0);
-            $userDebt = (int)($u->debt ?? $currentDebt);
-        } catch (\Throwable $e) {}
+            $userId = (int) ($data['order']->user_id ?? 0);
+            if ($userId > 0 && \Illuminate\Support\Facades\Schema::hasColumn('users', 'credit')) {
+                $cols = ['credit'];
+                if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'debt')) {
+                    $cols[] = 'debt';
+                }
+                $u = DB::table('users')->where('id', $userId)->first($cols);
+                $userCredit = (int) ($u->credit ?? 0);
+                $userDebt = (int) ($u->debt ?? 0);
+            }
+            if ($userId > 0 && \Illuminate\Support\Facades\Schema::hasTable('finances') && $userDebt === 0) {
+                $userDebt = (int) DB::table('finances')
+                    ->where('user_id', $userId)
+                    ->where('paid', 0)
+                    ->where('down', false)
+                    ->sum('amount');
+            }
+        } catch (\Throwable $e) {
+        }
 
         $this->view->usePackageNamespace('shop')
             ->setTheme('admin')
@@ -191,12 +206,13 @@ class OrdersController extends ShopAdminController implements HasList, ShouldFil
 
     public function invoice(Request $request, int $id)
     {
+        // Only join user name — credit/debt columns are optional (not on every shop).
         $order = DB::table('orders as o')
-            ->leftJoin('users as u','u.id','=','o.user_id')
-            ->select('o.*','u.name as user_name','u.credit as user_credit','u.debt as user_debt')
-            ->where('o.id',(int)$id)
+            ->leftJoin('users as u', 'u.id', '=', 'o.user_id')
+            ->select('o.*', 'u.name as user_name')
+            ->where('o.id', (int) $id)
             ->first();
-        abort_if(!$order,404);
+        abort_if(!$order, 404);
 
         // Build seller from config or fallback
         $seller = new Seller([
