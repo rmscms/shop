@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RMS\Shop\Models\AiActivity;
 use RMS\Shop\Models\AiReview;
+use RMS\Shop\Models\AiSuggestion;
 use RMS\Shop\Models\Product;
 
 /**
@@ -13,6 +14,45 @@ use RMS\Shop\Models\Product;
  */
 class AiReviewController extends BaseController
 {
+    /** Everything waiting for the agent in one call; the agent reads this first. */
+    public function inbox(): JsonResponse
+    {
+        $doneIds = AiReview::query()->where('status', AiReview::STATUS_DONE)->select('product_id');
+        $requests = AiReview::query()->with('product:id,name')->where('status', AiReview::STATUS_REQUESTED)->orderBy('id')->limit(10)->get();
+
+        $data = [
+            'review_requests' => [
+                'count' => AiReview::query()->where('status', AiReview::STATUS_REQUESTED)->count(),
+                'first' => $requests->map(fn (AiReview $r) => [
+                    'review_id' => $r->id,
+                    'product_id' => $r->product_id,
+                    'product' => $r->product?->name,
+                    'aspects' => $r->aspects,
+                    'note' => $r->note,
+                    'requested_at' => $r->requested_at?->toIso8601String(),
+                ])->values(),
+                'how' => 'GET ai/reviews/queue سپس POST ai/reviews',
+            ],
+            'unreviewed_products' => [
+                'count' => Product::query()->whereNotIn('id', $doneIds)->count(),
+                'how' => 'GET ai/reviews/unreviewed',
+            ],
+            'english_slugs' => [
+                'count' => Product::query()->whereRaw('LENGTH(slug) = CHAR_LENGTH(slug)')->count(),
+                'how' => 'GET ai/tasks/slug_fa/items',
+            ],
+            'suggestions_waiting_admin' => AiSuggestion::query()->where('status', AiSuggestion::STATUS_READY)->count(),
+            'products_total' => Product::query()->count(),
+        ];
+        $data['suggested_order'] = array_values(array_filter([
+            $data['review_requests']['count'] > 0 ? 'ابتدا درخواست‌های بررسی ادمین' : null,
+            $data['english_slugs']['count'] > 0 ? 'سپس اسلاگ‌های انگلیسی' : null,
+            $data['unreviewed_products']['count'] > 0 ? 'سپس محصولات بررسی‌نشده' : null,
+        ]));
+
+        return $this->payload($data);
+    }
+
     /** Requests waiting for an agent. */
     public function queue(Request $request): JsonResponse
     {
