@@ -184,3 +184,12 @@
   background: var(--shop-ink-soft); color: var(--body-color); border-color: var(--shop-line);
 }
 .shop-ui .btn-light:disabled { opacity: .5; }
+
+/* selectable image / option tile (checked state is a calm outline, no solid colour) */
+.shop-ui .shop-pick { cursor: pointer; border: 1px solid var(--shop-line); transition: border-color .15s ease, background .15s ease; }
+.shop-ui .shop-pick:hover { background: var(--shop-ink-soft); }
+.shop-ui .shop-pick:has(input:checked) { border-color: rgb(var(--tone-success)); background: rgba(var(--tone-success), .07); }
+.shop-ui .shop-pick__img { background: var(--shop-ink-soft); }
+
+/* table row that needs a look (replaces the solid table-warning yellow) */
+.shop-ui .shop-row-warn > td { background: rgba(var(--tone-warning), .09) !important; }

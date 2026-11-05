@@ -1,73 +1,61 @@
 @extends('cms::admin.layout.index')
 
-@php
-  $statusLabels = [
-    'pending' => ['در صف', 'secondary'],
-    'processing' => ['در حال پردازش', 'info'],
-    'ready' => ['آمادهٔ بررسی', 'primary'],
-    'failed' => ['خطا', 'danger'],
-    'applied' => ['اعمال شد', 'success'],
-    'rejected' => ['رد شد', 'dark'],
-  ];
-@endphp
-
 @section('content')
-<div class="content ai-page">
+@include('shop::admin.partials.ui')
+<div class="content shop-ui">
   @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
+    <div class="shop-note tone-success mb-3"><i class="ph-check-circle me-1"></i>{{ session('success') }}</div>
   @endif
   @if($errors->any())
-    <div class="alert alert-danger">{{ $errors->first() }}</div>
+    <div class="shop-note tone-danger mb-3"><i class="ph-warning-circle me-1"></i>{{ $errors->first() }}</div>
   @endif
 
-  <div class="mb-3">
-    <a href="{{ route('admin.shop.ai.catalog.index') }}" class="btn btn-sm btn-outline-primary">طرح کاتالوگ: وارد کردن لیست و چیدن دسته‌ها، برندها و تنوع‌ها</a>
-    <a href="{{ route('admin.shop.ai.images.index') }}" class="btn btn-sm btn-outline-primary">عکس‌های پیشنهادی</a>
+  <div class="shop-head">
+    <span class="shop-icon shop-icon--lg tone-warning"><i class="ph-sparkle"></i></span>
+    <div>
+      <h4 class="shop-head__title">دستیار هوش مصنوعی محصولات</h4>
+      <p class="shop-head__sub">پیشنهاد نام، توضیح، سئو، دسته و ویژگی‌ها؛ تا تأیید نکنی چیزی عوض نمی‌شود</p>
+    </div>
   </div>
+  @include('shop::admin.partials.ai-nav', ['active' => 'suggestions'])
 
   @if(!$ready)
-    <div class="alert alert-warning mb-0">جدول پیشنهادهای AI هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>
+    <div class="shop-note tone-warning">جدول پیشنهادهای AI هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>
   @else
     @if(!$configured)
-      <div class="alert alert-warning">
-        کلید API تنظیم نشده است. در <code>.env</code> مقدار <code dir="ltr">SHOP_AI_DRIVER</code> و کلید همان درایور
+      <div class="shop-note tone-warning mb-3">
+        <i class="ph-warning me-1"></i>
+        کلید API تنظیم نشده است. در <code dir="ltr">.env</code> مقدار <code dir="ltr">SHOP_AI_DRIVER</code> و کلید همان درایور
         (<code dir="ltr">SHOP_AI_ANTHROPIC_KEY</code> یا <code dir="ltr">SHOP_AI_OPENAI_KEY</code>) را بگذارید.
       </div>
     @endif
 
     <div class="row g-3 mb-3">
       <div class="col-md-4">
-        <div class="card h-100 mb-0">
-          <div class="card-body">
-            <div class="text-muted small mb-1">سرویس فعال</div>
-            <div class="fw-semibold" dir="ltr">{{ $driver }} · {{ $model }}</div>
-            <div class="small text-muted mt-2">صف: <code dir="ltr">{{ $queueName }}</code></div>
-          </div>
-        </div>
+        @include('shop::admin.partials.stat', ['label' => 'سرویس فعال', 'value' => $driver, 'icon' => 'ph-cpu', 'tone' => $configured ? 'success' : 'muted', 'hint' => $model.' · صف '.$queueName])
       </div>
       <div class="col-md-4">
-        <div class="card h-100 mb-0">
-          <div class="card-body">
-            <div class="text-muted small mb-1">وضعیت</div>
-            <div class="d-flex flex-wrap gap-2">
-              @foreach($statusLabels as $key => [$label, $color])
-                <a href="{{ route('admin.shop.ai.index', $status === $key ? [] : ['status' => $key]) }}"
-                   class="badge bg-{{ $color }} text-decoration-none {{ $status !== '' && $status !== $key ? 'opacity-50' : '' }}">
-                  {{ $label }}: {{ number_format($counts[$key] ?? 0) }}
+        <div class="card mb-0 h-100">
+          <div class="p-3">
+            <div class="shop-stat__label mb-2">وضعیت پیشنهادها <span class="opacity-75">· از {{ number_format($productsTotal) }} محصول</span></div>
+            <div class="shop-nav mb-0">
+              @foreach(['pending', 'processing', 'ready', 'failed', 'applied', 'rejected'] as $key)
+                <a href="{{ route('admin.shop.ai.index', $status === $key ? [] : ['status' => $key]) }}" class="{{ $status === $key ? 'is-active' : '' }}">
+                  <span class="shop-dot tone-{{ \RMS\Shop\Support\UiTone::tone('suggestion', $key) }}">{{ \RMS\Shop\Support\UiTone::label('suggestion', $key) }}</span>
+                  <span class="opacity-75">{{ number_format($counts[$key] ?? 0) }}</span>
                 </a>
               @endforeach
             </div>
-            <div class="small text-muted mt-2">از {{ number_format($productsTotal) }} محصول</div>
           </div>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card h-100 mb-0">
-          <div class="card-body">
-            <div class="text-muted small mb-1">مصرف توکن</div>
+        <div class="card mb-0 h-100">
+          <div class="p-3 d-flex flex-column h-100">
+            <div class="shop-stat__label mb-1">مصرف توکن</div>
             <div class="fw-semibold" dir="ltr">in {{ number_format((int) ($usage->input ?? 0)) }} · out {{ number_format((int) ($usage->output ?? 0)) }}</div>
             @if(($counts['ready'] ?? 0) > 0)
-              <a href="{{ route('admin.shop.ai.next') }}" class="btn btn-sm btn-primary mt-2">بررسی پیشنهادها یکی‌یکی</a>
+              <a href="{{ route('admin.shop.ai.next') }}" class="btn btn-primary mt-auto align-self-start"><i class="ph-list-checks me-1"></i> بررسی پیشنهادها یکی‌یکی</a>
             @endif
           </div>
         </div>
@@ -75,14 +63,18 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header"><h6 class="mb-0">ارسال محصولات به هوش مصنوعی</h6></div>
+      <div class="card-header"><h6 class="shop-card-title"><i class="ph-paper-plane-tilt"></i> ارسال محصولات به هوش مصنوعی</h6></div>
       <div class="card-body">
-        <p class="text-muted small">
+        <p class="text-muted fs-sm">
           AI عکس‌ها و اطلاعات هر محصول را می‌خواند و نام، توضیح، متن سئو، دسته‌بندی، برند و ویژگی‌ها را به فارسی پیشنهاد می‌دهد.
           چیزی روی محصول عوض نمی‌شود تا خودتان پیشنهاد را تأیید کنید. محصولاتی که قبلاً پیشنهاد گرفته‌اند دوباره ارسال نمی‌شوند.
         </p>
         <div class="d-flex flex-wrap gap-2 align-items-start">
-          <form method="post" action="{{ route('admin.shop.ai.enqueue') }}">
+          <form method="post" action="{{ route('admin.shop.ai.enqueue') }}"
+                data-confirm="همهٔ محصولات برای دریافت پیشنهاد به صف AI بروند؟"
+                data-confirm-title="ارسال همهٔ محصولات"
+                data-confirm-desc="برای هر محصول که پیشنهاد ندارد یک کار در صف می‌رود و از اعتبار سرویس AI مصرف می‌شود."
+                data-confirm-type="info" data-confirm-ok="ارسال به صف" data-confirm-icon="ph-paper-plane-tilt">
             @csrf
             <input type="hidden" name="scope" value="all">
             <button type="submit" class="btn btn-primary" @disabled(!$configured)>همهٔ محصولات</button>
@@ -90,13 +82,13 @@
           <form method="post" action="{{ route('admin.shop.ai.enqueue') }}">
             @csrf
             <input type="hidden" name="scope" value="missing">
-            <button type="submit" class="btn btn-outline-primary" @disabled(!$configured)>فقط محصولات بدون توضیح</button>
+            <button type="submit" class="btn btn-light" @disabled(!$configured)>فقط محصولات بدون توضیح</button>
           </form>
           <form method="post" action="{{ route('admin.shop.ai.enqueue') }}" class="d-flex gap-2">
             @csrf
             <input type="hidden" name="scope" value="product">
-            <input type="text" name="product_id" class="form-control" style="max-width:140px" inputmode="numeric" placeholder="شناسهٔ محصول" required>
-            <button type="submit" class="btn btn-outline-secondary text-nowrap" @disabled(!$configured)>یک محصول</button>
+            <input type="text" name="product_id" class="form-control" style="max-width:9rem" inputmode="numeric" placeholder="شناسهٔ محصول" required>
+            <button type="submit" class="btn btn-light text-nowrap" @disabled(!$configured)>یک محصول</button>
           </form>
         </div>
         <div class="form-text mt-2">
@@ -107,50 +99,42 @@
 
     <div class="card mb-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover shop-table">
           <thead>
-            <tr>
-              <th style="width:70px">#</th>
-              <th>محصول</th>
-              <th>نام پیشنهادی</th>
-              <th style="width:130px">وضعیت</th>
-              <th style="width:140px">زمان</th>
-              <th style="width:170px"></th>
-            </tr>
+            <tr><th style="width:4.5rem">#</th><th>محصول</th><th>نام پیشنهادی</th><th>وضعیت</th><th>زمان</th><th style="width:1%"></th></tr>
           </thead>
           <tbody>
             @forelse($suggestions as $row)
-              @php([$label, $color] = $statusLabels[$row->status] ?? [$row->status, 'secondary'])
               <tr>
-                <td>{{ $row->product_id }}</td>
+                <td class="text-muted">{{ $row->product_id }}</td>
                 <td>
-                  <div>{{ $row->product?->name ?? '—' }}</div>
-                  @if($row->product?->sku)<div class="small text-muted" dir="ltr">{{ $row->product->sku }}</div>@endif
+                  <div class="fw-semibold">{{ $row->product?->name ?? '—' }}</div>
+                  @if($row->product?->sku)<span class="shop-cell-sub" dir="ltr">{{ $row->product->sku }}</span>@endif
                 </td>
                 <td>
                   {{ $row->payload['name'] ?? '' }}
                   @if($row->status === 'failed' && $row->error)
-                    <div class="small text-danger text-break">{{ \Illuminate\Support\Str::limit($row->error, 200) }}</div>
+                    <div class="fs-sm text-break mt-1 tone-danger" style="color:rgb(var(--tone-danger))">{{ \Illuminate\Support\Str::limit($row->error, 200) }}</div>
                   @endif
                 </td>
-                <td><span class="badge bg-{{ $color }}">{{ $label }}</span></td>
-                <td class="small text-muted">{{ $row->updated_at?->format('Y-m-d H:i') }}</td>
-                <td class="text-end">
-                  <div class="d-flex gap-1 justify-content-end">
+                <td><span class="shop-dot tone-{{ \RMS\Shop\Support\UiTone::tone('suggestion', $row->status) }}">{{ \RMS\Shop\Support\UiTone::label('suggestion', $row->status) }}</span></td>
+                <td class="fs-sm text-muted text-nowrap" dir="ltr">{{ $row->updated_at?->format('Y-m-d H:i') }}</td>
+                <td>
+                  <div class="d-flex gap-1">
                     @if($row->payload)
-                      <a href="{{ route('admin.shop.ai.show', $row) }}" class="btn btn-sm btn-outline-primary">مشاهده</a>
+                      <a href="{{ route('admin.shop.ai.show', $row) }}" class="btn btn-light btn-sm">مشاهده</a>
                     @endif
                     @if(in_array($row->status, ['failed', 'rejected', 'applied', 'ready'], true))
                       <form method="post" action="{{ route('admin.shop.ai.retry', $row) }}">
                         @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-secondary">دوباره</button>
+                        <button type="submit" class="btn btn-light btn-sm" title="دوباره به صف بفرست"><i class="ph-arrows-clockwise"></i></button>
                       </form>
                     @endif
                   </div>
                 </td>
               </tr>
             @empty
-              <tr><td colspan="6" class="text-center text-muted py-4">هنوز پیشنهادی ثبت نشده است.</td></tr>
+              <tr><td colspan="6">@include('shop::admin.partials.empty', ['icon' => 'ph-sparkle', 'title' => 'هنوز پیشنهادی ثبت نشده است', 'hint' => 'محصولات را از کارت بالا به صف AI بفرست.'])</td></tr>
             @endforelse
           </tbody>
         </table>
@@ -161,4 +145,5 @@
     </div>
   @endif
 </div>
+@include('shop::admin.partials.confirm')
 @endsection

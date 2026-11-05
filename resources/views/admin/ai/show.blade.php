@@ -1,19 +1,20 @@
 @extends('cms::admin.layout.index')
 
 @section('content')
-<div class="content ai-review-page">
+@include('shop::admin.partials.ui')
+<div class="content shop-ui ai-review-page">
   @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
+    <div class="shop-note tone-success mb-3"><i class="ph-check-circle me-1"></i>{{ session('success') }}</div>
   @endif
   @if($errors->any())
-    <div class="alert alert-danger">{{ $errors->first() }}</div>
+    <div class="shop-note tone-danger mb-3"><i class="ph-warning-circle me-1"></i>{{ $errors->first() }}</div>
   @endif
 
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div>
-      <a href="{{ route('admin.shop.ai.index') }}" class="btn btn-sm btn-outline-secondary">بازگشت به لیست</a>
+      <a href="{{ route('admin.shop.ai.index') }}" class="btn btn-light btn-sm">بازگشت به لیست</a>
       @if($product)
-        <a href="{{ route('admin.shop.products.edit', $product->id) }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener">ویرایش محصول</a>
+        <a href="{{ route('admin.shop.products.edit', $product->id) }}" class="btn btn-light btn-sm" target="_blank" rel="noopener">ویرایش محصول</a>
       @endif
     </div>
     <div class="small text-muted" dir="ltr">
@@ -23,10 +24,10 @@
   </div>
 
   @if(!$product)
-    <div class="alert alert-warning">محصول این پیشنهاد حذف شده است.</div>
+    <div class="shop-note tone-warning mb-3">محصول این پیشنهاد حذف شده است.</div>
   @else
     @if(!empty($payload['notes']))
-      <div class="alert alert-info"><strong>نکتهٔ AI:</strong> {{ $payload['notes'] }}</div>
+      <div class="shop-note tone-info mb-3"><strong>نکتهٔ AI:</strong> {{ $payload['notes'] }}</div>
     @endif
 
     <form method="post" action="{{ route('admin.shop.ai.apply', $suggestion) }}" id="ai-apply-form">
@@ -35,13 +36,13 @@
 
       <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h6 class="mb-0">{{ $product->name }} <span class="text-muted small">#{{ $product->id }}</span></h6>
+          <h6 class="shop-card-title">{{ $product->name }} <span class="text-muted small">#{{ $product->id }}</span></h6>
           @if($product->mainImageUrl())
             <img src="{{ $product->mainImageUrl() }}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:6px">
           @endif
         </div>
         <div class="table-responsive">
-          <table class="table align-top mb-0">
+          <table class="table shop-table align-top mb-0">
             <thead>
               <tr>
                 <th style="width:48px"></th>
@@ -125,7 +126,7 @@
 
     @if(!empty($payload['sources']))
       <div class="card mb-3">
-        <div class="card-header"><h6 class="mb-0">منابع</h6></div>
+        <div class="card-header"><h6 class="shop-card-title">منابع</h6></div>
         <div class="card-body small">
           <div class="text-muted mb-2">صفحه‌هایی که AI برای بررسی مشخصات جستجو کرد. قبل از اعمال، مشخصات را با منبع چک کنید.</div>
           <ol class="mb-0">
@@ -144,7 +145,7 @@
       <div class="card-header d-flex align-items-center gap-2">
         <input type="checkbox" class="form-check-input mt-0" form="ai-apply-form" name="fields[]" value="seo" id="ai-apply-seo"
                @checked($hasSeo) @disabled(!$editable || !$hasSeo)>
-        <label for="ai-apply-seo" class="mb-0"><h6 class="mb-0">سئو</h6></label>
+        <label for="ai-apply-seo" class="mb-0"><h6 class="shop-card-title">سئو</h6></label>
         <span class="small text-muted">عنوان، توضیح متا، کلمهٔ کلیدی و alt عکس اصلی روی محصول ذخیره می‌شوند.</span>
       </div>
       <div class="card-body">
@@ -164,7 +165,7 @@
             </label>
             <div class="input-group">
               <input type="text" class="form-control" readonly value="{{ $value }}">
-              <button type="button" class="btn btn-outline-secondary" data-copy="{{ $value }}">کپی</button>
+              <button type="button" class="btn btn-light" data-copy="{{ $value }}">کپی</button>
             </div>
           </div>
         @endforeach
@@ -173,19 +174,20 @@
 
     @if($suggestion->status === 'ready')
       <div class="d-flex flex-wrap gap-2">
-        <button type="submit" form="ai-apply-form" class="btn btn-success">اعمال موارد انتخاب‌شده و بعدی</button>
-        <form method="post" action="{{ route('admin.shop.ai.reject', $suggestion) }}">
+        <button type="submit" form="ai-apply-form" class="btn btn-success"><i class="ph-check me-1"></i> اعمال موارد انتخاب‌شده و بعدی</button>
+        <form method="post" action="{{ route('admin.shop.ai.reject', $suggestion) }}"
+              data-confirm="این پیشنهاد رد شود و پیشنهاد بعدی باز شود؟" data-confirm-title="رد پیشنهاد" data-confirm-desc="چیزی روی محصول عوض نمی‌شود." data-confirm-type="danger" data-confirm-ok="رد کن" data-confirm-icon="ph-x-circle">
           @csrf
           <input type="hidden" name="next" value="1">
-          <button type="submit" class="btn btn-outline-danger">رد و بعدی</button>
+          <button type="submit" class="btn btn-light">رد و بعدی</button>
         </form>
         <form method="post" action="{{ route('admin.shop.ai.retry', $suggestion) }}">
           @csrf
-          <button type="submit" class="btn btn-outline-secondary">دوباره بنویس</button>
+          <button type="submit" class="btn btn-light">دوباره بنویس</button>
         </form>
       </div>
     @else
-      <div class="alert alert-secondary mb-0">وضعیت این پیشنهاد: {{ $suggestion->status }}</div>
+      <div class="shop-note tone-muted">وضعیت این پیشنهاد: {{ $suggestion->status }}</div>
     @endif
   @endif
 </div>
@@ -194,6 +196,7 @@
   .ai-review-page .ai-preview { max-height: 320px; overflow: auto; }
   .ai-review-page .ai-preview p:last-child { margin-bottom: 0; }
 </style>
+@include('shop::admin.partials.confirm')
 @endsection
 
 @push('scripts')

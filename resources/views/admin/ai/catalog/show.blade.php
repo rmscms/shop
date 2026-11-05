@@ -18,27 +18,35 @@
 @endphp
 
 @section('content')
-<div class="content ai-catalog-show">
+@include('shop::admin.partials.ui')
+<div class="content shop-ui ai-catalog-show">
   @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
+    <div class="shop-note tone-success mb-3"><i class="ph-check-circle me-1"></i>{{ session('success') }}</div>
   @endif
   @if($errors->any())
-    <div class="alert alert-danger">{{ $errors->first() }}</div>
+    <div class="shop-note tone-danger mb-3"><i class="ph-warning-circle me-1"></i>{{ $errors->first() }}</div>
   @endif
 
+  <div class="shop-head">
+    <span class="shop-icon shop-icon--lg tone-primary"><i class="ph-git-branch"></i></span>
+    <div>
+      <h4 class="shop-head__title">طرح کاتالوگ #{{ $plan->id }}</h4>
+      <p class="shop-head__sub">پیش از ساخت محصولات، گروه‌ها را ببین و تیک بزن</p>
+    </div>
+  </div>
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <a href="{{ route('admin.shop.ai.catalog.index') }}" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+    <a href="{{ route('admin.shop.ai.catalog.index') }}" class="btn btn-light btn-sm">بازگشت</a>
     <div class="small text-muted" dir="ltr">
       {{ $plan->batch }} · {{ $plan->driver }} · {{ $plan->model }} · in {{ number_format($plan->input_tokens) }} / out {{ number_format($plan->output_tokens) }}
     </div>
   </div>
 
   @if(!empty($payload['notes']))
-    <div class="alert alert-info"><strong>نکتهٔ AI:</strong> {{ $payload['notes'] }}</div>
+    <div class="shop-note tone-info mb-3"><strong>نکتهٔ AI:</strong> {{ $payload['notes'] }}</div>
   @endif
 
   @if($plan->status === 'applied')
-    <div class="alert alert-success">
+    <div class="shop-note tone-success mb-3">
       این طرح {{ $plan->applied_at?->diffForHumans() }} اعمال شد: {{ count($plan->result['products'] ?? []) }} محصول،
       {{ count($plan->result['categories_created'] ?? []) }} دستهٔ تازه، {{ count($plan->result['brands_created'] ?? []) }} برند تازه.
     </div>
@@ -47,7 +55,7 @@
   <div class="row g-3 mb-3">
     <div class="col-lg-6">
       <div class="card h-100 mb-0">
-        <div class="card-header"><h6 class="mb-0">درخت دسته‌بندی ({{ count($payload['categories'] ?? []) }})</h6></div>
+        <div class="card-header"><h6 class="shop-card-title">درخت دسته‌بندی ({{ count($payload['categories'] ?? []) }})</h6></div>
         <div class="card-body small">
           @php
             $render = function (array $nodes) use (&$render) {
@@ -64,10 +72,10 @@
     </div>
     <div class="col-lg-6">
       <div class="card h-100 mb-0">
-        <div class="card-header"><h6 class="mb-0">برندها ({{ count($payload['brands'] ?? []) }})</h6></div>
+        <div class="card-header"><h6 class="shop-card-title">برندها ({{ count($payload['brands'] ?? []) }})</h6></div>
         <div class="card-body d-flex flex-wrap gap-2 align-content-start">
           @forelse($payload['brands'] ?? [] as $brand)
-            <span class="badge bg-light text-dark border" dir="ltr">{{ $brand }}</span>
+            <span class="shop-soft tone-muted" dir="ltr">{{ $brand }}</span>
           @empty
             —
           @endforelse
@@ -77,8 +85,8 @@
   </div>
 
   @if(!empty($payload['suspicious']))
-    <div class="card mb-3 border-warning">
-      <div class="card-header"><h6 class="mb-0">ردیف‌های مشکوک ({{ count($payload['suspicious']) }})</h6></div>
+    <div class="card mb-3 shop-card-accent tone-warning">
+      <div class="card-header"><h6 class="shop-card-title">ردیف‌های مشکوک ({{ count($payload['suspicious']) }})</h6></div>
       <div class="card-body small">
         <p class="text-muted">این ردیف‌ها همان‌طور که در فایل هستند ساخته می‌شوند. اگر AI درست می‌گوید، اول فایل را اصلاح و دوباره وارد کنید، یا بعد از ساخت محصول را ویرایش کنید.</p>
         <ul class="mb-0">
@@ -101,7 +109,7 @@
     @csrf
     <div class="card mb-3">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h6 class="mb-0">گروه‌های محصول ({{ count($groups) }} گروه، حدود {{ $productCount }} صفحهٔ محصول)</h6>
+        <h6 class="shop-card-title">گروه‌های محصول ({{ count($groups) }} گروه، حدود {{ $productCount }} صفحهٔ محصول)</h6>
         @if($editable)
           <div class="form-check mb-0">
             <input type="checkbox" class="form-check-input" id="toggle-all" checked>
@@ -121,7 +129,7 @@
           </thead>
           <tbody>
             @foreach($groups as $index => $group)
-              <tr @class(['table-warning' => collect($group['items'])->contains(fn ($i) => $suspicious->has($i['id'])) || !empty($group['unplanned'])])>
+              <tr @class(['shop-row-warn' => collect($group['items'])->contains(fn ($i) => $suspicious->has($i['id'])) || !empty($group['unplanned'])])>
                 <td>
                   <input type="checkbox" class="form-check-input group-check" name="groups[]" value="{{ $index }}" checked @disabled(!$editable)>
                 </td>
@@ -148,7 +156,7 @@
                 <td class="small">
                   @foreach($group['items'] as $item)
                     <div @class(['text-danger' => $suspicious->has($item['id'])])>
-                      <span class="badge bg-light text-dark border">{{ $item['value'] ?: '—' }}</span>
+                      <span class="shop-soft tone-muted">{{ $item['value'] ?: '—' }}</span>
                       <span class="text-muted">{{ $items[$item['id']]?->label() }}</span>
                       @if($group['mode'] === 'separate' && count($group['items']) > 1 && $item['name'])
                         <div class="ms-3">← {{ $item['name'] }}</div>
@@ -164,22 +172,24 @@
     </div>
 
     @if($editable)
-      <div class="alert alert-secondary small">
+      <div class="shop-note tone-muted mb-3">
         با اعمال، دسته‌ها و برندهای لازم ساخته می‌شوند و محصولات <strong>غیرفعال و بدون قیمت</strong> ساخته می‌شوند. گروه‌هایی که تیکشان را بردارید در لیست می‌مانند تا بعداً دوباره طرح بگیرند.
       </div>
       <div class="d-flex flex-wrap gap-2">
-        <button type="submit" class="btn btn-success">ساخت محصولات انتخاب‌شده</button>
+        <button type="submit" class="btn btn-primary"><i class="ph-check me-1"></i> ساخت محصولات انتخاب‌شده</button>
       </div>
     @endif
   </form>
 
   @if($editable)
-    <form method="post" action="{{ route('admin.shop.ai.catalog.reject', $plan) }}" class="mt-2">
+    <form method="post" action="{{ route('admin.shop.ai.catalog.reject', $plan) }}" class="mt-2"
+        data-confirm="کل این طرح رد شود؟" data-confirm-title="رد طرح" data-confirm-desc="هیچ محصول، دسته یا برندی ساخته نمی‌شود." data-confirm-type="danger" data-confirm-ok="رد کن" data-confirm-icon="ph-x-circle">
       @csrf
-      <button type="submit" class="btn btn-outline-danger">رد طرح</button>
+      <button type="submit" class="btn btn-light"><i class="ph-x me-1"></i> رد طرح</button>
     </form>
   @endif
 </div>
+@include('shop::admin.partials.confirm')
 @endsection
 
 @push('scripts')
