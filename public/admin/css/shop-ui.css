@@ -235,3 +235,18 @@
 
 /* label row used as a switch line inside dropdowns and small forms */
 .shop-ui label.shop-pick { border: 1px solid var(--shop-line); cursor: pointer; }
+
+/* ---- older detail pages (orders ...): keep their markup, quiet the colour ---- */
+.shop-ui .card-header h4 i[class*="text-"], .shop-ui .card-header h5 i[class*="text-"], .shop-ui .card-header h6 i[class*="text-"] {
+  color: var(--text-muted, var(--gray-600)) !important;
+}
+.shop-ui .alert { border: 0; border-radius: .6rem; color: var(--body-color); }
+.shop-ui .alert-success { background: rgba(var(--tone-success), .12); }
+.shop-ui .alert-info    { background: rgba(var(--tone-info), .12); }
+.shop-ui .alert-warning { background: rgba(var(--tone-warning), .14); }
+.shop-ui .alert-danger  { background: rgba(var(--tone-danger), .12); }
+.shop-ui .alert-secondary, .shop-ui .alert-light { background: var(--shop-ink-soft); }
+.shop-ui .table-striped > tbody > tr:nth-of-type(odd) > * { --bs-table-accent-bg: transparent; background-color: transparent; color: inherit; }
+.shop-ui .table-striped > tbody > tr:hover > * { background-color: var(--shop-ink-soft); }
+.shop-ui .btn-outline-secondary { color: var(--body-color); border-color: var(--shop-line); background: transparent; }
+.shop-ui .btn-outline-secondary:hover { background: var(--shop-ink-soft); color: var(--body-color); border-color: var(--shop-line); }
