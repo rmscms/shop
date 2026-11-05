@@ -92,32 +92,38 @@
 
     @if($actions->isNotEmpty())
       <div class="card mb-3">
-        <div class="card-header"><h6 class="shop-card-title"><i class="ph-pencil-simple"></i> تغییرهای مستقیم ایجنت (با دستور ادمین)</h6></div>
+        <div class="card-header d-flex align-items-center flex-wrap gap-2">
+          <h6 class="shop-card-title"><i class="ph-pencil-simple"></i> تغییرهای مستقیم ایجنت (با دستور ادمین)</h6>
+          <a href="{{ route('admin.shop.ai-activity.index', ['type' => 'apply']) }}" class="ms-auto fs-sm">همهٔ تغییرهای مستقیم</a>
+        </div>
         <div class="table-responsive">
           <table class="table table-hover shop-table">
-            <thead><tr><th>محصول</th><th>فیلدها</th><th>دستور ادمین</th><th>قبل ← بعد</th><th>تاریخ</th></tr></thead>
+            <thead><tr><th>محصول</th><th>فیلدها</th><th>دستور ادمین</th><th>تاریخ</th><th style="width:1%"></th></tr></thead>
             <tbody>
               @foreach($actions as $a)
                 <tr>
-                  <td><a href="{{ route('admin.shop.products.edit', $a->product_id) }}">{{ $a->product?->name ?? ('#'.$a->product_id) }}</a></td>
+                  <td><a href="{{ route('admin.shop.products.edit', $a->product_id) }}">{{ \Illuminate\Support\Str::limit($a->product?->name ?? ('#'.$a->product_id), 40) }}</a></td>
                   <td class="fs-sm">{{ implode('، ', (array) $a->fields) }}</td>
-                  <td class="fs-sm">{{ \Illuminate\Support\Str::limit($a->operator_instruction, 80) }}</td>
-                  <td class="fs-sm">
-                    @foreach((array) $a->fields as $f)
-                      <div class="mb-1"><span class="text-muted">{{ $f }}</span>
-                        <span class="shop-diff shop-diff--old d-inline-block py-0">{{ \Illuminate\Support\Str::limit(strip_tags((string) data_get($a->before, $f)), 40) ?: '—' }}</span>
-                        <i class="ph-arrow-left mx-1 text-muted"></i>
-                        <span class="shop-diff shop-diff--new d-inline-block py-0">{{ \Illuminate\Support\Str::limit(strip_tags((string) data_get($a->after, $f)), 40) ?: '—' }}</span>
-                      </div>
-                    @endforeach
-                  </td>
+                  <td class="fs-sm" style="max-width:22rem">{{ \Illuminate\Support\Str::limit($a->operator_instruction, 70) }}</td>
                   <td class="fs-sm text-nowrap text-muted" dir="ltr">{{ $a->created_at?->format('Y-m-d H:i') }}</td>
+                  <td class="text-nowrap"><button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#action-{{ $a->id }}"><i class="ph-eye me-1"></i> جزئیات</button></td>
                 </tr>
               @endforeach
             </tbody>
           </table>
         </div>
       </div>
+      @foreach($actions as $a)
+        @include('shop::admin.partials.change-modal', [
+          'modalId' => 'action-'.$a->id,
+          'title' => $a->product?->name ?? ('محصول #'.$a->product_id),
+          'meta' => ($a->created_at?->format('Y-m-d H:i')).' · '.($a->source ?: 'ایجنت'),
+          'instruction' => $a->operator_instruction,
+          'before' => (array) $a->before,
+          'after' => (array) $a->after,
+          'link' => route('admin.shop.products.ai-activity', $a->product_id),
+        ])
+      @endforeach
     @endif
 
     <div class="card">

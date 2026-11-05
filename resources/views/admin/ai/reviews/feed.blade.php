@@ -85,6 +85,16 @@
                     <span class="shop-diff shop-diff--old py-0">{{ $d['from'] }}</span><i class="ph-arrow-left text-muted"></i><span class="shop-diff shop-diff--new py-0">{{ $d['to'] ?? '' }}</span>
                   </div>
                 @elseif($a->type === 'apply')
+                  <button type="button" class="btn btn-light btn-sm mt-1" data-bs-toggle="modal" data-bs-target="#act-{{ $a->id }}"><i class="ph-eye me-1"></i> جزئیات کامل</button>
+                  @include('shop::admin.partials.change-modal', [
+                    'modalId' => 'act-'.$a->id,
+                    'title' => $a->title,
+                    'meta' => ($a->created_at?->format('Y-m-d H:i')).' · '.($a->actor ?? '—'),
+                    'instruction' => $d['operator_instruction'] ?? null,
+                    'before' => (array) ($d['before'] ?? []),
+                    'after' => (array) ($d['after'] ?? []),
+                    'link' => $named[1] ?? null,
+                  ])
                   @if(!empty($d['operator_instruction']))<div class="shop-tl__detail text-muted">دستور ادمین: «{{ $d['operator_instruction'] }}»</div>@endif
                   @foreach((array) ($d['after'] ?? []) as $f => $after)
                     <div class="shop-tl__detail d-flex flex-wrap align-items-center gap-2">
