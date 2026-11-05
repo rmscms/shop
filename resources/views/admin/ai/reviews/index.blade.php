@@ -22,6 +22,7 @@
     </div>
   </div>
   @include('shop::admin.partials.ai-nav', ['active' => 'reviews'])
+  @include('shop::admin.partials.round-bar', ['round' => $round, 'withStart' => true])
 
   @if(!$ready)
     <div class="shop-note tone-warning">جدول بررسی‌های AI هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>
@@ -62,7 +63,7 @@
       </div>
     </div>
 
-    @if($stats['unreviewed'] > 0)
+    @if($stats['unreviewed'] > 0 && !($round['archived'] ?? false))
       <div class="card mb-3">
         <div class="card-header d-flex align-items-center flex-wrap gap-2">
           <h6 class="shop-card-title"><i class="ph-tray"></i> بررسی‌نشده‌ها <span class="shop-soft tone-muted">{{ $stats['unreviewed'] }}</span></h6>

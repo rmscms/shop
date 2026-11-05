@@ -4,6 +4,19 @@
   $pending = $proposal->status === 'pending';
   $tone = \RMS\Shop\Support\UiTone::tone('proposal', $proposal->status);
   $spec = $resource?->fields() ?? [];
+  $creates = (bool) $resource?->creates();
+  $canApply = $pending && ($model || $creates);
+  $renderFeatures = function ($groups) {
+      $out = '';
+      foreach ((array) $groups as $g) {
+          $out .= '<div class="fw-semibold fs-sm mt-1">'.e($g['group'] !== '' ? $g['group'] : 'بدون گروه').'</div><ul class="mb-1 ps-3">';
+          foreach ((array) ($g['features'] ?? []) as $f) {
+              $out .= '<li class="fs-sm">'.e($f['name']).': '.e($f['value']).'</li>';
+          }
+          $out .= '</ul>';
+      }
+      return $out ?: '—';
+  };
 @endphp
 
 @section('content')
@@ -16,7 +29,7 @@
   <div class="shop-head">
     <span class="shop-icon shop-icon--lg tone-{{ $tone }}"><i class="ph-git-diff"></i></span>
     <div>
-      <h4 class="shop-head__title">{{ $resource?->label() ?? $proposal->resource_type }}: {{ $modelTitle ?? ('#'.$proposal->resource_id) }}</h4>
+      <h4 class="shop-head__title">{{ $resource?->label() ?? $proposal->resource_type }}: {{ $modelTitle ?? ($creates ? (data_get($proposal->changes, 'name') ?: 'جدید') : '#'.$proposal->resource_id) }}</h4>
       <p class="shop-head__sub">
         <span class="shop-dot tone-{{ $tone }}">{{ \RMS\Shop\Support\UiTone::label('proposal', $proposal->status) }}</span>
         · <span>{{ \RMS\Shop\Support\UiDate::html($proposal->created_at, 'inline') }}</span> · {{ $proposal->actor ?? '—' }}
@@ -34,7 +47,7 @@
   @if($proposal->error)
     <div class="shop-note tone-danger mb-3">{{ $proposal->error }}</div>
   @endif
-  @if(!$model)
+  @if(!$model && !$creates)
     <div class="shop-note tone-warning mb-3"><i class="ph-warning me-1"></i> این مورد دیگر وجود ندارد.</div>
   @endif
 
@@ -47,18 +60,24 @@
           <tbody>
             @foreach((array) $proposal->changes as $field => $value)
               @php
-                $now = (string) ($live[$field] ?? '');
+                $isFeatures = ($spec[$field]['type'] ?? '') === 'features';
+                $now = $isFeatures ? '' : (string) ($live[$field] ?? '');
                 $was = (string) data_get($proposal->before, $field, '');
-                $drift = $pending && $now !== $was;
+                $drift = $pending && ! $isFeatures && ! $creates && $now !== $was;
               @endphp
               <tr>
-                <td><input type="checkbox" class="form-check-input" name="fields[]" value="{{ $field }}" @checked($pending) @disabled(!$pending || !$model)></td>
+                <td><input type="checkbox" class="form-check-input" name="fields[]" value="{{ $field }}" @checked($pending) @disabled(!$canApply)></td>
                 <td>
                   <div class="fw-semibold">{{ $spec[$field]['label'] ?? $field }}</div>
                   @if($drift)<div class="fs-xs tone-warning" style="color:rgb(var(--tone-warning))"><i class="ph-warning me-1"></i>از زمان پیشنهاد عوض شده</div>@endif
                 </td>
-                <td><div class="shop-diff shop-diff--old">{{ \Illuminate\Support\Str::limit(strip_tags($now), 600) ?: '—' }}</div></td>
-                <td><div class="shop-diff shop-diff--new">{{ \Illuminate\Support\Str::limit(strip_tags((string) $value), 600) }}</div></td>
+                @if($isFeatures)
+                  <td><div class="shop-diff shop-diff--old">{!! $renderFeatures($live[$field] ?? []) !!}</div></td>
+                  <td><div class="shop-diff shop-diff--new">{!! $renderFeatures($value) !!}</div><div class="fs-xs text-muted mt-1">فقط ویژگی‌های جدید اضافه می‌شوند؛ موارد فعلی حفظ می‌شوند.</div></td>
+                @else
+                  <td><div class="shop-diff shop-diff--old">{{ $creates ? '—' : (\Illuminate\Support\Str::limit(strip_tags($now), 600) ?: '—') }}</div></td>
+                  <td><div class="shop-diff shop-diff--new">{{ \Illuminate\Support\Str::limit(strip_tags((string) $value), 600) }}</div></td>
+                @endif
               </tr>
             @endforeach
           </tbody>
@@ -66,12 +85,12 @@
       </div>
     </div>
 
-    @if($pending && $model)
+    @if($canApply)
       <div class="d-flex gap-2">
         <button type="submit" class="btn btn-success"
                 data-confirm="فیلدهای تیک‌خورده روی {{ $resource?->label() ?? 'این مورد' }} اعمال شوند؟"
                 data-confirm-title="اعمال تغییرها"
-                data-confirm-desc="مقدارهای فعلی با پیشنهاد ایجنت جایگزین می‌شوند و در تاریخچه ثبت می‌گردند."
+                data-confirm-desc="{{ $creates ? 'مورد جدید ساخته می‌شود و در تاریخچه ثبت می‌گردد.' : 'مقدارهای فعلی با پیشنهاد ایجنت جایگزین می‌شوند و در تاریخچه ثبت می‌گردند.' }}"
                 data-confirm-type="success"
                 data-confirm-ok="اعمال کن"><i class="ph-check me-1"></i> اعمال فیلدهای انتخاب‌شده</button>
         <button type="submit" class="btn btn-light" formaction="{{ route('admin.shop.ai-proposals.reject', $proposal) }}" formnovalidate

@@ -20,7 +20,7 @@ abstract class AiResource
     abstract protected function modelClass(): string;
 
     /**
-     * Fields an agent may propose. type: string | text | html | slug.
+     * Fields an agent may propose. type: string | text | html | slug | features.
      *
      * @return array<string, array{label: string, type: string, max?: int}>
      */
@@ -28,6 +28,28 @@ abstract class AiResource
 
     /** API path an agent reads the resource from, e.g. "products/{id}". */
     abstract public function readPath(): string;
+
+    /** True for resources an agent can propose to CREATE (no id in the proposal). */
+    public function creates(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Create the record from cleaned values (only for resources where creates() is true).
+     *
+     * @param  array<string, mixed>  $cleaned
+     */
+    public function create(array $cleaned): Model
+    {
+        throw new \LogicException($this->key().' cannot be created from a proposal.');
+    }
+
+    /** Extra guidance for agents (existing names to reuse, value shapes); shown by GET ai/resources. */
+    public function hints(): array
+    {
+        return [];
+    }
 
     public function find(int $id): ?Model
     {
@@ -56,12 +78,25 @@ abstract class AiResource
     }
 
     /**
+     * Drop what is already there. Returns the value that still changes something, or null when nothing does.
+     */
+    public function reduce(?Model $model, string $field, mixed $cleaned): mixed
+    {
+        if ($model === null) {
+            return $cleaned;
+        }
+        $current = $this->current($model, [$field])[$field] ?? '';
+
+        return trim((string) $current) === (string) $cleaned ? null : $cleaned;
+    }
+
+    /**
      * Clean and check proposed values. Unknown fields and bad values come back as errors.
      *
      * @param  array<string, mixed>  $changes
-     * @return array{0: array<string, string>, 1: array<string, array<int, string>>}  [cleaned, errors]
+     * @return array{0: array<string, mixed>, 1: array<string, array<int, string>>}  [cleaned, errors]
      */
-    public function clean(Model $model, array $changes): array
+    public function clean(?Model $model, array $changes): array
     {
         $spec = $this->fields();
         $cleaned = [];
@@ -72,12 +107,23 @@ abstract class AiResource
                 $errors[$field][] = 'این فیلد برای این منبع مجاز نیست. مجاز: '.implode(', ', array_keys($spec));
                 continue;
             }
+
+            $type = $spec[$field]['type'];
+            if ($type === 'features') {
+                [$groups, $problem] = static::cleanFeatures($value);
+                if ($problem) {
+                    $errors[$field][] = $problem;
+                } else {
+                    $cleaned[$field] = $groups;
+                }
+                continue;
+            }
+
             if (! is_scalar($value) && $value !== null) {
                 $errors[$field][] = 'مقدار باید متن باشد.';
                 continue;
             }
 
-            $type = $spec[$field]['type'];
             $max = (int) ($spec[$field]['max'] ?? 255);
             $text = trim((string) $value);
 
@@ -87,7 +133,7 @@ abstract class AiResource
                     $errors[$field][] = 'آدرس معتبر نیست.';
                     continue;
                 }
-                if (($this->modelClass())::query()->where('slug', $text)->whereKeyNot($model->getKey())->exists()) {
+                if (($this->modelClass())::query()->where('slug', $text)->when($model, fn ($q) => $q->whereKeyNot($model->getKey()))->exists()) {
                     $errors[$field][] = 'این آدرس برای مورد دیگری استفاده شده است.';
                     continue;
                 }
@@ -117,7 +163,50 @@ abstract class AiResource
         return [$cleaned, $errors];
     }
 
-    /** @param array<string, string> $changes already cleaned */
+    /**
+     * Shape: [{"group": "ابعاد", "features": [{"name": "ارتفاع", "value": "35 میلی‌متر"}]}]
+     *
+     * @return array{0: array<int, array{group: string, features: array<int, array{name: string, value: string}>}>, 1: ?string}
+     */
+    public static function cleanFeatures(mixed $value): array
+    {
+        if (! is_array($value) || $value === []) {
+            return [[], 'ویژگی‌ها باید فهرستی از گروه‌ها باشد: [{"group":"…","features":[{"name":"…","value":"…"}]}].'];
+        }
+        if (count($value) > 40) {
+            return [[], 'حداکثر ۴۰ گروه ویژگی در هر پیشنهاد.'];
+        }
+
+        $groups = [];
+        foreach ($value as $group) {
+            if (! is_array($group) || ! is_array($group['features'] ?? null)) {
+                return [[], 'هر گروه باید کلید features (فهرست ویژگی‌ها) داشته باشد.'];
+            }
+            $name = trim(strip_tags((string) ($group['group'] ?? '')));
+            if (mb_strlen($name) > 100) {
+                return [[], 'نام گروه حداکثر ۱۰۰ کاراکتر.'];
+            }
+            $features = [];
+            foreach ($group['features'] as $feature) {
+                $fName = trim(strip_tags((string) ($feature['name'] ?? '')));
+                $fValue = trim(strip_tags((string) ($feature['value'] ?? '')));
+                if ($fName === '' || $fValue === '') {
+                    continue;
+                }
+                if (mb_strlen($fName) > 100 || mb_strlen($fValue) > 255) {
+                    return [[], 'نام ویژگی حداکثر ۱۰۰ و مقدارش حداکثر ۲۵۵ کاراکتر.'];
+                }
+                $features[] = ['name' => $fName, 'value' => $fValue];
+            }
+            if ($features !== []) {
+                $groups[] = ['group' => $name, 'features' => array_slice($features, 0, 80)];
+            }
+        }
+
+        return $groups === [] ? [[], 'هیچ ویژگی معتبری (نام و مقدار) پیدا نشد.'] : [$groups, null];
+    }
+
+    /** @param array<string, mixed> $changes already cleaned */
     public function apply(Model $model, array $changes): void
     {
         $model->forceFill($changes)->save();

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Schema;
 use RMS\Shop\Models\AiAction;
 use RMS\Shop\Models\AiActivity;
 use RMS\Shop\Models\AiReview;
+use RMS\Shop\Models\AiRound;
 use RMS\Shop\Models\Product;
 
 /**
@@ -15,6 +16,8 @@ use RMS\Shop\Models\Product;
  */
 class AiReviewsController extends ShopAdminController
 {
+    use \RMS\Shop\Http\Controllers\Admin\Concerns\ResolvesAiRound;
+
     public function table(): string
     {
         return 'shop_ai_reviews';
@@ -37,18 +40,21 @@ class AiReviewsController extends ShopAdminController
         $reviews = collect();
         $unreviewed = collect();
         $actions = collect();
+        $round = $this->aiRound($request);
+        $rid = $round['id'];
+        $inRound = fn ($query) => $rid ? $query->where('round_id', $rid) : $query;
 
         if ($ready) {
             if (Schema::hasTable('shop_ai_actions')) {
-                $actions = AiAction::query()->with('product:id,name')->orderByDesc('id')->limit(15)->get();
+                $actions = $inRound(AiAction::query()->with('product:id,name'))->orderByDesc('id')->limit(15)->get();
             }
 
             $total = Product::query()->count();
-            $reviewedIds = AiReview::query()->where('status', AiReview::STATUS_DONE)->distinct()->pluck('product_id');
-            $openIds = AiReview::query()->where('status', AiReview::STATUS_REQUESTED)->distinct()->pluck('product_id');
+            $reviewedIds = $inRound(AiReview::query()->where('status', AiReview::STATUS_DONE))->distinct()->pluck('product_id');
+            $openIds = $inRound(AiReview::query()->where('status', AiReview::STATUS_REQUESTED))->distinct()->pluck('product_id');
 
             // Latest finished review per product drives the averages.
-            $latest = AiReview::query()
+            $latest = $inRound(AiReview::query())
                 ->where('status', AiReview::STATUS_DONE)
                 ->orderByDesc('reviewed_at')
                 ->get(['id', 'product_id', 'score', 'result', 'reviewed_at'])
@@ -68,12 +74,12 @@ class AiReviewsController extends ShopAdminController
                 'unreviewed' => max(0, $total - $reviewedIds->count()),
                 'requested' => $openIds->count(),
                 'avg_score' => $scored->isEmpty() ? null : (int) round($scored->avg('score')),
-                'last_7_days' => AiReview::query()->where('status', AiReview::STATUS_DONE)->where('reviewed_at', '>=', now()->subDays(7))->count(),
+                'last_7_days' => $inRound(AiReview::query())->where('status', AiReview::STATUS_DONE)->where('reviewed_at', '>=', now()->subDays(7))->count(),
                 'aspect_avg' => $aspectAvg,
                 'low' => $scored->filter(fn ($r) => $r->score < 50)->count(),
             ];
 
-            $reviews = AiReview::query()
+            $reviews = $inRound(AiReview::query())
                 ->with('product:id,name,sku,slug')
                 ->when($status !== '', fn ($q) => $q->where('status', $status))
                 ->orderByRaw("case status when 'requested' then 0 when 'done' then 1 else 2 end")
@@ -100,6 +106,7 @@ class AiReviewsController extends ShopAdminController
                 'actions' => $actions,
                 'status' => $status,
                 'aspects' => AiReview::ASPECTS,
+                'round' => $round,
             ]);
 
         return $this->view();
@@ -134,13 +141,23 @@ class AiReviewsController extends ShopAdminController
         $ready = Schema::hasTable('shop_ai_activities');
         $type = (string) $request->query('type', '');
         $resource = (string) $request->query('resource', '');
+        $round = $this->aiRound($request);
+        $rid = $round['id'];
+        $roundStats = [];
 
         $items = collect();
         $names = [];
         $counts = [];
         if ($ready) {
-            $counts = AiActivity::query()->selectRaw('type, count(*) as total')->groupBy('type')->pluck('total', 'type')->all();
-            $items = AiActivity::query()
+            $inRound = fn ($query) => $rid ? $query->where('round_id', $rid) : $query;
+            $counts = $inRound(AiActivity::query())->selectRaw('type, count(*) as total')->groupBy('type')->pluck('total', 'type')->all();
+            if ($round['rounds']->isNotEmpty()) {
+                $perRound = AiActivity::query()->selectRaw('round_id, count(*) as total')->groupBy('round_id')->pluck('total', 'round_id')->all();
+                foreach ($round['rounds'] as $r) {
+                    $roundStats[$r->id] = (int) ($perRound[$r->id] ?? 0);
+                }
+            }
+            $items = $inRound(AiActivity::query())
                 ->when($type !== '', fn ($q) => $q->where('type', $type))
                 ->when($resource !== '', fn ($q) => $q->where('resource_type', $resource))
                 ->orderByDesc('id')
@@ -172,9 +189,27 @@ class AiReviewsController extends ShopAdminController
                 'resource' => $resource,
                 'types' => AiActivity::TYPES,
                 'resources' => \RMS\Shop\Ai\Resources\AiResourceRegistry::all(),
+                'round' => $round,
+                'roundStats' => $roundStats,
             ]);
 
         return $this->view();
+    }
+
+    /** Archive everything done so far and begin a fresh round (open requests and pending proposals carry over). */
+    public function startRound(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['name' => ['nullable', 'string', 'max:120']]);
+
+        if (! AiRound::available()) {
+            return back()->withErrors(['round' => 'جدول دورها هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.']);
+        }
+
+        $round = AiRound::startNew($data['name'] ?? null, auth('admin')->id());
+        AiActivity::record(null, null, 'note', 'دور تازه شروع شد: '.$round->label(), ['round_id' => $round->id]);
+
+        return redirect()->route('admin.shop.ai-reviews.index')
+            ->with('success', $round->label().' شروع شد؛ کارهای دور قبل در آرشیو «فعالیت AI» هستند.');
     }
 
     /** Full timeline of what the agent did on one product. */
@@ -211,7 +246,14 @@ class AiReviewsController extends ShopAdminController
 
     public function requestAll(): RedirectResponse
     {
-        $taken = AiReview::query()->whereIn('status', [AiReview::STATUS_DONE, AiReview::STATUS_REQUESTED])->select('product_id');
+        // Done reviews only count inside the current round; open requests count from any round.
+        $rid = AiRound::currentId();
+        $taken = AiReview::query()
+            ->where(function ($q) use ($rid) {
+                $q->where('status', AiReview::STATUS_REQUESTED)
+                    ->orWhere(fn ($d) => $d->where('status', AiReview::STATUS_DONE)->when($rid, fn ($x) => $x->where('round_id', $rid)));
+            })
+            ->select('product_id');
         $count = 0;
         foreach (Product::query()->whereNotIn('id', $taken)->orderBy('id')->cursor() as $product) {
             $this->createRequest($product->id, [], null);

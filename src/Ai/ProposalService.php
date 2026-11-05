@@ -25,10 +25,12 @@ class ProposalService
             return [null, ['resource' => ['منبع ناشناخته است. مجاز: '.implode(', ', array_keys(AiResourceRegistry::all()))]], 422];
         }
 
-        $model = $resource->find($id);
-        if (! $model) {
+        $creates = $resource->creates();
+        $model = $creates ? null : $resource->find($id);
+        if (! $creates && ! $model) {
             return [null, ['id' => ['پیدا نشد.']], 404];
         }
+        $id = $creates ? 0 : $id;
 
         if ($changes === []) {
             return [null, ['changes' => ['حداقل یک فیلد بفرست.']], 422];
@@ -40,24 +42,28 @@ class ProposalService
         }
 
         // A value equal to the current one is no change; drop it.
-        $current = $resource->current($model, array_keys($cleaned));
         foreach ($cleaned as $field => $value) {
-            if (trim((string) ($current[$field] ?? '')) === $value) {
+            $kept = $resource->reduce($model, $field, $value);
+            if ($kept === null) {
                 unset($cleaned[$field]);
+            } else {
+                $cleaned[$field] = $kept;
             }
         }
         if ($cleaned === []) {
             return [null, ['changes' => ['همهٔ مقدارها با مقدار فعلی یکی است.']], 422];
         }
 
-        $before = $resource->current($model, array_keys($cleaned));
+        $before = $model ? $resource->current($model, array_keys($cleaned)) : [];
 
-        $proposal = DB::transaction(function () use ($access, $type, $id, $cleaned, $before, $note, $source) {
-            // One open proposal per resource: a newer one replaces the unreviewed older one.
-            AiProposal::query()
-                ->where('resource_type', $type)->where('resource_id', $id)
-                ->where('status', AiProposal::STATUS_PENDING)
-                ->update(['status' => AiProposal::STATUS_SUPERSEDED]);
+        $proposal = DB::transaction(function () use ($access, $type, $id, $cleaned, $before, $note, $source, $creates) {
+            // One open proposal per resource: a newer one replaces the unreviewed older one (creations stand side by side).
+            if (! $creates) {
+                AiProposal::query()
+                    ->where('resource_type', $type)->where('resource_id', $id)
+                    ->where('status', AiProposal::STATUS_PENDING)
+                    ->update(['status' => AiProposal::STATUS_SUPERSEDED]);
+            }
 
             return AiProposal::query()->create([
                 'resource_type' => $type,
@@ -76,7 +82,7 @@ class ProposalService
             $access,
             null,
             'suggestion',
-            'پیشنهاد تغییر '.$resource->label().': '.implode('، ', array_map(fn ($f) => $resource->fields()[$f]['label'] ?? $f, array_keys($cleaned))),
+            ($creates ? 'پیشنهاد ساخت ' : 'پیشنهاد تغییر ').$resource->label().': '.implode('، ', array_map(fn ($f) => $resource->fields()[$f]['label'] ?? $f, array_keys($cleaned))),
             ['proposal_id' => $proposal->id, 'note' => $proposal->note],
             $type,
             $id
@@ -98,8 +104,9 @@ class ProposalService
         }
 
         $resource = AiResourceRegistry::get($proposal->resource_type);
-        $model = $resource?->find($proposal->resource_id);
-        if (! $resource || ! $model) {
+        $creates = (bool) $resource?->creates();
+        $model = $creates ? null : $resource?->find($proposal->resource_id);
+        if (! $resource || (! $creates && ! $model)) {
             return ['resource' => ['منبع پیدا نشد یا حذف شده است.']];
         }
 
@@ -115,9 +122,13 @@ class ProposalService
             return $errors;
         }
 
-        $before = $resource->current($model, array_keys($cleaned));
-        DB::transaction(function () use ($resource, $model, $cleaned, $proposal, $adminId) {
-            $resource->apply($model, $cleaned);
+        $before = $model ? $resource->current($model, array_keys($cleaned)) : [];
+        DB::transaction(function () use ($resource, $model, $cleaned, $proposal, $adminId, $creates) {
+            if ($creates) {
+                $proposal->resource_id = (int) $resource->create($cleaned)->getKey();
+            } else {
+                $resource->apply($model, $cleaned);
+            }
             $proposal->forceFill([
                 'status' => AiProposal::STATUS_APPLIED,
                 'applied_fields' => array_keys($cleaned),
@@ -130,7 +141,7 @@ class ProposalService
             null,
             null,
             'apply',
-            'تأیید و اعمال پیشنهاد: '.implode('، ', array_map(fn ($f) => $resource->fields()[$f]['label'] ?? $f, array_keys($cleaned))),
+            ($creates ? 'تأیید و ساخت ' : 'تأیید و اعمال پیشنهاد: ').($creates ? $resource->label().': ' : '').implode('، ', array_map(fn ($f) => $resource->fields()[$f]['label'] ?? $f, array_keys($cleaned))),
             ['proposal_id' => $proposal->id, 'before' => $before, 'after' => $cleaned, 'approved_by_admin' => $adminId],
             $proposal->resource_type,
             $proposal->resource_id

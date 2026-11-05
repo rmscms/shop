@@ -3,11 +3,14 @@
 namespace RMS\Shop\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use RMS\Shop\Models\Concerns\HasRound;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /** Log of product changes an agent applied directly on an admin's explicit order. */
 class AiAction extends Model
 {
+    use HasRound;
+
     protected $table = 'shop_ai_actions';
 
     protected $fillable = [

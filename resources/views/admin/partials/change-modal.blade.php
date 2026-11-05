@@ -33,11 +33,11 @@
             <div class="row g-2">
               <div class="col-md-6">
                 <div class="fs-xs text-muted mb-1">قبل</div>
-                <div class="shop-diff shop-diff--old" style="max-height:18rem;overflow:auto">{{ trim(strip_tags((string) data_get($before ?? [], $field, ''))) ?: '—' }}</div>
+                <div class="shop-diff shop-diff--old" style="max-height:18rem;overflow:auto">{{ \RMS\Shop\Support\UiText::plain(data_get($before ?? [], $field, '')) ?: '—' }}</div>
               </div>
               <div class="col-md-6">
                 <div class="fs-xs text-muted mb-1">بعد</div>
-                <div class="shop-diff shop-diff--new" style="max-height:18rem;overflow:auto">{{ trim(strip_tags((string) data_get($after ?? [], $field, ''))) ?: '—' }}</div>
+                <div class="shop-diff shop-diff--new" style="max-height:18rem;overflow:auto">{{ \RMS\Shop\Support\UiText::plain(data_get($after ?? [], $field, '')) ?: '—' }}</div>
               </div>
             </div>
           </div>

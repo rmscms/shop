@@ -23,11 +23,13 @@ class AiProposalController extends BaseController
                 'label' => $resource->label(),
                 'read' => 'GET '.$resource->readPath(),
                 'fields' => $resource->fields(),
+                'creates' => $resource->creates(),
+                'hints' => $resource->hints(),
             ];
         }
 
         return $this->apiSuccess($data, [
-            'submit' => 'POST ai/proposals {resource, id, changes:{field:value}, note?, source?}',
+            'submit' => 'POST ai/proposals {resource, id, changes:{field:value}, note?, source?}. For resources with creates=true send no id: the record is made only after an admin approves.',
         ]);
     }
 
@@ -35,7 +37,7 @@ class AiProposalController extends BaseController
     {
         $data = $request->validate([
             'resource' => ['required', 'string', 'max:30'],
-            'id' => ['required', 'integer'],
+            'id' => ['nullable', 'integer'],
             'changes' => ['required', 'array', 'min:1'],
             'note' => ['nullable', 'string', 'max:2000'],
             'source' => ['nullable', 'string', 'max:80'],
@@ -44,7 +46,7 @@ class AiProposalController extends BaseController
         [$proposal, $errors, $status] = $service->submit(
             $request->attributes->get('shop_api_access'),
             $data['resource'],
-            (int) $data['id'],
+            (int) ($data['id'] ?? 0),
             $data['changes'],
             $data['note'] ?? null,
             $data['source'] ?? null

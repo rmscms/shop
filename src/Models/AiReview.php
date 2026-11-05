@@ -3,10 +3,13 @@
 namespace RMS\Shop\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use RMS\Shop\Models\Concerns\HasRound;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AiReview extends Model
 {
+    use HasRound;
+
     public const STATUS_REQUESTED = 'requested';
     public const STATUS_DONE = 'done';
     public const STATUS_DISMISSED = 'dismissed';

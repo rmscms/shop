@@ -3,6 +3,7 @@
 namespace RMS\Shop\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use RMS\Shop\Models\Concerns\HasRound;
 
 /**
  * A change an agent proposes for any shop resource (product, category, brand ...).
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AiProposal extends Model
 {
+    use HasRound;
+
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPLIED = 'applied';
     public const STATUS_REJECTED = 'rejected';

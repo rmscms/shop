@@ -15,6 +15,22 @@
     </div>
   </div>
   @include('shop::admin.partials.ai-nav', ['active' => 'activity'])
+  @include('shop::admin.partials.round-bar', ['round' => $round])
+
+  @if(($round['rounds'] ?? collect())->count() > 1)
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="shop-card-title"><i class="ph-archive"></i> دورها و آرشیو</h6></div>
+      <div class="card-body d-flex flex-wrap gap-2">
+        @foreach($round['rounds'] as $r)
+          <a href="{{ route('admin.shop.ai-activity.index', array_filter(['round' => $r->id, 'type' => $type, 'resource' => $resource])) }}"
+             class="shop-soft text-decoration-none {{ $r->isCurrent() ? 'tone-primary' : 'tone-muted' }}">
+            <i class="{{ $r->isCurrent() ? 'ph-arrows-clockwise' : 'ph-archive' }}"></i>
+            {{ $r->label() }} · {{ \RMS\Shop\Support\UiDate::jalali($r->started_at, false) }} · {{ number_format($roundStats[$r->id] ?? 0) }} فعالیت
+          </a>
+        @endforeach
+      </div>
+    </div>
+  @endif
 
   @if(!$ready)
     <div class="shop-note tone-warning">جدول فعالیت‌ها هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>
@@ -99,9 +115,9 @@
                   @foreach((array) ($d['after'] ?? []) as $f => $after)
                     <div class="shop-tl__detail d-flex flex-wrap align-items-center gap-2">
                       <span class="text-muted">{{ $f }}</span>
-                      <span class="shop-diff shop-diff--old py-0">{{ \Illuminate\Support\Str::limit(strip_tags((string) data_get($d, 'before.'.$f)), 50) ?: '—' }}</span>
+                      <span class="shop-diff shop-diff--old py-0">{{ \Illuminate\Support\Str::limit(\RMS\Shop\Support\UiText::plain(data_get($d, 'before.'.$f)), 50) ?: '—' }}</span>
                       <i class="ph-arrow-left text-muted"></i>
-                      <span class="shop-diff shop-diff--new py-0">{{ \Illuminate\Support\Str::limit(strip_tags((string) $after), 50) ?: '—' }}</span>
+                      <span class="shop-diff shop-diff--new py-0">{{ \Illuminate\Support\Str::limit(\RMS\Shop\Support\UiText::plain($after), 50) ?: '—' }}</span>
                     </div>
                   @endforeach
                 @elseif($a->type === 'write')

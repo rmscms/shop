@@ -14,6 +14,8 @@ use RMS\Shop\Models\AiProposal;
  */
 class AiProposalsController extends ShopAdminController
 {
+    use \RMS\Shop\Http\Controllers\Admin\Concerns\ResolvesAiRound;
+
     public function table(): string
     {
         return 'shop_ai_proposals';
@@ -35,9 +37,13 @@ class AiProposalsController extends ShopAdminController
 
         $rows = collect();
         $counts = [];
+        $round = $this->aiRound($request);
+        $rid = $round['id'];
         if ($ready) {
-            $counts = AiProposal::query()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status')->all();
+            $counts = AiProposal::query()->when($rid, fn ($q) => $q->where('round_id', $rid))
+                ->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status')->all();
             $rows = AiProposal::query()
+                ->when($rid, fn ($q) => $q->where('round_id', $rid))
                 ->when($status !== '' && $status !== 'all', fn ($q) => $q->where('status', $status))
                 ->when($type !== '', fn ($q) => $q->where('resource_type', $type))
                 ->orderByDesc('id')
@@ -55,6 +61,7 @@ class AiProposalsController extends ShopAdminController
                 'status' => $status,
                 'type' => $type,
                 'resources' => AiResourceRegistry::all(),
+                'round' => $round,
             ]);
 
         return $this->view();

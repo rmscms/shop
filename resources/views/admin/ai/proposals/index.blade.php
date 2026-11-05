@@ -2,7 +2,7 @@
 
 @php
   $statusTabs = ['pending' => 'در انتظار تأیید', 'applied' => 'اعمال شد', 'rejected' => 'رد شد', 'superseded' => 'جایگزین شد', 'failed' => 'خطا', 'all' => 'همه'];
-  $resourceIcons = ['product' => 'ph-package', 'category' => 'ph-folders', 'brand' => 'ph-tag'];
+  $resourceIcons = ['product' => 'ph-package', 'category' => 'ph-folders', 'brand' => 'ph-tag', 'feature_category' => 'ph-list-bullets'];
 @endphp
 
 @section('content')
@@ -23,6 +23,7 @@
     </div>
   </div>
   @include('shop::admin.partials.ai-nav', ['active' => 'proposals'])
+  @include('shop::admin.partials.round-bar', ['round' => $round])
 
   @if(!$ready)
     <div class="shop-note tone-warning">جدول پیشنهادها هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>
@@ -64,7 +65,7 @@
                   <div class="d-flex align-items-center gap-2">
                     <span class="shop-icon shop-icon--sm tone-muted"><i class="{{ $resourceIcons[$p->resource_type] ?? 'ph-circle' }}"></i></span>
                     <div>
-                      <div class="fw-semibold">{{ $res?->label() ?? $p->resource_type }} <span class="text-muted fw-normal" dir="ltr">#{{ $p->resource_id }}</span></div>
+                      <div class="fw-semibold">{{ $res?->label() ?? $p->resource_type }} @if($p->resource_id)<span class="text-muted fw-normal" dir="ltr">#{{ $p->resource_id }}</span>@else<span class="text-muted fw-normal">· {{ data_get($p->changes, 'name') }}</span>@endif</div>
                     </div>
                   </div>
                 </td>

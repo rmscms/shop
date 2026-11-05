@@ -3,11 +3,14 @@
 namespace RMS\Shop\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use RMS\Shop\Models\Concerns\HasRound;
 use Illuminate\Support\Facades\Schema;
 
 /** Timeline of everything an API token did on a product (reviews, suggestions, changes, notes). */
 class AiActivity extends Model
 {
+    use HasRound;
+
     public const TYPES = [
         'review' => 'بررسی',
         'suggestion' => 'پیشنهاد',

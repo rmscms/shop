@@ -16,7 +16,7 @@ class AiResourceRegistry
     {
         if (static::$cache === null) {
             $classes = array_merge(
-                [ProductAiResource::class, CategoryAiResource::class, BrandAiResource::class],
+                [ProductAiResource::class, CategoryAiResource::class, BrandAiResource::class, FeatureCategoryAiResource::class],
                 (array) config('shop.ai.resources', [])
             );
             static::$cache = [];

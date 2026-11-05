@@ -3,10 +3,13 @@
 namespace RMS\Shop\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use RMS\Shop\Models\Concerns\HasRound;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AiSuggestion extends Model
 {
+    use HasRound;
+
     public const STATUS_PENDING = 'pending';
     public const STATUS_PROCESSING = 'processing';
     public const STATUS_READY = 'ready';

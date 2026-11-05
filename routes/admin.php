@@ -71,6 +71,7 @@ Route::middleware([
 
         // Everything agents did across the shop
         Route::get('ai-activity', [AiReviewsController::class, 'feed'])->name('ai-activity.index');
+        Route::post('ai-rounds/start', [AiReviewsController::class, 'startRound'])->name('ai-rounds.start');
 
         // AI product reviews (done by an outside agent through the admin API)
         Route::get('ai-reviews', [AiReviewsController::class, 'index'])->name('ai-reviews.index');

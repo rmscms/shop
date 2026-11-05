@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Schema;
 use RMS\Shop\Models\AiActivity;
 use RMS\Shop\Models\AiProposal;
 use RMS\Shop\Models\AiReview;
+use RMS\Shop\Models\AiRound;
 use RMS\Shop\Models\AiSuggestion;
 use RMS\Shop\Models\Product;
 
@@ -19,7 +20,9 @@ class AiReviewController extends BaseController
     /** Everything waiting for the agent in one call; the agent reads this first. */
     public function inbox(): JsonResponse
     {
-        $doneIds = AiReview::query()->where('status', AiReview::STATUS_DONE)->select('product_id');
+        // Reviews count for the current work round only; a new round starts coverage from zero.
+        $rid = AiRound::currentId();
+        $doneIds = AiReview::query()->where('status', AiReview::STATUS_DONE)->when($rid, fn ($q) => $q->where('round_id', $rid))->select('product_id');
         $requests = AiReview::query()->with('product:id,name')->where('status', AiReview::STATUS_REQUESTED)->orderBy('id')->limit(10)->get();
 
         $data = [
@@ -46,6 +49,7 @@ class AiReviewController extends BaseController
             'suggestions_waiting_admin' => AiSuggestion::query()->where('status', AiSuggestion::STATUS_READY)->count()
                 + (Schema::hasTable('shop_ai_proposals') ? AiProposal::query()->where('status', AiProposal::STATUS_PENDING)->count() : 0),
             'products_total' => Product::query()->count(),
+            'round' => ['id' => $rid, 'name' => AiRound::current()?->label(), 'started_at' => AiRound::current()?->started_at?->toIso8601String()],
         ];
         $data['suggested_order'] = array_values(array_filter([
             $data['review_requests']['count'] > 0 ? 'ابتدا درخواست‌های بررسی ادمین' : null,
@@ -84,7 +88,7 @@ class AiReviewController extends BaseController
         $perPage = min(100, max(1, (int) $request->integer('per_page', 50)));
 
         $rows = Product::query()
-            ->whereNotIn('id', AiReview::query()->where('status', AiReview::STATUS_DONE)->select('product_id'))
+            ->whereNotIn('id', AiReview::query()->where('status', AiReview::STATUS_DONE)->when(AiRound::currentId(), fn ($q, $rid) => $q->where('round_id', $rid))->select('product_id'))
             ->orderBy('id')
             ->paginate($perPage, ['id', 'name', 'slug', 'sku']);
 

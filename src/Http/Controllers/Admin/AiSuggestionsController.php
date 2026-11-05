@@ -16,6 +16,8 @@ use RMS\Shop\Models\ProductFeature;
 
 class AiSuggestionsController extends ShopAdminController
 {
+    use \RMS\Shop\Http\Controllers\Admin\Concerns\ResolvesAiRound;
+
     public function table(): string
     {
         return 'shop_ai_suggestions';
@@ -35,8 +37,12 @@ class AiSuggestionsController extends ShopAdminController
         $ready = Schema::hasTable('shop_ai_suggestions');
         $status = (string) $request->query('status', '');
 
+        $round = $this->aiRound($request);
+        $rid = $round['id'];
+
         $suggestions = $ready
             ? AiSuggestion::query()
+                ->when($rid, fn ($q) => $q->where('round_id', $rid))
                 ->with('product:id,name,sku')
                 ->when($status !== '', fn ($q) => $q->where('status', $status))
                 ->orderByRaw("case status when 'ready' then 0 when 'failed' then 1 when 'processing' then 2 when 'pending' then 3 else 4 end")
@@ -46,11 +52,11 @@ class AiSuggestionsController extends ShopAdminController
             : collect();
 
         $counts = $ready
-            ? AiSuggestion::query()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status')->all()
+            ? AiSuggestion::query()->when($rid, fn ($q) => $q->where('round_id', $rid))->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status')->all()
             : [];
 
         $usage = $ready
-            ? AiSuggestion::query()->selectRaw('coalesce(sum(input_tokens),0) as input, coalesce(sum(output_tokens),0) as output')->first()
+            ? AiSuggestion::query()->when($rid, fn ($q) => $q->where('round_id', $rid))->selectRaw('coalesce(sum(input_tokens),0) as input, coalesce(sum(output_tokens),0) as output')->first()
             : null;
 
         $this->view->usePackageNamespace('shop')
@@ -67,6 +73,7 @@ class AiSuggestionsController extends ShopAdminController
                 'usage' => $usage,
                 'productsTotal' => $ready ? Product::query()->count() : 0,
                 'queueName' => (string) config('shop.ai.queue', 'shop-ai'),
+                'round' => $round,
             ]);
 
         return $this->view();
@@ -114,9 +121,12 @@ class AiSuggestionsController extends ShopAdminController
             if ($data['scope'] === 'missing') {
                 $query->where(fn ($q) => $q->whereNull('description')->orWhere('description', ''));
             }
-            // Bulk runs skip products that already have work in progress or were applied.
+            // Bulk runs skip products that already have work in progress or were applied in this round
+            // (a new round starts clean, so earlier applied ones can be suggested again).
+            $rid = \RMS\Shop\Models\AiRound::currentId();
             $query->whereNotIn('id', AiSuggestion::query()
                 ->whereIn('status', [AiSuggestion::STATUS_PENDING, AiSuggestion::STATUS_PROCESSING, AiSuggestion::STATUS_READY, AiSuggestion::STATUS_APPLIED])
+                ->when($rid, fn ($q) => $q->where('round_id', $rid))
                 ->select('product_id'));
         }
 

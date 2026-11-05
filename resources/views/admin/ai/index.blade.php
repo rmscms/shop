@@ -18,6 +18,7 @@
     </div>
   </div>
   @include('shop::admin.partials.ai-nav', ['active' => 'suggestions'])
+  @include('shop::admin.partials.round-bar', ['round' => $round])
 
   @if(!$ready)
     <div class="shop-note tone-warning">جدول پیشنهادهای AI هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>

@@ -58,9 +58,9 @@
                 @foreach((array) ($d['after'] ?? []) as $f => $after)
                   <div class="shop-tl__detail d-flex flex-wrap align-items-center gap-2">
                     <span class="text-muted">{{ $f }}</span>
-                    <span class="shop-diff shop-diff--old py-0">{{ \Illuminate\Support\Str::limit(strip_tags((string) data_get($d, 'before.'.$f)), 50) ?: '—' }}</span>
+                    <span class="shop-diff shop-diff--old py-0">{{ \Illuminate\Support\Str::limit(\RMS\Shop\Support\UiText::plain(data_get($d, 'before.'.$f)), 50) ?: '—' }}</span>
                     <i class="ph-arrow-left text-muted"></i>
-                    <span class="shop-diff shop-diff--new py-0">{{ \Illuminate\Support\Str::limit(strip_tags((string) $after), 50) ?: '—' }}</span>
+                    <span class="shop-diff shop-diff--new py-0">{{ \Illuminate\Support\Str::limit(\RMS\Shop\Support\UiText::plain($after), 50) ?: '—' }}</span>
                   </div>
                 @endforeach
               @elseif($a->type === 'write')
