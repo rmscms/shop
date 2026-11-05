@@ -47,7 +47,7 @@
 
   @if($plan->status === 'applied')
     <div class="shop-note tone-success mb-3">
-      این طرح {{ $plan->applied_at?->diffForHumans() }} اعمال شد: {{ count($plan->result['products'] ?? []) }} محصول،
+      این طرح {{ \RMS\Shop\Support\UiDate::human($plan->applied_at) }} اعمال شد: {{ count($plan->result['products'] ?? []) }} محصول،
       {{ count($plan->result['categories_created'] ?? []) }} دستهٔ تازه، {{ count($plan->result['brands_created'] ?? []) }} برند تازه.
     </div>
   @endif

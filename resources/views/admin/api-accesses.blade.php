@@ -18,7 +18,7 @@
           ."آدرس API: {$adminApi}\n"
           ."توکن (Bearer): {$access->token}\n"
           ."سطح این توکن: {$level}\n"
-          ."اعتبار توکن: ".($access->expires_at ? $access->expires_at->format('Y-m-d H:i').' ('.$access->expiryLabel().')؛ بعد از آن 401 می‌دهد و باید توکن تازه گرفت' : 'بدون انقضا')."\n"
+          ."اعتبار توکن: ".($access->expires_at ? \RMS\Shop\Support\UiDate::jalali($access->expires_at).' ('.$access->expiryLabel().')؛ بعد از آن 401 می‌دهد و باید توکن تازه گرفت' : 'بدون انقضا')."\n"
           ."مستندات: {$docsUrl}\n"
           ."راهنمای ایجنت: GET {$adminApi}/ai/guide\n"
           ."صندوق کارها: GET {$adminApi}/ai/inbox\n\n"
@@ -174,12 +174,12 @@
               <span class="shop-icon"><i class="{{ $canWrite ? 'ph-pencil-simple' : 'ph-eye' }}"></i></span>
               <div>
                 <div class="fw-semibold">{{ $access->name }}</div>
-                <div class="shop-tl__meta"><i class="ph-clock me-1"></i>{{ $access->last_used_at ? 'آخرین استفاده '.$access->last_used_at->format('Y-m-d H:i') : 'هنوز استفاده نشده' }}</div>
+                <div class="shop-tl__meta"><i class="ph-clock me-1"></i>{{ $access->last_used_at ? 'آخرین استفاده '.\RMS\Shop\Support\UiDate::human($access->last_used_at) : 'هنوز استفاده نشده' }}</div>
               </div>
             </div>
             <div class="d-flex flex-wrap align-items-center gap-2">
               <span class="shop-soft tone-{{ $permTone }}">{{ $canWrite ? 'خواندن و نوشتن' : 'فقط خواندن' }}</span>
-              <span class="shop-soft tone-{{ $expTone }}" title="{{ $access->expires_at ? 'تا '.$access->expires_at->format('Y-m-d H:i') : 'هیچ‌وقت منقضی نمی‌شود' }}"><i class="ph-hourglass"></i>{{ $access->expiryLabel() }}</span>
+              <span class="shop-soft tone-{{ $expTone }}" title="{{ $access->expires_at ? 'تا '.\RMS\Shop\Support\UiDate::jalali($access->expires_at) : 'هیچ‌وقت منقضی نمی‌شود' }}"><i class="ph-hourglass"></i>{{ $access->expiryLabel() }}</span>
               <span class="shop-dot tone-{{ $access->active ? 'success' : 'muted' }}">{{ $access->active ? 'فعال' : 'غیرفعال' }}</span>
 
               @if($access->expires_at)

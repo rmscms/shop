@@ -12,7 +12,7 @@
     <span class="shop-icon shop-icon--lg tone-{{ $overallTone }}"><i class="ph-clipboard-text"></i></span>
     <div>
       <h4 class="shop-head__title">{{ $product?->name ?? ('محصول #'.$review->product_id) }}</h4>
-      <p class="shop-head__sub">گزارش بررسی AI · <span dir="ltr">{{ $review->reviewed_at?->format('Y-m-d H:i') }}</span> · {{ $review->source }}</p>
+      <p class="shop-head__sub">گزارش بررسی AI · <span>{{ \RMS\Shop\Support\UiDate::html($review->reviewed_at, 'inline') }}</span> · {{ $review->source }}</p>
     </div>
     <div class="shop-head__actions">
       @if($product)<a href="{{ route('admin.shop.products.edit', $product->id) }}" class="btn btn-light"><i class="ph-pencil-simple me-1"></i> ویرایش محصول</a>@endif
@@ -78,7 +78,7 @@
           <li>
             <span class="shop-icon shop-icon--sm shop-icon--round tone-{{ \RMS\Shop\Support\UiTone::score($h->score) }}"><i class="ph-chart-bar"></i></span>
             <div class="shop-tl__body d-flex align-items-center gap-2">
-              <a href="{{ route('admin.shop.ai-reviews.show', $h->id) }}" dir="ltr">{{ $h->reviewed_at?->format('Y-m-d H:i') }}</a>
+              <a href="{{ route('admin.shop.ai-reviews.show', $h->id) }}">{{ \RMS\Shop\Support\UiDate::html($h->reviewed_at) }}</a>
               @if($h->id === $review->id)<span class="shop-soft tone-primary">همین گزارش</span>@endif
               <span class="ms-auto shop-score tone-{{ \RMS\Shop\Support\UiTone::score($h->score) }}">{{ $h->score ?? '—' }}</span>
             </div>

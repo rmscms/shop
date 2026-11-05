@@ -86,7 +86,7 @@
                 </td>
                 <td>{{ count($plan->payload['groups'] ?? []) ?: '—' }}</td>
                 <td class="fs-sm text-muted" dir="ltr">{{ $plan->model ?: $plan->driver }}</td>
-                <td class="fs-sm text-muted">{{ $plan->updated_at?->diffForHumans() }}</td>
+                <td class="fs-sm text-muted">{{ \RMS\Shop\Support\UiDate::human($plan->updated_at) }}</td>
                 <td class="text-nowrap">
                   @if(in_array($plan->status, ['ready', 'applied'], true))
                     <a href="{{ route('admin.shop.ai.catalog.show', $plan) }}" class="btn btn-light btn-sm">{{ $plan->status === 'ready' ? 'بررسی' : 'نمایش' }}</a>

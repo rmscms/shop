@@ -274,3 +274,8 @@
 /* core list statistic cards (tinted + coloured border) become neutral tiles on shop lists */
 .shop-ui.shop-list .card.bg-opacity-10 { background: var(--card-bg) !important; border-color: var(--shop-line) !important; }
 .shop-ui.shop-list .card.bg-opacity-10 h4 { color: var(--body-color) !important; }
+
+/* ---- dates: human text with the Jalali date underneath ---- */
+.shop-ui .shop-when { display: inline-flex; flex-direction: column; line-height: 1.35; white-space: nowrap; }
+.shop-ui .shop-when__human { font-size: .8125rem; color: var(--body-color); }
+.shop-ui .shop-when__abs { font-size: .6875rem; color: var(--text-muted, var(--gray-600)); }

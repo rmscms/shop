@@ -118,7 +118,7 @@
                   @endif
                 </td>
                 <td><span class="shop-dot tone-{{ \RMS\Shop\Support\UiTone::tone('suggestion', $row->status) }}">{{ \RMS\Shop\Support\UiTone::label('suggestion', $row->status) }}</span></td>
-                <td class="fs-sm text-muted text-nowrap" dir="ltr">{{ $row->updated_at?->format('Y-m-d H:i') }}</td>
+                <td class="fs-sm text-muted text-nowrap">{{ \RMS\Shop\Support\UiDate::html($row->updated_at) }}</td>
                 <td>
                   <div class="d-flex gap-1">
                     @if($row->payload)

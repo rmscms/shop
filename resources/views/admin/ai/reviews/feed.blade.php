@@ -61,7 +61,7 @@
                 <div class="d-flex align-items-center flex-wrap gap-2">
                   <span class="shop-tl__title">{{ $a->title }}</span>
                   <span class="shop-soft tone-{{ $tone }}">{{ \RMS\Shop\Support\UiTone::label('activity', $a->type) }}</span>
-                  <span class="shop-tl__meta ms-auto" dir="ltr">{{ $a->created_at?->format('Y-m-d H:i') }}</span>
+                  <span class="shop-tl__meta ms-auto">{{ \RMS\Shop\Support\UiDate::html($a->created_at) }}</span>
                 </div>
                 <div class="shop-tl__meta">
                   @if($named)
@@ -89,7 +89,7 @@
                   @include('shop::admin.partials.change-modal', [
                     'modalId' => 'act-'.$a->id,
                     'title' => $a->title,
-                    'meta' => ($a->created_at?->format('Y-m-d H:i')).' · '.($a->actor ?? '—'),
+                    'meta' => \RMS\Shop\Support\UiDate::both($a->created_at).' · '.($a->actor ?? '—'),
                     'instruction' => $d['operator_instruction'] ?? null,
                     'before' => (array) ($d['before'] ?? []),
                     'after' => (array) ($d['after'] ?? []),

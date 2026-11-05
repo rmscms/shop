@@ -19,7 +19,7 @@
       <h4 class="shop-head__title">{{ $resource?->label() ?? $proposal->resource_type }}: {{ $modelTitle ?? ('#'.$proposal->resource_id) }}</h4>
       <p class="shop-head__sub">
         <span class="shop-dot tone-{{ $tone }}">{{ \RMS\Shop\Support\UiTone::label('proposal', $proposal->status) }}</span>
-        · <span dir="ltr">{{ $proposal->created_at?->format('Y-m-d H:i') }}</span> · {{ $proposal->actor ?? '—' }}
+        · <span>{{ \RMS\Shop\Support\UiDate::html($proposal->created_at, 'inline') }}</span> · {{ $proposal->actor ?? '—' }}
       </p>
     </div>
     <div class="shop-head__actions">

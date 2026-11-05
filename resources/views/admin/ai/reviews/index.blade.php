@@ -105,7 +105,7 @@
                   <td><a href="{{ route('admin.shop.products.edit', $a->product_id) }}">{{ \Illuminate\Support\Str::limit($a->product?->name ?? ('#'.$a->product_id), 40) }}</a></td>
                   <td class="fs-sm">{{ implode('، ', (array) $a->fields) }}</td>
                   <td class="fs-sm" style="max-width:22rem">{{ \Illuminate\Support\Str::limit($a->operator_instruction, 70) }}</td>
-                  <td class="fs-sm text-nowrap text-muted" dir="ltr">{{ $a->created_at?->format('Y-m-d H:i') }}</td>
+                  <td class="fs-sm text-nowrap text-muted">{{ \RMS\Shop\Support\UiDate::html($a->created_at) }}</td>
                   <td class="text-nowrap"><button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#action-{{ $a->id }}"><i class="ph-eye me-1"></i> جزئیات</button></td>
                 </tr>
               @endforeach
@@ -117,7 +117,7 @@
         @include('shop::admin.partials.change-modal', [
           'modalId' => 'action-'.$a->id,
           'title' => $a->product?->name ?? ('محصول #'.$a->product_id),
-          'meta' => ($a->created_at?->format('Y-m-d H:i')).' · '.($a->source ?: 'ایجنت'),
+          'meta' => \RMS\Shop\Support\UiDate::both($a->created_at).' · '.($a->source ?: 'ایجنت'),
           'instruction' => $a->operator_instruction,
           'before' => (array) $a->before,
           'after' => (array) $a->after,
@@ -154,7 +154,7 @@
                   @else <span class="text-muted">—</span> @endif
                 </td>
                 <td class="fs-sm" style="max-width:26rem">{{ \Illuminate\Support\Str::limit((string) $r->summary, 110) ?: '—' }}</td>
-                <td class="fs-sm text-nowrap text-muted" dir="ltr">{{ ($r->reviewed_at ?? $r->requested_at)?->format('Y-m-d H:i') }}</td>
+                <td class="fs-sm text-nowrap text-muted">{{ \RMS\Shop\Support\UiDate::html($r->reviewed_at ?? $r->requested_at) }}</td>
                 <td class="text-nowrap">
                   @if($r->status === 'done')
                     <a class="btn btn-light btn-sm" href="{{ route('admin.shop.ai-reviews.show', $r) }}"><i class="ph-file-text me-1"></i> گزارش</a>

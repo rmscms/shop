@@ -71,7 +71,7 @@
                 <td class="fs-sm">{{ collect((array) $p->changes)->keys()->map(fn ($f) => $res?->fields()[$f]['label'] ?? $f)->implode('، ') }}</td>
                 <td><span class="shop-dot tone-{{ $tone }}">{{ \RMS\Shop\Support\UiTone::label('proposal', $p->status) }}</span></td>
                 <td class="fs-sm text-muted">{{ $p->actor ?? '—' }}</td>
-                <td class="fs-sm text-nowrap text-muted" dir="ltr">{{ $p->created_at?->format('Y-m-d H:i') }}</td>
+                <td class="fs-sm text-nowrap text-muted">{{ \RMS\Shop\Support\UiDate::html($p->created_at) }}</td>
                 <td><a class="btn btn-light btn-sm" href="{{ route('admin.shop.ai-proposals.show', $p) }}">{{ $p->status === 'pending' ? 'بررسی' : 'نمایش' }}</a></td>
               </tr>
             @empty
