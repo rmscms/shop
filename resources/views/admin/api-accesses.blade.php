@@ -36,7 +36,7 @@
       <div class="card-body">
         <form method="post" action="{{ route('admin.shop.api-accesses.store') }}" class="row g-3 align-items-start">
           @csrf
-          <div class="col-md-3">
+          <div class="col-md-2">
             <label class="form-label" for="name">نام</label>
             <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required maxlength="190">
             @error('name')<div class="form-text text-danger">{{ $message }}</div>@enderror
@@ -47,7 +47,7 @@
             <div class="form-text">صفر یعنی بدون سقف.</div>
             @error('rate_limit')<div class="form-text text-danger">{{ $message }}</div>@enderror
           </div>
-          <div class="col-md-5">
+          <div class="col-md-4">
             <label class="form-label" for="allowed_ips_input">آی‌پی‌های مجاز</label>
             <div class="ip-tags" data-ip-tags>
               <input type="hidden" name="allowed_ips" value="{{ old('allowed_ips') }}">
@@ -55,6 +55,14 @@
             </div>
             <div class="form-text">اختیاری. با اینتر یا تب تگ می‌شود. خالی یعنی همهٔ آی‌پی‌ها.</div>
             @error('allowed_ips')<div class="form-text text-danger">{{ $message }}</div>@enderror
+          </div>
+          <div class="col-md-2">
+            <label class="form-label" for="permission">سطح دسترسی</label>
+            <select class="form-select" id="permission" name="permission">
+              <option value="read" @selected(old('permission', 'read') === 'read')>فقط خواندن</option>
+              <option value="read_write" @selected(old('permission') === 'read_write')>خواندن و نوشتن</option>
+            </select>
+            @error('permission')<div class="form-text text-danger">{{ $message }}</div>@enderror
           </div>
           <div class="col-md-2">
             <label class="form-label d-none d-md-block">&nbsp;</label>
@@ -125,11 +133,11 @@
                 </div>
               </div>
               <div class="col-md-2">
-                <label class="form-label">اعمال مستقیم</label>
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" name="can_apply" value="1" id="can-apply-{{ $access->id }}" @checked($access->can_apply)>
-                  <label class="form-check-label small" for="can-apply-{{ $access->id }}">فقط با دستور صریح ادمین</label>
-                </div>
+                <label class="form-label">سطح دسترسی</label>
+                <select name="permission" class="form-select">
+                  <option value="read" @selected($access->permission === 'read')>فقط خواندن</option>
+                  <option value="read_write" @selected($access->permission === 'read_write')>خواندن و نوشتن</option>
+                </select>
               </div>
               <div class="col-md-2">
                 <label class="form-label d-none d-md-block">&nbsp;</label>

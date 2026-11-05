@@ -73,6 +73,7 @@ class ApiAccessesController extends ShopAdminController
             'name' => ['required', 'string', 'max:190'],
             'rate_limit' => ['required', 'integer', 'min:0'],
             'allowed_ips' => ['nullable', 'string', 'max:2000'],
+            'permission' => ['nullable', 'in:read,read_write'],
         ]);
 
         $ips = $this->parseIps((string) ($data['allowed_ips'] ?? ''));
@@ -88,6 +89,7 @@ class ApiAccessesController extends ShopAdminController
             'token' => $plain,
             'rate_limit' => (int) $data['rate_limit'],
             'allowed_ips' => $ips,
+            'permission' => $data['permission'] ?? 'read',
             'active' => true,
         ]);
 
@@ -102,6 +104,7 @@ class ApiAccessesController extends ShopAdminController
         $data = $request->validate([
             'rate_limit' => ['required', 'integer', 'min:0'],
             'allowed_ips' => ['nullable', 'string', 'max:2000'],
+            'permission' => ['required', 'in:read,read_write'],
         ]);
 
         $ips = $this->parseIps((string) ($data['allowed_ips'] ?? ''));
@@ -109,7 +112,7 @@ class ApiAccessesController extends ShopAdminController
         $row->forceFill([
             'rate_limit' => (int) $data['rate_limit'],
             'allowed_ips' => $ips,
-            'can_apply' => $request->boolean('can_apply'),
+            'permission' => $data['permission'],
         ])->save();
 
         return redirect()

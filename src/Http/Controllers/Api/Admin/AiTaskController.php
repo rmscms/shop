@@ -24,7 +24,12 @@ class AiTaskController extends BaseController
 
         return response()->json([
             'status' => 'ok',
-            'data' => AgentGuide::build($base),
+            'data' => AgentGuide::build($base) + [
+                'your_token' => [
+                    'name' => $request->attributes->get('shop_api_access')?->name,
+                    'permission' => $request->attributes->get('shop_api_access')?->permission,
+                ],
+            ],
             'errors' => [],
             'meta' => [],
         ]);
@@ -81,14 +86,14 @@ class AiTaskController extends BaseController
     }
 
     /**
-     * Apply changes straight to a product. Only for tokens an admin switched to can_apply, and only
+     * Apply changes straight to a product. Only for read_write tokens, and only
      * with the admin's own words attached; every call is logged with before/after values.
      */
     public function apply(Request $request, ProductAiEnricher $enricher): JsonResponse
     {
         $access = $request->attributes->get('shop_api_access');
-        if (! $access || ! $access->can_apply) {
-            return $this->apiError(['token' => ['این توکن اجازهٔ اعمال مستقیم ندارد. فقط پیشنهاد ثبت کن (POST ai/suggestions).']], 403);
+        if (! $access || ! $access->canWrite()) {
+            return $this->apiError(['permission' => ['این توکن فقط خواندنی است. فقط پیشنهاد ثبت کن (POST ai/suggestions) و به اپراتور بگو.']], 403);
         }
 
         $data = $request->validate([

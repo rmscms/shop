@@ -11,6 +11,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AuthenticateShopApiAccess
 {
+    /** Non-GET routes a read-only token may still call. */
+    private const READ_TOKEN_WRITABLE_ROUTES = [
+        'shop.admin_api.ai.suggestions.store',
+        'shop.admin_api.ai.reviews.store',
+    ];
+
     public function handle(Request $request, Closure $next): Response
     {
         $plain = $this->bearerToken($request);
@@ -34,6 +40,14 @@ class AuthenticateShopApiAccess
 
         if ($allowed !== [] && !in_array($request->ip(), $allowed, true)) {
             return $this->error($request, ['ip' => ['آی‌پی مجاز نیست.']], 403);
+        }
+
+        // Read tokens may only read. The AI work queue (reviews and suggestions) is the one exception:
+        // it records results for an admin to look at and changes nothing in the shop.
+        if (! $access->canWrite()
+            && ! in_array($request->method(), ['GET', 'HEAD', 'OPTIONS'], true)
+            && ! in_array($request->route()?->getName(), self::READ_TOKEN_WRITABLE_ROUTES, true)) {
+            return $this->error($request, ['permission' => ['این توکن فقط خواندنی است (read).']], 403);
         }
 
         $limit = (int) $access->rate_limit;
