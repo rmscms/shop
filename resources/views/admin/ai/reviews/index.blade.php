@@ -176,7 +176,7 @@
         </table>
       </div>
       @if($reviews instanceof \Illuminate\Contracts\Pagination\Paginator)
-        <div class="card-footer">{{ $reviews->links() }}</div>
+        <div class="card-footer">{{ $reviews->links('shop::admin.partials.pagination') }}</div>
       @endif
     </div>
   @endif

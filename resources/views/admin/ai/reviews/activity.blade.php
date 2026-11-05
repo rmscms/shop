@@ -73,7 +73,7 @@
         @endforeach
       </ul>
       @if($items instanceof \Illuminate\Contracts\Pagination\Paginator)
-        <div class="card-footer">{{ $items->links() }}</div>
+        <div class="card-footer">{{ $items->links('shop::admin.partials.pagination') }}</div>
       @endif
     @endif
   </div>
