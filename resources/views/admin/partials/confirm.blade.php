@@ -52,10 +52,11 @@
   if (window.rmsConfirm) { return; }
 
   var TYPES = {
-    danger:  { icon: 'ph-trash',          color: '#e5484d', btn: 'btn-danger',  ok: 'بله، حذف کن' },
-    warning: { icon: 'ph-warning',        color: '#f59e0b', btn: 'btn-warning', ok: 'بله، ادامه بده' },
-    info:    { icon: 'ph-info',           color: '#3b82f6', btn: 'btn-primary', ok: 'تأیید' },
-    success: { icon: 'ph-check-circle',   color: '#22a06b', btn: 'btn-success', ok: 'بله، اعمال کن' }
+    // Theme colours, so the icon matches the button in both light and dark.
+    danger:  { icon: 'ph-trash',          color: 'var(--danger, #ef4444)',  btn: 'btn-danger',  ok: 'بله، حذف کن' },
+    warning: { icon: 'ph-warning',        color: 'var(--warning, #f58646)', btn: 'btn-warning', ok: 'بله، ادامه بده' },
+    info:    { icon: 'ph-info',           color: 'var(--primary, #0c83ff)', btn: 'btn-primary', ok: 'تأیید' },
+    success: { icon: 'ph-check-circle',   color: 'var(--success, #059669)', btn: 'btn-success', ok: 'بله، اعمال کن' }
   };
 
   function el(tag, cls, text) {

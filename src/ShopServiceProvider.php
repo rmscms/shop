@@ -87,6 +87,7 @@ class ShopServiceProvider extends ServiceProvider
             __DIR__.'/../public/admin/css' => public_path('vendor/shop/admin/css'),
             __DIR__.'/../public/admin/js/image-library.js' => public_path('admin/js/image-library.js'),
             __DIR__.'/../public/admin/css/image-library.css' => public_path('admin/css/image-library.css'),
+            __DIR__.'/../public/admin/css/shop-ui.css' => public_path('admin/css/shop-ui.css'),
         ], 'shop-assets');
 
         // Publish plugins separately
@@ -155,6 +156,7 @@ class ShopServiceProvider extends ServiceProvider
         $files = [
             'js/image-library.js',
             'css/image-library.css',
+            'css/shop-ui.css',
             'css/products/edit.css',
             'js/products/edit.js',
             'js/products/attributes.js',

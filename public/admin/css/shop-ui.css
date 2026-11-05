@@ -1,0 +1,186 @@
+/*
+ * shop-ui.css — shared, calm look for the shop admin pages (light + dark).
+ *
+ * Rules:
+ *  - colours come from the theme (--card-bg, --border-color, --body-color ...) or from the tone
+ *    triplets below, never from fixed hex values in a page;
+ *  - status is a dot + text, a soft pill is only for emphasis, nothing is a solid coloured block;
+ *  - everything is scoped under .shop-ui so it cannot leak into other admin pages.
+ * Pages opt in with:  @include('shop::admin.partials.ui')  and  <div class="content shop-ui">
+ */
+
+/* ---- tones: rgb triplets so one variable gives both the text colour and a soft background ---- */
+.shop-ui {
+  --tone-success: 5, 150, 105;
+  --tone-warning: 217, 119, 6;
+  --tone-danger: 220, 38, 38;
+  --tone-info: 8, 145, 178;
+  --tone-primary: 12, 131, 255;
+  --tone-muted: 107, 114, 128;
+  --t: var(--tone-muted);
+  --shop-ink-soft: rgba(var(--body-color-rgb, 31, 41, 55), .06);
+  --shop-line: var(--border-color-translucent, rgba(128, 128, 128, .22));
+}
+[data-color-theme=dark] .shop-ui {
+  --tone-success: 52, 211, 153;
+  --tone-warning: 251, 191, 36;
+  --tone-danger: 248, 113, 113;
+  --tone-info: 34, 211, 238;
+  --tone-primary: 96, 165, 250;
+  --tone-muted: 156, 163, 175;
+  --shop-ink-soft: rgba(255, 255, 255, .06);
+}
+.shop-ui .tone-success { --t: var(--tone-success); }
+.shop-ui .tone-warning { --t: var(--tone-warning); }
+.shop-ui .tone-danger  { --t: var(--tone-danger); }
+.shop-ui .tone-info    { --t: var(--tone-info); }
+.shop-ui .tone-primary { --t: var(--tone-primary); }
+.shop-ui .tone-muted   { --t: var(--tone-muted); }
+
+/* ---- page header ---- */
+.shop-ui .shop-head { display: flex; align-items: center; flex-wrap: wrap; gap: .85rem; margin-bottom: 1.25rem; }
+.shop-ui .shop-head__title { margin: 0; font-size: 1.25rem; font-weight: 600; }
+.shop-ui .shop-head__sub { margin: .1rem 0 0; font-size: .8125rem; color: var(--text-muted, var(--gray-600)); }
+.shop-ui .shop-head__actions { margin-inline-start: auto; display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.shop-ui .shop-nav { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: 1rem; }
+.shop-ui .shop-nav a {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .8rem; border-radius: 999px;
+  font-size: .8125rem; color: var(--body-color); text-decoration: none; border: 1px solid var(--shop-line);
+}
+.shop-ui .shop-nav a:hover { background: var(--shop-ink-soft); }
+.shop-ui .shop-nav a.is-active { background: rgba(var(--tone-primary), .14); color: rgb(var(--tone-primary)); border-color: rgba(var(--tone-primary), .35); }
+
+/* ---- round icon chip ---- */
+.shop-ui .shop-icon {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 2.5rem; height: 2.5rem; border-radius: .7rem; font-size: 1.25rem;
+  color: rgb(var(--t)); background: rgba(var(--t), .12);
+}
+.shop-ui .shop-icon--lg { width: 3rem; height: 3rem; border-radius: .85rem; font-size: 1.5rem; }
+.shop-ui .shop-icon--sm { width: 2rem; height: 2rem; border-radius: .55rem; font-size: 1rem; }
+.shop-ui .shop-icon--round { border-radius: 50%; }
+
+/* ---- cards ---- */
+.shop-ui .card { box-shadow: none; border: 1px solid var(--shop-line); border-radius: .75rem; }
+.shop-ui .card-header { background: transparent; border-bottom: 1px solid var(--shop-line); }
+.shop-ui .card-footer { background: transparent; border-top: 1px solid var(--shop-line); }
+.shop-ui .shop-card-accent { border-inline-start: 3px solid rgb(var(--t)); }
+.shop-ui .shop-card-title { display: flex; align-items: center; gap: .5rem; margin: 0; font-size: .95rem; font-weight: 600; }
+.shop-ui .shop-card-title i { color: var(--text-muted, var(--gray-600)); }
+
+/* ---- stat tile ---- */
+.shop-ui .shop-stat { display: flex; align-items: flex-start; gap: .75rem; padding: 1rem 1.1rem; height: 100%; }
+.shop-ui .shop-stat__body { flex: 1 1 auto; min-width: 0; }
+.shop-ui .shop-stat__label { font-size: .78rem; color: var(--text-muted, var(--gray-600)); margin-bottom: .2rem; }
+.shop-ui .shop-stat__value { font-size: 1.6rem; font-weight: 600; line-height: 1.15; }
+.shop-ui .shop-stat__value small { font-size: .8rem; font-weight: 400; color: var(--text-muted, var(--gray-600)); }
+.shop-ui .shop-stat__hint { margin-top: .35rem; font-size: .75rem; color: var(--text-muted, var(--gray-600)); }
+
+/* ---- status: dot + text, soft pill, meter ---- */
+.shop-ui .shop-dot { display: inline-flex; align-items: center; gap: .45rem; font-size: .8125rem; white-space: nowrap; }
+.shop-ui .shop-dot::before { content: ''; width: .5rem; height: .5rem; border-radius: 50%; background: rgb(var(--t)); flex-shrink: 0; }
+.shop-ui .shop-soft {
+  display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .6rem; border-radius: 999px;
+  font-size: .75rem; font-weight: 500; white-space: nowrap; color: rgb(var(--t)); background: rgba(var(--t), .13);
+}
+.shop-ui .shop-score { font-weight: 600; font-variant-numeric: tabular-nums; color: rgb(var(--t)); }
+.shop-ui .shop-meter { height: .3rem; border-radius: 999px; background: var(--shop-ink-soft); overflow: hidden; }
+.shop-ui .shop-meter > span { display: block; height: 100%; border-radius: inherit; background: rgb(var(--t)); }
+.shop-ui .shop-meter-row { display: flex; align-items: center; gap: .75rem; font-size: .8125rem; }
+.shop-ui .shop-meter-row .shop-meter { flex: 1 1 auto; }
+.shop-ui .shop-meter-row__label { width: 4.5rem; color: var(--text-muted, var(--gray-600)); }
+.shop-ui .shop-meter-row__value { width: 2rem; text-align: end; }
+
+/* ---- tables ---- */
+.shop-ui .shop-table { margin: 0; }
+.shop-ui .shop-table thead th {
+  font-size: .75rem; font-weight: 500; color: var(--text-muted, var(--gray-600));
+  background: transparent; border-bottom: 1px solid var(--shop-line); white-space: nowrap;
+}
+.shop-ui .shop-table td { border-color: var(--shop-line); vertical-align: middle; }
+.shop-ui .shop-table tbody tr:hover > td { background: var(--shop-ink-soft); }
+.shop-ui .shop-table .shop-cell-sub { display: block; font-size: .75rem; color: var(--text-muted, var(--gray-600)); }
+
+/* ---- empty state ---- */
+.shop-ui .shop-empty { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted, var(--gray-600)); }
+.shop-ui .shop-empty i { font-size: 2.5rem; opacity: .4; display: block; margin-bottom: .5rem; }
+.shop-ui .shop-empty__title { font-weight: 600; color: var(--body-color); margin-bottom: .2rem; }
+
+/* ---- segmented radios / chips (btn-check + label.btn) ---- */
+.shop-ui .shop-segment .btn,
+.shop-ui .shop-chips .btn {
+  background: transparent; color: var(--body-color); border: 1px solid var(--shop-line);
+  display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+}
+.shop-ui .shop-segment .btn:hover,
+.shop-ui .shop-chips .btn:hover { background: var(--shop-ink-soft); }
+.shop-ui .shop-segment .btn-check:checked + .btn,
+.shop-ui .shop-chips .btn-check:checked + .btn {
+  color: rgb(var(--t, var(--tone-primary))); background: rgba(var(--t, var(--tone-primary)), .14);
+  border-color: rgba(var(--t, var(--tone-primary)), .5);
+}
+.shop-ui .shop-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.shop-ui .shop-chips .btn { border-radius: 999px; padding: .3rem .85rem; font-size: .8125rem; }
+
+/* ---- activity timeline ---- */
+.shop-ui .shop-tl { list-style: none; margin: 0; padding: 0; }
+.shop-ui .shop-tl > li { position: relative; display: flex; gap: .85rem; padding: .85rem 1.1rem; }
+.shop-ui .shop-tl > li + li { border-top: 1px solid var(--shop-line); }
+.shop-ui .shop-tl__body { flex: 1 1 auto; min-width: 0; }
+.shop-ui .shop-tl__title { font-weight: 500; }
+.shop-ui .shop-tl__meta { font-size: .75rem; color: var(--text-muted, var(--gray-600)); }
+.shop-ui .shop-tl__detail { margin-top: .35rem; font-size: .8125rem; }
+
+/* ---- before / after diff ---- */
+.shop-ui .shop-diff { border-radius: .5rem; padding: .55rem .75rem; white-space: pre-wrap; line-height: 1.7; }
+.shop-ui .shop-diff--old { background: rgba(var(--tone-danger), .08); }
+.shop-ui .shop-diff--new { background: rgba(var(--tone-success), .1); }
+.shop-ui .shop-note { border-radius: .6rem; padding: .6rem .85rem; font-size: .8125rem; color: rgb(var(--t)); background: rgba(var(--t), .1); }
+
+/* ---- code / copyable text ---- */
+.shop-ui .shop-code {
+  display: block; padding: .45rem .65rem; border-radius: .5rem; font-size: .8125rem; overflow: auto; min-width: 0;
+  color: var(--body-color); background: var(--shop-ink-soft); border: 1px solid var(--shop-line);
+}
+.shop-ui pre.shop-code { white-space: pre-wrap; margin: 0; line-height: 1.8; }
+
+/* ---- form controls follow the theme ---- */
+.shop-ui .form-control, .shop-ui .form-select { background-color: var(--input-bg, var(--card-bg)); color: var(--body-color); border-color: var(--shop-line); }
+.shop-ui .form-control:focus, .shop-ui .form-select:focus {
+  border-color: var(--component-active-bg, rgb(var(--tone-primary)));
+  box-shadow: 0 0 0 .2rem rgba(var(--tone-primary), .22);
+}
+.shop-ui .form-control::placeholder { color: var(--text-muted, var(--gray-600)); opacity: .8; }
+
+/* ---- IP tag input (API access) ---- */
+.shop-ui .ip-tags {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; min-height: 2.5rem; padding: .35rem .5rem; cursor: text;
+  background-color: var(--input-bg, var(--card-bg)); border: 1px solid var(--shop-line); border-radius: var(--border-radius, .5rem);
+}
+.shop-ui .ip-tags:focus-within { border-color: rgb(var(--tone-primary)); box-shadow: 0 0 0 .2rem rgba(var(--tone-primary), .22); }
+.shop-ui .ip-tags.is-invalid { border-color: rgb(var(--tone-danger)); }
+.shop-ui .ip-tag {
+  display: inline-flex; align-items: center; gap: .3rem; padding: .1rem .5rem; border-radius: 999px; direction: ltr; line-height: 1.4;
+  font-size: .8125rem; color: rgb(var(--tone-primary)); background: rgba(var(--tone-primary), .14);
+}
+.shop-ui .ip-tag button { border: 0; background: transparent; color: inherit; padding: 0; line-height: 1; cursor: pointer; font-size: 1rem; }
+.shop-ui .ip-tags-input { flex: 1 1 7rem; min-width: 7rem; border: 0; outline: none; background: transparent; color: inherit; direction: ltr; text-align: left; padding: .1rem 0; }
+
+/* ---- control heights line up across inputs, buttons and segments ---- */
+.shop-ui { --shop-h: 2.5rem; }
+.shop-ui .form-control, .shop-ui .form-select,
+.shop-ui .btn:not(.btn-sm), .shop-ui .ip-tags { min-height: var(--shop-h); }
+.shop-ui .btn-icon.shop-btn-sq { width: var(--shop-h); height: var(--shop-h); padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+.shop-ui .btn-group .btn { display: inline-flex; align-items: center; justify-content: center; }
+
+@media (prefers-reduced-motion: reduce) { .shop-ui * { transition: none !important; } }
+
+/* small list bullet (the icon font has no plain dot) */
+.shop-ui .shop-bullet { width: .4rem; height: .4rem; margin-top: .65rem; border-radius: 50%; flex-shrink: 0; background: rgb(var(--tone-muted)); }
+
+/* neutral buttons stay quiet in both themes (the theme's btn-light is a bright block in dark mode) */
+.shop-ui .btn-light { background: transparent; border: 1px solid var(--shop-line); color: var(--body-color); }
+.shop-ui .btn-light:hover, .shop-ui .btn-light:focus, .shop-ui .btn-light:active, .shop-ui .show > .btn-light.dropdown-toggle {
+  background: var(--shop-ink-soft); color: var(--body-color); border-color: var(--shop-line);
+}
+.shop-ui .btn-light:disabled { opacity: .5; }
