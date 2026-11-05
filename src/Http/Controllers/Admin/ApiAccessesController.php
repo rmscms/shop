@@ -74,6 +74,7 @@ class ApiAccessesController extends ShopAdminController
             'rate_limit' => ['required', 'integer', 'min:0'],
             'allowed_ips' => ['nullable', 'string', 'max:2000'],
             'permission' => ['nullable', 'in:read,read_write'],
+            'expiry' => ['nullable', 'in:'.implode(',', array_keys(ShopApiAccess::EXPIRY_PRESETS))],
         ]);
 
         $ips = $this->parseIps((string) ($data['allowed_ips'] ?? ''));
@@ -83,7 +84,7 @@ class ApiAccessesController extends ShopAdminController
         }
 
         $plain = Str::random(48);
-        ShopApiAccess::query()->create([
+        $attributes = [
             'name' => $data['name'],
             'token_hash' => ShopApiAccess::hashToken($plain),
             'token' => $plain,
@@ -91,7 +92,12 @@ class ApiAccessesController extends ShopAdminController
             'allowed_ips' => $ips,
             'permission' => $data['permission'] ?? 'read',
             'active' => true,
-        ]);
+        ];
+        if (Schema::hasColumn('shop_api_accesses', 'expires_at')) {
+            // Not chosen = the safe default, so a forgotten token still runs out.
+            $attributes['expires_at'] = ShopApiAccess::expiresAtFor($data['expiry'] ?? ShopApiAccess::EXPIRY_DEFAULT);
+        }
+        ShopApiAccess::query()->create($attributes);
 
         return redirect()
             ->route('admin.shop.api-accesses.index')
@@ -105,6 +111,8 @@ class ApiAccessesController extends ShopAdminController
             'rate_limit' => ['required', 'integer', 'min:0'],
             'allowed_ips' => ['nullable', 'string', 'max:2000'],
             'permission' => ['required', 'in:read,read_write'],
+            // "keep" leaves the expiry alone; a preset counts from now (this is also how you extend).
+            'expiry' => ['nullable', 'in:keep,'.implode(',', array_keys(ShopApiAccess::EXPIRY_PRESETS))],
         ]);
 
         $ips = $this->parseIps((string) ($data['allowed_ips'] ?? ''));
@@ -113,7 +121,11 @@ class ApiAccessesController extends ShopAdminController
             'rate_limit' => (int) $data['rate_limit'],
             'allowed_ips' => $ips,
             'permission' => $data['permission'],
-        ])->save();
+        ]);
+        if (($data['expiry'] ?? 'keep') !== 'keep' && Schema::hasColumn('shop_api_accesses', 'expires_at')) {
+            $row->forceFill(['expires_at' => ShopApiAccess::expiresAtFor($data['expiry'])]);
+        }
+        $row->save();
 
         return redirect()
             ->route('admin.shop.api-accesses.index')

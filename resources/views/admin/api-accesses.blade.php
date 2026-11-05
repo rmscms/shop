@@ -2,7 +2,9 @@
 
 @php
   $total = $accesses->count();
-  $activeCount = $accesses->where('active', true)->count();
+  $activeCount = $accesses->filter(fn ($a) => $a->isUsable())->count();
+  $expiryPresets = \RMS\Shop\Models\ShopApiAccess::EXPIRY_PRESETS;
+  $expiryDefault = \RMS\Shop\Models\ShopApiAccess::EXPIRY_DEFAULT;
   $writeCount = $accesses->where('permission', 'read_write')->count();
   $readCount = $total - $writeCount;
   $adminApi = collect($endpoints ?? [])->firstWhere('title', 'API ادمین')['url'] ?? url('api/v1/admin/shop');
@@ -16,6 +18,7 @@
           ."آدرس API: {$adminApi}\n"
           ."توکن (Bearer): {$access->token}\n"
           ."سطح این توکن: {$level}\n"
+          ."اعتبار توکن: ".($access->expires_at ? $access->expires_at->format('Y-m-d H:i').' ('.$access->expiryLabel().')؛ بعد از آن 401 می‌دهد و باید توکن تازه گرفت' : 'بدون انقضا')."\n"
           ."مستندات: {$docsUrl}\n"
           ."راهنمای ایجنت: GET {$adminApi}/ai/guide\n"
           ."صندوق کارها: GET {$adminApi}/ai/inbox\n\n"
@@ -147,6 +150,19 @@
               <div class="form-text">پیش‌فرض امن: فقط خواندن. نوشتن را فقط برای اپ مدیریت یا کار اعمال مستقیم بده.</div>
               @error('permission')<div class="form-text text-danger">{{ $message }}</div>@enderror
             </div>
+            <div class="col-12">
+              <label class="form-label">مدت اعتبار</label>
+              <div class="d-flex flex-wrap gap-2">
+                @foreach($expiryPresets as $key => $preset)
+                  <input type="radio" class="btn-check" name="expiry" id="exp-new-{{ $key }}" value="{{ $key }}" autocomplete="off" @checked(old('expiry', $expiryDefault) === $key)>
+                  <label class="btn btn-outline-{{ $key === 'never' ? 'danger' : 'secondary' }}" for="exp-new-{{ $key }}">
+                    @if($key === 'never')<i class="ph-infinity me-1"></i>@endif{{ $preset['label'] }}
+                  </label>
+                @endforeach
+              </div>
+              <div class="form-text">بعد از این مدت توکن خودش از کار می‌افتد و درخواست‌ها 401 می‌گیرند؛ اگر فراموش کنی حذفش کنی، امن می‌ماند. «بدون انقضا» فقط برای اپ‌های دائمی.</div>
+              @error('expiry')<div class="form-text text-danger">{{ $message }}</div>@enderror
+            </div>
             <div class="col-md-9">
               <label class="form-label" for="allowed_ips_input">آی‌پی‌های مجاز</label>
               <div class="ip-tags" data-ip-tags>
@@ -171,7 +187,7 @@
           $canWrite = $access->permission === 'read_write';
           $accent = $canWrite ? 'warning' : 'info';
         @endphp
-        <div class="card mb-0 api-token border-start border-{{ $accent }} border-3 {{ $access->active ? '' : 'api-token-off' }}">
+        <div class="card mb-0 api-token border-start border-{{ $accent }} border-3 {{ $access->isUsable() ? '' : 'api-token-off' }}">
           <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div class="d-flex align-items-center gap-3">
               <span class="api-icon api-icon-sm bg-{{ $accent }} bg-opacity-10 text-{{ $accent }}"><i class="{{ $canWrite ? 'ph-pencil-simple' : 'ph-eye' }}"></i></span>
@@ -184,6 +200,12 @@
             </div>
             <div class="api-actions">
               <span class="badge bg-{{ $accent }} bg-opacity-20 text-{{ $accent }}">{{ $canWrite ? 'خواندن و نوشتن' : 'فقط خواندن' }}</span>
+              @php
+                $expClass = $access->isExpired() ? 'danger' : ($access->expiresSoon() ? 'warning' : ($access->expires_at ? 'secondary' : 'info'));
+              @endphp
+              <span class="badge bg-{{ $expClass }} bg-opacity-20 text-{{ $expClass }}" title="{{ $access->expires_at ? 'تا '.$access->expires_at->format('Y-m-d H:i') : 'هیچ‌وقت منقضی نمی‌شود' }}">
+                <i class="ph-hourglass me-1"></i>{{ $access->expiryLabel() }}
+              </span>
               @if($access->active)
                 <span class="badge bg-success bg-opacity-20 text-success">فعال</span>
                 <form method="post" action="{{ route('admin.shop.api-accesses.revoke', $access) }}">
@@ -254,6 +276,17 @@
               </div>
               <div class="col-md-2 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100"><i class="ph-floppy-disk me-1"></i> ذخیره</button>
+              </div>
+              <div class="col-12">
+                <label class="form-label fs-sm text-muted">تمدید یا تغییر اعتبار (از همین الان حساب می‌شود)</label>
+                <div class="d-flex flex-wrap gap-2">
+                  <input type="radio" class="btn-check" name="expiry" id="exp-{{ $access->id }}-keep" value="keep" autocomplete="off" checked>
+                  <label class="btn btn-outline-primary" for="exp-{{ $access->id }}-keep">بدون تغییر ({{ $access->expiryLabel() }})</label>
+                  @foreach($expiryPresets as $key => $preset)
+                    <input type="radio" class="btn-check" name="expiry" id="exp-{{ $access->id }}-{{ $key }}" value="{{ $key }}" autocomplete="off">
+                    <label class="btn btn-outline-{{ $key === 'never' ? 'danger' : 'secondary' }}" for="exp-{{ $access->id }}-{{ $key }}">{{ $preset['label'] }}</label>
+                  @endforeach
+                </div>
               </div>
             </form>
           </div>

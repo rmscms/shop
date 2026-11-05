@@ -36,6 +36,11 @@ class AuthenticateShopApiAccess
             return $this->error($request, ['token' => ['توکن نامعتبر است.']], 401);
         }
 
+        // Expired tokens stop working on their own; ask an admin for a new one.
+        if ($access->isExpired()) {
+            return $this->error($request, ['token' => ['توکن منقضی شده است. از ادمین توکن تازه یا تمدید بخواه.']], 401);
+        }
+
         $allowed = array_values(array_filter(array_map(
             static fn ($ip) => trim((string) $ip),
             $access->allowed_ips ?? []

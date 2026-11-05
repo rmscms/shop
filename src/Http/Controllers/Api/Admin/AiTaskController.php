@@ -29,6 +29,8 @@ class AiTaskController extends BaseController
                 'your_token' => [
                     'name' => $request->attributes->get('shop_api_access')?->name,
                     'permission' => $request->attributes->get('shop_api_access')?->permission,
+                    'expires_at' => $request->attributes->get('shop_api_access')?->expires_at?->toIso8601String(),
+                    'note' => 'اگر 401 «منقضی شده» گرفتی، به اپراتور بگو توکن را تمدید کند.',
                 ],
             ],
             'errors' => [],
