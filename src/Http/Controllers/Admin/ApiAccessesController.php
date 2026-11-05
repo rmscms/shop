@@ -120,7 +120,8 @@ class ApiAccessesController extends ShopAdminController
             ->with('success', 'دسترسی به‌روز شد.');
     }
 
-    public function destroy(ShopApiAccess $access): RedirectResponse
+    // Not "destroy": the core AdminController already defines destroy(Request, string|int).
+    public function deleteAccess(ShopApiAccess $access): RedirectResponse
     {
         $name = $access->name;
         $access->delete();
