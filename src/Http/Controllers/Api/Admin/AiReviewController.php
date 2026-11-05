@@ -4,7 +4,9 @@ namespace RMS\Shop\Http\Controllers\Api\Admin;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use RMS\Shop\Models\AiActivity;
+use RMS\Shop\Models\AiProposal;
 use RMS\Shop\Models\AiReview;
 use RMS\Shop\Models\AiSuggestion;
 use RMS\Shop\Models\Product;
@@ -41,7 +43,8 @@ class AiReviewController extends BaseController
                 'count' => Product::query()->whereRaw('LENGTH(slug) = CHAR_LENGTH(slug)')->count(),
                 'how' => 'GET ai/tasks/slug_fa/items',
             ],
-            'suggestions_waiting_admin' => AiSuggestion::query()->where('status', AiSuggestion::STATUS_READY)->count(),
+            'suggestions_waiting_admin' => AiSuggestion::query()->where('status', AiSuggestion::STATUS_READY)->count()
+                + (Schema::hasTable('shop_ai_proposals') ? AiProposal::query()->where('status', AiProposal::STATUS_PENDING)->count() : 0),
             'products_total' => Product::query()->count(),
         ];
         $data['suggested_order'] = array_values(array_filter([

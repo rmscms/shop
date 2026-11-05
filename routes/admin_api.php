@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use RMS\Shop\Http\Controllers\Api\Admin\AiProposalController;
 use RMS\Shop\Http\Controllers\Api\Admin\AiReviewController;
 use RMS\Shop\Http\Controllers\Api\Admin\AiTaskController;
 use RMS\Shop\Http\Controllers\Api\Admin\BrandController;
@@ -73,6 +74,9 @@ Route::prefix($prefix)
             Route::post('ai/suggestions', [AiTaskController::class, 'submit'])->name('ai.suggestions.store');
             Route::post('ai/apply', [AiTaskController::class, 'apply'])->name('ai.apply');
             Route::post('ai/notes', [AiTaskController::class, 'note'])->name('ai.notes.store');
+            Route::get('ai/resources', [AiProposalController::class, 'resources'])->name('ai.resources');
+            Route::get('ai/proposals', [AiProposalController::class, 'index'])->name('ai.proposals.index');
+            Route::post('ai/proposals', [AiProposalController::class, 'store'])->name('ai.proposals.store');
             Route::get('ai/inbox', [AiReviewController::class, 'inbox'])->name('ai.inbox');
             Route::get('ai/reviews/queue', [AiReviewController::class, 'queue'])->name('ai.reviews.queue');
             Route::get('ai/reviews/unreviewed', [AiReviewController::class, 'unreviewed'])->name('ai.reviews.unreviewed');

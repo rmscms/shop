@@ -17,6 +17,7 @@ class AuthenticateShopApiAccess
         'shop.admin_api.ai.suggestions.store',
         'shop.admin_api.ai.reviews.store',
         'shop.admin_api.ai.notes.store',
+        'shop.admin_api.ai.proposals.store',
     ];
 
     public function handle(Request $request, Closure $next): Response

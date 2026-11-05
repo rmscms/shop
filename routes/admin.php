@@ -24,6 +24,7 @@ use RMS\Shop\Http\Controllers\Admin\ApiAccessesController;
 use RMS\Shop\Http\Controllers\Admin\AiSuggestionsController;
 use RMS\Shop\Http\Controllers\Admin\AiCatalogController;
 use RMS\Shop\Http\Controllers\Admin\AiImagesController;
+use RMS\Shop\Http\Controllers\Admin\AiProposalsController;
 use RMS\Shop\Http\Controllers\Admin\AiReviewsController;
 use RMS\Shop\Http\Controllers\Admin\BulkPricingController;
 
@@ -59,6 +60,12 @@ Route::middleware([
         Route::post('api-accesses/{access}/revoke', [ApiAccessesController::class, 'revoke'])->name('api-accesses.revoke');
         Route::post('api-accesses/{access}/activate', [ApiAccessesController::class, 'activate'])->name('api-accesses.activate');
         Route::post('api-accesses/{access}/rotate', [ApiAccessesController::class, 'rotate'])->name('api-accesses.rotate');
+
+        // Agent proposals for any shop resource: approve or reject
+        Route::get('ai-proposals', [AiProposalsController::class, 'index'])->name('ai-proposals.index');
+        Route::get('ai-proposals/{proposal}', [AiProposalsController::class, 'show'])->name('ai-proposals.show');
+        Route::post('ai-proposals/{proposal}/apply', [AiProposalsController::class, 'apply'])->name('ai-proposals.apply');
+        Route::post('ai-proposals/{proposal}/reject', [AiProposalsController::class, 'reject'])->name('ai-proposals.reject');
 
         // AI product reviews (done by an outside agent through the admin API)
         Route::get('ai-reviews', [AiReviewsController::class, 'index'])->name('ai-reviews.index');

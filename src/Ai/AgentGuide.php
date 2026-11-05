@@ -69,6 +69,9 @@ class AgentGuide
                 'POST '.$base.'/ai/reviews',
                 'GET '.$base.'/ai/tasks/slug_fa/items',
                 'POST '.$base.'/ai/suggestions',
+                'GET '.$base.'/ai/resources  (منبع‌ها و فیلدهای قابل پیشنهاد)',
+                'POST '.$base.'/ai/proposals  {resource, id, changes:{field:value}, note?}  (پیشنهاد تغییر برای محصول، دسته‌بندی و برند؛ با توکن read هم مجاز است)',
+                'GET '.$base.'/ai/proposals  (وضعیت پیشنهادهای ثبت‌شده)',
                 'POST '.$base.'/ai/notes  {product_id, title, details?}  (یادداشت کار روی محصول؛ با توکن read هم مجاز است)',
                 'POST '.$base.'/ai/apply  (فقط با دستور صریح اپراتور؛ فیلدها: product_id, operator_instruction, و name|short_desc|description|slug|meta_title|meta_description|focus_keyword|image_alt)',
                 'GET '.$base.'/products  و  GET '.$base.'/products/{id}  (فقط خواندن)',
@@ -104,6 +107,16 @@ class AgentGuide
                             ],
                         ],
                     ],
+                ],
+                'proposal' => [
+                    'when' => 'اپراتور گفت متن، سئو، نام یا آدرس یک محصول، دسته‌بندی یا برند را اصلاح کن.',
+                    'steps' => [
+                        'GET /ai/resources تا فیلدهای مجاز هر منبع را ببینی؛ هر فیلد دیگری رد می‌شود.',
+                        'منبع را بخوان (GET /products/{id} یا /categories/{id} یا /brands/{id}) و مقدار فعلی را ببین.',
+                        'POST /ai/proposals با resource و id و changes (فقط فیلدهایی که واقعاً عوض می‌شود) و note کوتاه که دلیل را می‌گوید.',
+                        'چیزی اعمال نمی‌شود. به اپراتور بگو پیشنهاد در admin/shop/ai-proposals منتظر تأیید است.',
+                    ],
+                    'notes' => 'سفارش‌ها، مبلغ، تخفیف و ساختار دسته‌بندی (والد، ترتیب، فعال) از این راه مجاز نیست. پیشنهاد تازه برای همان منبع، پیشنهاد بی‌پاسخ قبلی را جایگزین می‌کند.',
                 ],
                 'slug_fa' => [
                     'when' => 'اپراتور گفت اسلاگ‌ها را فارسی کن.',
