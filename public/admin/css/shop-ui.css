@@ -223,3 +223,15 @@
 .shop-ui .page-link:hover { background: var(--shop-ink-soft); color: var(--body-color); }
 .shop-ui .page-item.active .page-link { background: rgba(var(--tone-primary), .14) !important; border-color: rgba(var(--tone-primary), .45) !important; color: rgb(var(--tone-primary)) !important; }
 .shop-ui .page-item.disabled .page-link { opacity: .45; background: transparent !important; }
+
+/* quick-link tile (dashboard) */
+.shop-ui .shop-quick {
+  display: flex; align-items: center; gap: .6rem; padding: .65rem .8rem; border-radius: .6rem; text-decoration: none;
+  color: var(--body-color); border: 1px solid var(--shop-line); font-size: .875rem; transition: background .15s ease, border-color .15s ease;
+}
+.shop-ui .shop-quick i { font-size: 1.2rem; color: var(--text-muted, var(--gray-600)); }
+.shop-ui .shop-quick:hover { background: var(--shop-ink-soft); border-color: rgba(var(--tone-primary), .4); color: var(--body-color); }
+.shop-ui .shop-quick:hover i { color: rgb(var(--tone-primary)); }
+
+/* label row used as a switch line inside dropdowns and small forms */
+.shop-ui label.shop-pick { border: 1px solid var(--shop-line); cursor: pointer; }
