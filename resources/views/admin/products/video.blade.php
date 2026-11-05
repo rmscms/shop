@@ -20,7 +20,7 @@
             <div class="alert alert-warning py-2">ویدئو در صف پردازش است. لطفاً چند دقیقه بعد صفحه را رفرش کنید.</div>
           @endif
         </div>
-        <form method="POST" action="{{ $deleteUrl }}" onsubmit="return confirm('حذف ویدئو قطعی است. مطمئنید؟');">
+        <form method="POST" action="{{ $deleteUrl }}" data-confirm="این ویدئو حذف شود؟" data-confirm-title="حذف ویدئو" data-confirm-desc="حذف قطعی است و برگشت‌پذیر نیست." data-confirm-type="danger" data-confirm-ok="حذف ویدئو">
           @csrf
           @method('DELETE')
           <button class="btn btn-outline-danger">حذف ویدئو</button>
@@ -40,4 +40,5 @@
     </div>
   </div>
 </div>
+@include('shop::admin.partials.confirm')
 @endsection

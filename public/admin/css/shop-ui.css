@@ -250,3 +250,27 @@
 .shop-ui .table-striped > tbody > tr:hover > * { background-color: var(--shop-ink-soft); }
 .shop-ui .btn-outline-secondary { color: var(--body-color); border-color: var(--shop-line); background: transparent; }
 .shop-ui .btn-outline-secondary:hover { background: var(--shop-ink-soft); color: var(--body-color); border-color: var(--shop-line); }
+
+/* ---- tabs (product edit and other tabbed pages): quiet underline instead of a heavy highlight ---- */
+.shop-ui .nav-tabs { border-bottom: 1px solid var(--shop-line); gap: .15rem; }
+.shop-ui .nav-tabs .nav-link {
+  display: inline-flex; align-items: center; gap: .15rem; color: var(--text-muted, var(--gray-600)); background: transparent;
+  border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: .65rem .9rem; font-size: .875rem;
+}
+.shop-ui .nav-tabs .nav-link:hover { color: var(--body-color); border-bottom-color: var(--shop-line); }
+.shop-ui .nav-tabs .nav-link.active { color: rgb(var(--tone-primary)); background: transparent; border-bottom-color: rgb(var(--tone-primary)); }
+.shop-ui .nav-tabs .nav-link.disabled { opacity: .4; }
+.shop-ui .nav-tabs .nav-link::after, .shop-ui .nav-tabs .nav-link::before { display: none !important; }
+.shop-ui .tab-pane { padding-top: .25rem; }
+.shop-ui .form-label { font-size: .8125rem; color: var(--text-muted, var(--gray-600)); margin-bottom: .3rem; }
+.shop-ui .form-text { font-size: .75rem; }
+.shop-ui .form-check-input:checked { background-color: rgb(var(--tone-primary)); border-color: rgb(var(--tone-primary)); }
+
+/* ---- video library cards ---- */
+.shop-ui .shop-video-thumb { height: 11rem; overflow: hidden; background: var(--shop-ink-soft); border-radius: .75rem .75rem 0 0; }
+.shop-ui .shop-video-play { position: absolute; inset-inline-end: .6rem; top: .6rem; background: rgba(0, 0, 0, .55) !important; color: #fff !important; border: 0 !important; width: 2.25rem; height: 2.25rem; display: inline-flex; align-items: center; justify-content: center; }
+.shop-ui .shop-video-play:hover { background: rgba(0, 0, 0, .75) !important; }
+
+/* core list statistic cards (tinted + coloured border) become neutral tiles on shop lists */
+.shop-ui.shop-list .card.bg-opacity-10 { background: var(--card-bg) !important; border-color: var(--shop-line) !important; }
+.shop-ui.shop-list .card.bg-opacity-10 h4 { color: var(--body-color) !important; }
