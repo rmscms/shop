@@ -55,6 +55,7 @@
               @foreach([
                 'name' => ['نام', $product->name, $payload['name'] ?? ''],
                 'short_desc' => ['توضیح کوتاه', strip_tags((string) $product->short_desc), $payload['short_desc'] ?? ''],
+                'slug' => ['اسلاگ (آدرس)', $product->slug, $payload['slug'] ?? ''],
               ] as $field => [$label, $current, $suggested])
                 <tr>
                   <td><input type="checkbox" class="form-check-input" name="fields[]" value="{{ $field }}" @checked(filled($suggested)) @disabled(!$editable || blank($suggested))></td>

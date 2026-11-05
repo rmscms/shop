@@ -117,11 +117,18 @@
                 <label class="form-label">سقف در دقیقه</label>
                 <input type="text" class="form-control" name="rate_limit" value="{{ $access->rate_limit }}" inputmode="numeric" autocomplete="off" required>
               </div>
-              <div class="col-md-7">
+              <div class="col-md-5">
                 <label class="form-label">آی‌پی‌های مجاز</label>
                 <div class="ip-tags" data-ip-tags>
                   <input type="hidden" name="allowed_ips" value="{{ implode("\n", $access->allowed_ips ?? []) }}">
                   <input type="text" class="ip-tags-input" dir="ltr" placeholder="127.0.0.1" autocomplete="off">
+                </div>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">اعمال مستقیم</label>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="can_apply" value="1" id="can-apply-{{ $access->id }}" @checked($access->can_apply)>
+                  <label class="form-check-label small" for="can-apply-{{ $access->id }}">فقط با دستور صریح ادمین</label>
                 </div>
               </div>
               <div class="col-md-2">

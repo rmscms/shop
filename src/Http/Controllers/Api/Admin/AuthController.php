@@ -4,6 +4,7 @@ namespace RMS\Shop\Http\Controllers\Api\Admin;
 
 use Illuminate\Http\Request;
 use OpenApi\Annotations as OA;
+use RMS\Shop\Ai\AgentGuide;
 use RMS\Core\Models\Admin;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -89,7 +90,13 @@ class AuthController extends BaseController
                 'email' => (string) $admin->email,
                 'role' => (string) ($admin->role ?? 'admin'),
             ],
+            'need_to_check' => AgentGuide::needToCheck($this->apiBase()),
         ]);
+    }
+
+    protected function apiBase(): string
+    {
+        return url('/'.trim((string) config('shop.admin_api.prefix', 'api/v1/admin/shop'), '/'));
     }
 
     /**
@@ -190,6 +197,7 @@ class AuthController extends BaseController
             'active' => (bool) $admin->active,
             'last_login_at' => optional($admin->last_login_at)->toIso8601String(),
             'avatar' => $admin->avatar ? asset($admin->avatar) : null,
+            'need_to_check' => AgentGuide::needToCheck($this->apiBase()),
         ]);
     }
 }

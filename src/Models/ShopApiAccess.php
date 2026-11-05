@@ -15,6 +15,7 @@ class ShopApiAccess extends Model
         'rate_limit',
         'allowed_ips',
         'active',
+        'can_apply',
         'last_used_at',
     ];
 
@@ -23,6 +24,7 @@ class ShopApiAccess extends Model
         'rate_limit' => 'integer',
         'allowed_ips' => 'array',
         'active' => 'boolean',
+        'can_apply' => 'boolean',
         'last_used_at' => 'datetime',
     ];
 

@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use RMS\Shop\Http\Controllers\Api\Admin\AiReviewController;
+use RMS\Shop\Http\Controllers\Api\Admin\AiTaskController;
 use RMS\Shop\Http\Controllers\Api\Admin\BrandController;
 use RMS\Shop\Http\Controllers\Api\Admin\ProductController;
 use RMS\Shop\Http\Controllers\Api\Admin\CategoryController;
@@ -41,6 +43,9 @@ Route::prefix($prefix)
                 'prefix' => '/'.trim($prefix, '/'),
                 'auth' => 'Bearer token from admin/shop/api-accesses',
                 'docs' => url(config('l5-swagger.documentations.default.routes.api', 'api/documentation')),
+                'agent_guide' => 'GET '.url(trim($prefix, '/').'/ai/guide').' (Bearer token; first call for AI agents)',
+                'need_to_check' => \RMS\Shop\Ai\AgentGuide::needToCheck(url($prefix)),
+                'note_for_agents' => 'با هدر Authorization: Bearer <token> لینک‌های need_to_check را به ترتیب بخوان و طبق راهنما کار کن.',
                 'sample' => [
                     'GET' => url(trim($prefix, '/').'/auth/me'),
                     'POST' => url(trim($prefix, '/').'/auth/login'),
@@ -60,6 +65,16 @@ Route::prefix($prefix)
             // Dashboard
             Route::get('dashboard', [ShopDashboardController::class, 'index'])->name('dashboard.index');
             Route::get('dashboard/system-requirements', [ShopDashboardController::class, 'systemRequirements'])->name('dashboard.system-requirements');
+
+            // AI tasks for outside agents (suggestions only, applied after admin approval)
+            Route::get('ai/guide', [AiTaskController::class, 'guide'])->name('ai.guide');
+            Route::get('ai/tasks', [AiTaskController::class, 'tasks'])->name('ai.tasks');
+            Route::get('ai/tasks/{task}/items', [AiTaskController::class, 'items'])->name('ai.tasks.items');
+            Route::post('ai/suggestions', [AiTaskController::class, 'submit'])->name('ai.suggestions.store');
+            Route::post('ai/apply', [AiTaskController::class, 'apply'])->name('ai.apply');
+            Route::get('ai/reviews/queue', [AiReviewController::class, 'queue'])->name('ai.reviews.queue');
+            Route::get('ai/reviews/unreviewed', [AiReviewController::class, 'unreviewed'])->name('ai.reviews.unreviewed');
+            Route::post('ai/reviews', [AiReviewController::class, 'submit'])->name('ai.reviews.store');
 
             // Brands
             Route::get('brands/options', [BrandController::class, 'options'])->name('brands.options');

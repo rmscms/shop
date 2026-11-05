@@ -24,6 +24,7 @@ use RMS\Shop\Http\Controllers\Admin\ApiAccessesController;
 use RMS\Shop\Http\Controllers\Admin\AiSuggestionsController;
 use RMS\Shop\Http\Controllers\Admin\AiCatalogController;
 use RMS\Shop\Http\Controllers\Admin\AiImagesController;
+use RMS\Shop\Http\Controllers\Admin\AiReviewsController;
 use RMS\Shop\Http\Controllers\Admin\BulkPricingController;
 
 $ordersControllerClass = (string) config('shop.controllers.admin.orders', \RMS\Shop\Http\Controllers\Admin\OrdersController::class);
@@ -58,6 +59,13 @@ Route::middleware([
         Route::post('api-accesses/{access}/revoke', [ApiAccessesController::class, 'revoke'])->name('api-accesses.revoke');
         Route::post('api-accesses/{access}/activate', [ApiAccessesController::class, 'activate'])->name('api-accesses.activate');
         Route::post('api-accesses/{access}/rotate', [ApiAccessesController::class, 'rotate'])->name('api-accesses.rotate');
+
+        // AI product reviews (done by an outside agent through the admin API)
+        Route::get('ai-reviews', [AiReviewsController::class, 'index'])->name('ai-reviews.index');
+        Route::post('ai-reviews/request-all', [AiReviewsController::class, 'requestAll'])->name('ai-reviews.request-all');
+        Route::get('ai-reviews/{review}', [AiReviewsController::class, 'show'])->name('ai-reviews.show');
+        Route::post('ai-reviews/{review}/dismiss', [AiReviewsController::class, 'dismiss'])->name('ai-reviews.dismiss');
+        Route::post('products/{product}/ai-review', [AiReviewsController::class, 'request'])->name('products.ai-review.request');
 
         // AI catalog plan (before ai/{suggestion} so "catalog" is not read as a suggestion id)
         Route::get('ai/catalog', [AiCatalogController::class, 'index'])->name('ai.catalog.index');

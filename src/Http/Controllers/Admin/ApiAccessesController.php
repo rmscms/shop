@@ -109,6 +109,7 @@ class ApiAccessesController extends ShopAdminController
         $row->forceFill([
             'rate_limit' => (int) $data['rate_limit'],
             'allowed_ips' => $ips,
+            'can_apply' => $request->boolean('can_apply'),
         ])->save();
 
         return redirect()

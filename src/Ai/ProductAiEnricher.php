@@ -21,7 +21,7 @@ use RMS\Shop\Services\SeoService;
  */
 class ProductAiEnricher
 {
-    public const APPLICABLE_FIELDS = ['name', 'short_desc', 'description', 'category_id', 'brand_id', 'features', 'seo'];
+    public const APPLICABLE_FIELDS = ['name', 'short_desc', 'description', 'category_id', 'brand_id', 'features', 'seo', 'slug'];
 
     protected const SUPPORTED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
@@ -116,6 +116,13 @@ class ProductAiEnricher
                 $id = $payload[$field] ?? null;
                 if (in_array($field, $fields, true) && $id && $model::query()->whereKey($id)->exists()) {
                     $updates[$field] = (int) $id;
+                }
+            }
+
+            if (in_array('slug', $fields, true) && filled($payload['slug'] ?? null)) {
+                $slug = SlugTask::clean((string) $payload['slug']);
+                if (SlugTask::validate($product, $slug) === null) {
+                    $updates['slug'] = $slug;
                 }
             }
 
@@ -412,6 +419,7 @@ TXT;
         foreach (['name', 'short_desc', 'description', 'focus_keyword', 'meta_title', 'meta_description', 'image_alt', 'notes'] as $field) {
             $data[$field] = trim((string) ($data[$field] ?? ''));
         }
+        $data['slug'] = SlugTask::clean((string) ($data['slug'] ?? ''));
         $data['meta_title'] = mb_substr($data['meta_title'], 0, 120);
         $data['meta_description'] = mb_substr($data['meta_description'], 0, 320);
         $data['focus_keyword'] = mb_substr($data['focus_keyword'], 0, 100);
