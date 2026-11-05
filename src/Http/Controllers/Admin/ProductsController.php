@@ -549,6 +549,13 @@ class ProductsController extends ShopAdminController implements HasList, HasForm
             return;
         }
 
+        // Slug sent by the SEO tab's own save button (the main form saves it as "slug").
+        $slug = trim((string) $request->input('seo.slug', ''));
+        if ($slug !== '' && $slug !== $product->slug) {
+            validator(['slug' => $slug], ['slug' => ['required', 'string', 'max:190', 'unique:products,slug,'.$product->id]])->validate();
+            $product->forceFill(['slug' => $slug])->save();
+        }
+
         $fields = validator((array) $request->input('seo', []), \RMS\Shop\Services\SeoService::productFieldRules())->validate();
         $fields['noindex'] = $request->boolean('seo.noindex');
         app(\RMS\Shop\Services\SeoService::class)->saveProductFields($product, $fields);

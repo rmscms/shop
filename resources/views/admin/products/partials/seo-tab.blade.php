@@ -11,6 +11,17 @@
   <div class="row g-4">
     <div class="col-lg-7">
       <div class="mb-3">
+        <label class="form-label">@lang('shop.product.slug') <span class="text-muted">(آدرس صفحهٔ محصول)</span></label>
+        <div class="input-group" dir="ltr">
+          <span class="input-group-text">{{ url('/product') }}/</span>
+          <input type="text" name="slug" class="form-control @error('slug') is-invalid @enderror" maxlength="190"
+                 value="{{ old('slug', $product->slug ?? '') }}" data-slug-target>
+        </div>
+        @error('slug')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+        <div class="form-text">کوتاه و خوانا بنویسید. با تغییر آدرس، لینک قبلی خودکار با ریدایرکت ۳۰۱ به آدرس جدید می‌رود.</div>
+      </div>
+
+      <div class="mb-3">
         <label class="form-label d-flex justify-content-between">
           <span>عنوان سئو (meta title)</span>
           <small class="text-muted"><span data-count="meta_title">0</span> / {{ $titleMax }}</small>
@@ -138,6 +149,9 @@
         if (el.disabled || (el.type === 'checkbox' && !el.checked)) { return; }
         body.set(el.name, el.value);
       });
+      // The slug input lives in this tab but belongs to the main form, so it is sent explicitly.
+      var slugEl = tab.querySelector('[name="slug"]');
+      if (slugEl && slugEl.value.trim() !== '') { body.set('seo[slug]', slugEl.value.trim()); }
       save.disabled = true;
       try {
         var resp = await fetch(tab.dataset.saveUrl, {
