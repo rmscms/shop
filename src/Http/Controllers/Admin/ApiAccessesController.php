@@ -132,6 +132,25 @@ class ApiAccessesController extends ShopAdminController
             ->with('success', 'دسترسی به‌روز شد.');
     }
 
+    /** One-click "+1 day" style extension on top of the current expiry. */
+    public function extendAccess(Request $request, ShopApiAccess $access): RedirectResponse
+    {
+        $data = $request->validate([
+            'add' => ['required', 'in:'.implode(',', array_diff(array_keys(ShopApiAccess::EXPIRY_PRESETS), ['never']))],
+        ]);
+
+        $next = $access->extendedExpiry($data['add']);
+        if ($next === null) {
+            return back()->withErrors(['expiry' => 'این توکن انقضا ندارد؛ برای محدود کردنش از «تغییر اعتبار» استفاده کن.']);
+        }
+
+        $access->forceFill(['expires_at' => $next])->save();
+
+        return redirect()
+            ->route('admin.shop.api-accesses.index')
+            ->with('success', 'اعتبار «'.$access->name.'» تا '.$next->format('Y-m-d H:i').' تمدید شد ('.$access->expiryLabel().').');
+    }
+
     // Not "destroy": the core AdminController already defines destroy(Request, string|int).
     public function deleteAccess(ShopApiAccess $access): RedirectResponse
     {

@@ -206,6 +206,22 @@
               <span class="badge bg-{{ $expClass }} bg-opacity-20 text-{{ $expClass }}" title="{{ $access->expires_at ? 'تا '.$access->expires_at->format('Y-m-d H:i') : 'هیچ‌وقت منقضی نمی‌شود' }}">
                 <i class="ph-hourglass me-1"></i>{{ $access->expiryLabel() }}
               </span>
+              @if($access->expires_at)
+                <div class="dropdown">
+                  <button type="button" class="btn {{ $access->isExpired() || $access->expiresSoon() ? 'btn-warning' : 'btn-outline-primary' }}" data-bs-toggle="dropdown">
+                    <i class="ph-plus-circle me-1"></i> تمدید
+                  </button>
+                  <form method="post" action="{{ route('admin.shop.api-accesses.extend', $access) }}" class="dropdown-menu dropdown-menu-end p-0">
+                    @csrf
+                    <div class="dropdown-header">اضافه شود به اعتبار فعلی</div>
+                    @foreach($expiryPresets as $key => $preset)
+                      @if($key !== 'never')
+                        <button type="submit" name="add" value="{{ $key }}" class="dropdown-item"><i class="ph-plus me-2"></i>{{ $preset['label'] }}</button>
+                      @endif
+                    @endforeach
+                  </form>
+                </div>
+              @endif
               @if($access->active)
                 <span class="badge bg-success bg-opacity-20 text-success">فعال</span>
                 <form method="post" action="{{ route('admin.shop.api-accesses.revoke', $access) }}">

@@ -62,6 +62,23 @@ class ShopApiAccess extends Model
         return $interval ? Carbon::now()->add(new DateInterval($interval)) : null;
     }
 
+    /**
+     * New expiry when adding a preset on top of the current one (tomorrow's "+1 day").
+     * Counts from the current expiry, or from now when it already ran out. Null when the
+     * preset is "never" or the token has no expiry to add to.
+     */
+    public function extendedExpiry(string $key): ?Carbon
+    {
+        $interval = self::EXPIRY_PRESETS[$key]['interval'] ?? null;
+        if (! $interval || $this->expires_at === null) {
+            return null;
+        }
+
+        $base = $this->isExpired() ? Carbon::now() : $this->expires_at->copy();
+
+        return $base->add(new DateInterval($interval));
+    }
+
     public function isExpired(): bool
     {
         return $this->expires_at !== null && $this->expires_at->getTimestamp() <= time();

@@ -58,6 +58,7 @@ Route::middleware([
         Route::post('api-accesses', [ApiAccessesController::class, 'store'])->name('api-accesses.store');
         Route::put('api-accesses/{access}', [ApiAccessesController::class, 'update'])->name('api-accesses.update');
         Route::delete('api-accesses/{access}', [ApiAccessesController::class, 'deleteAccess'])->name('api-accesses.destroy');
+        Route::post('api-accesses/{access}/extend', [ApiAccessesController::class, 'extendAccess'])->name('api-accesses.extend');
         Route::post('api-accesses/{access}/revoke', [ApiAccessesController::class, 'revoke'])->name('api-accesses.revoke');
         Route::post('api-accesses/{access}/activate', [ApiAccessesController::class, 'activate'])->name('api-accesses.activate');
         Route::post('api-accesses/{access}/rotate', [ApiAccessesController::class, 'rotate'])->name('api-accesses.rotate');
