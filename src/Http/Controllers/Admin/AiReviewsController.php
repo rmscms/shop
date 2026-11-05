@@ -126,6 +126,57 @@ class AiReviewsController extends ShopAdminController
         return $this->view();
     }
 
+    /** Everything agents did across the shop, newest first, with simple filters. */
+    public function feed(Request $request)
+    {
+        $this->title('فعالیت AI');
+
+        $ready = Schema::hasTable('shop_ai_activities');
+        $type = (string) $request->query('type', '');
+        $resource = (string) $request->query('resource', '');
+
+        $items = collect();
+        $names = [];
+        $counts = [];
+        if ($ready) {
+            $counts = AiActivity::query()->selectRaw('type, count(*) as total')->groupBy('type')->pluck('total', 'type')->all();
+            $items = AiActivity::query()
+                ->when($type !== '', fn ($q) => $q->where('type', $type))
+                ->when($resource !== '', fn ($q) => $q->where('resource_type', $resource))
+                ->orderByDesc('id')
+                ->paginate(40)
+                ->withQueryString();
+
+            // One lookup per distinct resource on the page, so every row can name and link what it touched.
+            foreach ($items as $row) {
+                $rType = $row->resource_type ?: ($row->product_id ? 'product' : null);
+                $rId = $row->resource_id ?: $row->product_id;
+                if (! $rType || ! $rId || isset($names[$rType.':'.$rId])) {
+                    continue;
+                }
+                $res = \RMS\Shop\Ai\Resources\AiResourceRegistry::get($rType);
+                $model = $res?->find((int) $rId);
+                $names[$rType.':'.$rId] = $model ? [$res->title($model), $res->adminUrl($model), $res->label()] : null;
+            }
+        }
+
+        $this->view->usePackageNamespace('shop')
+            ->setTheme('admin')
+            ->setTpl('ai.reviews.feed')
+            ->withVariables([
+                'ready' => $ready,
+                'items' => $items,
+                'names' => $names,
+                'counts' => $counts,
+                'type' => $type,
+                'resource' => $resource,
+                'types' => AiActivity::TYPES,
+                'resources' => \RMS\Shop\Ai\Resources\AiResourceRegistry::all(),
+            ]);
+
+        return $this->view();
+    }
+
     /** Full timeline of what the agent did on one product. */
     public function activity(Product $product)
     {

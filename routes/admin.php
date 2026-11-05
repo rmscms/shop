@@ -69,6 +69,9 @@ Route::middleware([
         Route::post('ai-proposals/{proposal}/apply', [AiProposalsController::class, 'apply'])->name('ai-proposals.apply');
         Route::post('ai-proposals/{proposal}/reject', [AiProposalsController::class, 'reject'])->name('ai-proposals.reject');
 
+        // Everything agents did across the shop
+        Route::get('ai-activity', [AiReviewsController::class, 'feed'])->name('ai-activity.index');
+
         // AI product reviews (done by an outside agent through the admin API)
         Route::get('ai-reviews', [AiReviewsController::class, 'index'])->name('ai-reviews.index');
         Route::post('ai-reviews/request-all', [AiReviewsController::class, 'requestAll'])->name('ai-reviews.request-all');
