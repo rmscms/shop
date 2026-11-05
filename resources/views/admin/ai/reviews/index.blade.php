@@ -1,72 +1,71 @@
 @extends('cms::admin.layout.index')
 
 @php
-  $statusLabels = [
-    'requested' => ['در انتظار بررسی', 'warning'],
-    'done' => ['انجام شد', 'success'],
-    'dismissed' => ['لغو شد', 'dark'],
-  ];
-  $scoreClass = fn ($s) => $s === null ? 'secondary' : ($s >= 75 ? 'success' : ($s >= 50 ? 'warning' : 'danger'));
+  $statusFilters = ['' => 'همه', 'requested' => 'در انتظار', 'done' => 'انجام شد', 'dismissed' => 'لغو شد'];
 @endphp
 
 @section('content')
-<div class="content ai-page">
+@include('shop::admin.partials.ui')
+<div class="content shop-ui">
   @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
+    <div class="shop-note tone-success mb-3"><i class="ph-check-circle me-1"></i>{{ session('success') }}</div>
   @endif
   @if($errors->any())
-    <div class="alert alert-danger">{{ $errors->first() }}</div>
+    <div class="shop-note tone-danger mb-3"><i class="ph-warning-circle me-1"></i>{{ $errors->first() }}</div>
   @endif
 
-  <div class="mb-3">
-    <a href="{{ route('admin.shop.ai.index') }}" class="btn btn-sm btn-outline-primary">پیشنهادهای AI</a>
-    <a href="{{ route('admin.shop.ai.catalog.index') }}" class="btn btn-sm btn-outline-primary">طرح کاتالوگ</a>
-    <a href="{{ route('admin.shop.ai.images.index') }}" class="btn btn-sm btn-outline-primary">عکس‌های پیشنهادی</a>
-    <a href="{{ route('admin.shop.ai-reviews.index') }}" class="btn btn-sm btn-primary">آمار بررسی AI</a>
+  <div class="shop-head">
+    <span class="shop-icon shop-icon--lg tone-primary"><i class="ph-chart-bar"></i></span>
+    <div>
+      <h4 class="shop-head__title">آمار بررسی AI</h4>
+      <p class="shop-head__sub">پوشش و کیفیت محصول‌ها بر اساس بررسی‌های ایجنت</p>
+    </div>
   </div>
+  @include('shop::admin.partials.ai-nav', ['active' => 'reviews'])
 
   @if(!$ready)
-    <div class="alert alert-warning mb-0">جدول بررسی‌های AI هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>
+    <div class="shop-note tone-warning">جدول بررسی‌های AI هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>
   @else
-    @php($pct = $stats['total'] > 0 ? (int) round($stats['reviewed'] / $stats['total'] * 100) : 0)
+    @php
+      $pct = $stats['total'] > 0 ? (int) round($stats['reviewed'] / $stats['total'] * 100) : 0;
+      $avgTone = \RMS\Shop\Support\UiTone::score($stats['avg_score']);
+    @endphp
+
     <div class="row g-3 mb-3">
-      <div class="col-md-3">
-        <div class="card h-100 mb-0"><div class="card-body">
-          <div class="text-muted small mb-1">پوشش بررسی</div>
-          <div class="fs-3 fw-semibold">{{ $stats['reviewed'] }} <span class="fs-6 text-muted">از {{ $stats['total'] }} محصول</span></div>
-          <div class="progress mt-2" style="height:6px"><div class="progress-bar bg-success" style="width: {{ $pct }}%"></div></div>
-          <div class="small text-muted mt-1">{{ $pct }}٪ بررسی شده · {{ $stats['unreviewed'] }} مانده</div>
-        </div></div>
+      <div class="col-6 col-xl-3">
+        @include('shop::admin.partials.stat', ['label' => 'پوشش بررسی', 'value' => $stats['reviewed'], 'suffix' => 'از '.$stats['total'].' محصول', 'icon' => 'ph-chart-pie', 'tone' => 'primary', 'meter' => $pct, 'hint' => $pct.'٪ بررسی شده · '.$stats['unreviewed'].' مانده'])
       </div>
-      <div class="col-md-3">
-        <div class="card h-100 mb-0"><div class="card-body">
-          <div class="text-muted small mb-1">میانگین امتیاز</div>
-          <div class="fs-3 fw-semibold"><span class="badge bg-{{ $scoreClass($stats['avg_score']) }}">{{ $stats['avg_score'] ?? '—' }}</span></div>
-          <div class="small text-muted mt-2">{{ $stats['low'] }} محصول زیر ۵۰</div>
-        </div></div>
+      <div class="col-6 col-xl-3">
+        @include('shop::admin.partials.stat', ['label' => 'میانگین امتیاز', 'value' => $stats['avg_score'] ?? '—', 'suffix' => 'از ۱۰۰', 'icon' => 'ph-gauge', 'tone' => $avgTone, 'hint' => $stats['low'].' محصول زیر ۵۰'])
       </div>
-      <div class="col-md-3">
-        <div class="card h-100 mb-0"><div class="card-body">
-          <div class="text-muted small mb-1">در انتظار ایجنت</div>
-          <div class="fs-3 fw-semibold">{{ $stats['requested'] }}</div>
-          <div class="small text-muted mt-2">۷ روز اخیر: {{ $stats['last_7_days'] }} بررسی انجام شد</div>
-        </div></div>
+      <div class="col-6 col-xl-3">
+        @include('shop::admin.partials.stat', ['label' => 'در انتظار ایجنت', 'value' => $stats['requested'], 'icon' => 'ph-hourglass', 'tone' => $stats['requested'] > 0 ? 'warning' : 'muted', 'hint' => 'در ۷ روز اخیر '.$stats['last_7_days'].' بررسی انجام شد'])
       </div>
-      <div class="col-md-3">
-        <div class="card h-100 mb-0"><div class="card-body">
-          <div class="text-muted small mb-1">میانگین هر جنبه</div>
-          @foreach($aspects as $key => $label)
-            <div class="d-flex justify-content-between small"><span>{{ $label }}</span>
-              <span class="badge bg-{{ $scoreClass($stats['aspect_avg'][$key] ?? null) }}">{{ $stats['aspect_avg'][$key] ?? '—' }}</span></div>
-          @endforeach
-        </div></div>
+      <div class="col-6 col-xl-3">
+        <div class="card mb-0 h-100">
+          <div class="p-3">
+            <div class="shop-stat__label mb-2">میانگین هر جنبه</div>
+            <div class="d-flex flex-column gap-2">
+              @foreach($aspects as $key => $label)
+                @php
+                  $avg = $stats['aspect_avg'][$key] ?? null;
+                @endphp
+                <div class="shop-meter-row tone-{{ \RMS\Shop\Support\UiTone::score($avg) }}">
+                  <span class="shop-meter-row__label">{{ $label }}</span>
+                  <div class="shop-meter"><span style="width: {{ $avg ?? 0 }}%"></span></div>
+                  <span class="shop-meter-row__value shop-score">{{ $avg ?? '—' }}</span>
+                </div>
+              @endforeach
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     @if($stats['unreviewed'] > 0)
       <div class="card mb-3">
         <div class="card-header d-flex align-items-center flex-wrap gap-2">
-          <h6 class="mb-0">بررسی‌نشده‌ها ({{ $stats['unreviewed'] }})</h6>
+          <h6 class="shop-card-title"><i class="ph-tray"></i> بررسی‌نشده‌ها <span class="shop-soft tone-muted">{{ $stats['unreviewed'] }}</span></h6>
           <form method="post" action="{{ route('admin.shop.ai-reviews.request-all') }}" class="ms-auto"
                 data-confirm="برای همهٔ محصولات بررسی‌نشده درخواست بررسی ثبت شود؟"
                 data-confirm-title="درخواست بررسی گروهی"
@@ -75,15 +74,17 @@
                 data-confirm-ok="ثبت درخواست‌ها"
                 data-confirm-icon="ph-paper-plane-tilt">
             @csrf
-            <button class="btn btn-sm btn-primary" type="submit">درخواست بررسی برای همهٔ بررسی‌نشده‌ها</button>
+            <button class="btn btn-light btn-sm" type="submit"><i class="ph-paper-plane-tilt me-1"></i> درخواست بررسی برای همه</button>
           </form>
         </div>
-        <div class="card-body">
+        <div class="card-body d-flex flex-wrap gap-2">
           @foreach($unreviewed as $p)
-            <a href="{{ route('admin.shop.products.edit', $p->id) }}" class="badge bg-light text-dark border me-1 mb-1">#{{ $p->id }} {{ \Illuminate\Support\Str::limit($p->name, 40) }}</a>
+            <a href="{{ route('admin.shop.products.edit', $p->id) }}" class="shop-soft tone-muted text-decoration-none" title="{{ $p->name }}">
+              <span class="opacity-75">#{{ $p->id }}</span> {{ \Illuminate\Support\Str::limit($p->name, 34) }}
+            </a>
           @endforeach
           @if($stats['unreviewed'] > $unreviewed->count())
-            <span class="text-muted small">… و {{ $stats['unreviewed'] - $unreviewed->count() }} محصول دیگر</span>
+            <span class="text-muted fs-sm align-self-center">و {{ $stats['unreviewed'] - $unreviewed->count() }} محصول دیگر</span>
           @endif
         </div>
       </div>
@@ -91,24 +92,26 @@
 
     @if($actions->isNotEmpty())
       <div class="card mb-3">
-        <div class="card-header"><h6 class="mb-0">تغییرهای اعمال‌شدهٔ مستقیم توسط ایجنت (با دستور ادمین)</h6></div>
+        <div class="card-header"><h6 class="shop-card-title"><i class="ph-pencil-simple"></i> تغییرهای مستقیم ایجنت (با دستور ادمین)</h6></div>
         <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
+          <table class="table table-hover shop-table">
             <thead><tr><th>محصول</th><th>فیلدها</th><th>دستور ادمین</th><th>قبل ← بعد</th><th>تاریخ</th></tr></thead>
             <tbody>
               @foreach($actions as $a)
                 <tr>
                   <td><a href="{{ route('admin.shop.products.edit', $a->product_id) }}">{{ $a->product?->name ?? ('#'.$a->product_id) }}</a></td>
-                  <td class="small">{{ implode('، ', (array) $a->fields) }}</td>
-                  <td class="small">{{ \Illuminate\Support\Str::limit($a->operator_instruction, 80) }}</td>
-                  <td class="small">
+                  <td class="fs-sm">{{ implode('، ', (array) $a->fields) }}</td>
+                  <td class="fs-sm">{{ \Illuminate\Support\Str::limit($a->operator_instruction, 80) }}</td>
+                  <td class="fs-sm">
                     @foreach((array) $a->fields as $f)
-                      <div><span class="text-muted">{{ $f }}:</span>
-                        {{ \Illuminate\Support\Str::limit(strip_tags((string) data_get($a->before, $f)), 40) ?: '—' }}
-                        ← {{ \Illuminate\Support\Str::limit(strip_tags((string) data_get($a->after, $f)), 40) ?: '—' }}</div>
+                      <div class="mb-1"><span class="text-muted">{{ $f }}</span>
+                        <span class="shop-diff shop-diff--old d-inline-block py-0">{{ \Illuminate\Support\Str::limit(strip_tags((string) data_get($a->before, $f)), 40) ?: '—' }}</span>
+                        <i class="ph-arrow-left mx-1 text-muted"></i>
+                        <span class="shop-diff shop-diff--new d-inline-block py-0">{{ \Illuminate\Support\Str::limit(strip_tags((string) data_get($a->after, $f)), 40) ?: '—' }}</span>
+                      </div>
                     @endforeach
                   </td>
-                  <td class="small text-nowrap" dir="ltr">{{ $a->created_at?->format('Y-m-d H:i') }}</td>
+                  <td class="fs-sm text-nowrap text-muted" dir="ltr">{{ $a->created_at?->format('Y-m-d H:i') }}</td>
                 </tr>
               @endforeach
             </tbody>
@@ -119,35 +122,36 @@
 
     <div class="card">
       <div class="card-header d-flex align-items-center flex-wrap gap-2">
-        <h6 class="mb-0">لاگ بررسی‌ها</h6>
-        <form method="get" class="ms-auto d-flex gap-2">
-          <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-            <option value="">همه</option>
-            @foreach($statusLabels as $k => [$label])
-              <option value="{{ $k }}" @selected($status === $k)>{{ $label }}</option>
-            @endforeach
-          </select>
-        </form>
+        <h6 class="shop-card-title"><i class="ph-list-checks"></i> لاگ بررسی‌ها</h6>
+        <nav class="shop-nav mb-0 ms-auto">
+          @foreach($statusFilters as $k => $label)
+            <a href="{{ route('admin.shop.ai-reviews.index', $k === '' ? [] : ['status' => $k]) }}" class="{{ $status === (string) $k ? 'is-active' : '' }}">{{ $label }}</a>
+          @endforeach
+        </nav>
       </div>
       <div class="table-responsive">
-        <table class="table table-sm align-middle mb-0">
+        <table class="table table-hover shop-table">
           <thead>
-            <tr><th>#</th><th>محصول</th><th>جنبه‌ها</th><th>وضعیت</th><th>امتیاز</th><th>خلاصه</th><th>تاریخ</th><th></th></tr>
+            <tr><th>محصول</th><th>وضعیت</th><th>امتیاز</th><th>خلاصه</th><th>تاریخ</th><th style="width:1%"></th></tr>
           </thead>
           <tbody>
             @forelse($reviews as $r)
-              @php([$sLabel, $sClass] = $statusLabels[$r->status] ?? [$r->status, 'secondary'])
               <tr>
-                <td dir="ltr">{{ $r->id }}</td>
-                <td><a href="{{ route('admin.shop.products.edit', $r->product_id) }}">{{ $r->product?->name ?? ('#'.$r->product_id) }}</a></td>
-                <td class="small">{{ collect($r->aspects ?? [])->map(fn ($a) => $aspects[$a] ?? $a)->implode('، ') }}</td>
-                <td><span class="badge bg-{{ $sClass }}">{{ $sLabel }}</span></td>
-                <td>@if($r->score !== null)<span class="badge bg-{{ $scoreClass($r->score) }}">{{ $r->score }}</span>@else — @endif</td>
-                <td class="small">{{ \Illuminate\Support\Str::limit((string) $r->summary, 90) ?: '—' }}</td>
-                <td class="small text-nowrap" dir="ltr">{{ ($r->reviewed_at ?? $r->requested_at)?->format('Y-m-d H:i') }}</td>
+                <td>
+                  <a href="{{ route('admin.shop.products.edit', $r->product_id) }}" class="fw-semibold">{{ $r->product?->name ?? ('#'.$r->product_id) }}</a>
+                  <span class="shop-cell-sub">{{ collect($r->aspects ?? [])->map(fn ($a) => $aspects[$a] ?? $a)->implode('، ') }}</span>
+                </td>
+                <td><span class="shop-dot tone-{{ \RMS\Shop\Support\UiTone::tone('review', $r->status) }}">{{ \RMS\Shop\Support\UiTone::label('review', $r->status) }}</span></td>
+                <td>
+                  @if($r->score !== null)
+                    <span class="shop-score tone-{{ \RMS\Shop\Support\UiTone::score($r->score) }}">{{ $r->score }}</span>
+                  @else <span class="text-muted">—</span> @endif
+                </td>
+                <td class="fs-sm" style="max-width:26rem">{{ \Illuminate\Support\Str::limit((string) $r->summary, 110) ?: '—' }}</td>
+                <td class="fs-sm text-nowrap text-muted" dir="ltr">{{ ($r->reviewed_at ?? $r->requested_at)?->format('Y-m-d H:i') }}</td>
                 <td class="text-nowrap">
                   @if($r->status === 'done')
-                    <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.shop.ai-reviews.show', $r) }}">گزارش</a>
+                    <a class="btn btn-light btn-sm" href="{{ route('admin.shop.ai-reviews.show', $r) }}"><i class="ph-file-text me-1"></i> گزارش</a>
                   @elseif($r->status === 'requested')
                     <form method="post" action="{{ route('admin.shop.ai-reviews.dismiss', $r) }}" class="d-inline"
                           data-confirm="درخواست بررسی این محصول لغو شود؟"
@@ -155,12 +159,12 @@
                           data-confirm-type="warning"
                           data-confirm-ok="لغو کن"
                           data-confirm-cancel="نه، بماند">@csrf
-                      <button class="btn btn-sm btn-outline-secondary" type="submit">لغو</button></form>
+                      <button class="btn btn-light btn-sm" type="submit"><i class="ph-x me-1"></i> لغو</button></form>
                   @endif
                 </td>
               </tr>
             @empty
-              <tr><td colspan="8" class="text-center text-muted py-4">هنوز بررسی‌ای ثبت نشده است.</td></tr>
+              <tr><td colspan="6">@include('shop::admin.partials.empty', ['icon' => 'ph-clipboard-text', 'title' => 'هنوز بررسی‌ای ثبت نشده است', 'hint' => 'از دکمهٔ «بررسی AI» در صفحهٔ هر محصول درخواست بده.'])</td></tr>
             @endforelse
           </tbody>
         </table>

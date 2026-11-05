@@ -8,7 +8,7 @@
   $writeCount = $accesses->where('permission', 'read_write')->count();
   $readCount = $total - $writeCount;
   $adminApi = collect($endpoints ?? [])->firstWhere('title', 'API ادمین')['url'] ?? url('api/v1/admin/shop');
-  $endpointIcons = ['داک API' => ['ph-book-open-text', 'info'], 'API ادمین' => ['ph-shield-check', 'warning'], 'API پنل' => ['ph-users-three', 'success']];
+  $endpointIcons = ['داک API' => 'ph-book-open', 'API ادمین' => 'ph-shield-check', 'API پنل' => 'ph-users-three'];
   $docsUrl = collect($endpoints ?? [])->firstWhere('title', 'داک API')['url'] ?? url('api/documentation');
   // Everything an agent needs in one paste, with the token inside.
   $connectionText = function ($access) use ($adminApi, $docsUrl) {
@@ -29,102 +29,82 @@
           ."4. بدون «اعمال کن» صریح اپراتور چیزی را روی محصول، دسته یا برند مستقیم تغییر نده.\n"
           ."5. توکن را در جای عمومی یا مخزن کد ننویس.";
   };
-  $agentPrompt ="آدرس API: {$adminApi}\nتوکن: (توکن این صفحه را اینجا بگذار)\nاول GET {$adminApi}/ai/guide و بعد GET {$adminApi}/ai/inbox را با هدر Authorization: Bearer بخوان و طبق راهنما کار کن.\nنتیجهٔ هر کار را در سیستم ثبت کن (نه فقط در چت) و بدون «اعمال کن» صریح من چیزی را روی محصول تغییر نده.";
+  $agentPrompt = "آدرس API: {$adminApi}\nتوکن: (توکن این صفحه را اینجا بگذار)\nاول GET {$adminApi}/ai/guide و بعد GET {$adminApi}/ai/inbox را با هدر Authorization: Bearer بخوان و طبق راهنما کار کن.\nنتیجهٔ هر کار را در سیستم ثبت کن (نه فقط در چت) و بدون «اعمال کن» صریح من چیزی را روی محصول تغییر نده.";
 @endphp
 
 @section('content')
-<div class="content api-access-page">
+@include('shop::admin.partials.ui')
+<div class="content shop-ui">
   @if(session('success'))
-    <div class="alert alert-success d-flex align-items-center"><i class="ph-check-circle me-2"></i>{{ session('success') }}</div>
+    <div class="shop-note tone-success mb-3"><i class="ph-check-circle me-1"></i>{{ session('success') }}</div>
   @endif
   @if($errors->any())
-    <div class="alert alert-danger d-flex align-items-center"><i class="ph-warning-circle me-2"></i>{{ $errors->first() }}</div>
+    <div class="shop-note tone-danger mb-3"><i class="ph-warning-circle me-1"></i>{{ $errors->first() }}</div>
   @endif
 
   @if(!$ready)
-    <div class="alert alert-warning mb-0">جدول دسترسی هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>
+    <div class="shop-note tone-warning">جدول دسترسی هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>
   @else
-    {{-- Header + numbers --}}
-    <div class="d-flex align-items-center flex-wrap gap-3 mb-3">
-      <span class="api-icon bg-primary bg-opacity-10 text-primary"><i class="ph-key ph-2x"></i></span>
+    <div class="shop-head">
+      <span class="shop-icon shop-icon--lg tone-primary"><i class="ph-key"></i></span>
       <div>
-        <h4 class="mb-0">دسترسی API</h4>
-        <div class="text-muted">توکن‌های اتصال اپ‌ها و ایجنت‌ها به فروشگاه</div>
+        <h4 class="shop-head__title">دسترسی API</h4>
+        <p class="shop-head__sub">توکن‌های اتصال اپ‌ها و ایجنت‌ها به فروشگاه</p>
       </div>
-      <button class="btn btn-primary ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#new-access">
-        <i class="ph-plus me-1"></i> توکن تازه
-      </button>
+      <div class="shop-head__actions">
+        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#new-access"><i class="ph-plus me-1"></i> توکن تازه</button>
+      </div>
     </div>
 
     <div class="row g-3 mb-3">
-      @foreach([
-        ['کل توکن‌ها', $total, 'ph-key', 'primary'],
-        ['فعال', $activeCount, 'ph-check-circle', 'success'],
-        ['خواندن و نوشتن', $writeCount, 'ph-pencil-simple', 'warning'],
-        ['فقط خواندن', $readCount, 'ph-eye', 'info'],
-      ] as [$label, $value, $icon, $color])
-        <div class="col-6 col-lg-3">
-          <div class="card mb-0">
-            <div class="card-body d-flex align-items-center gap-3 py-3">
-              <span class="api-icon api-icon-sm bg-{{ $color }} bg-opacity-10 text-{{ $color }}"><i class="{{ $icon }}"></i></span>
-              <div>
-                <div class="fs-4 fw-semibold lh-1">{{ $value }}</div>
-                <div class="text-muted fs-sm mt-1">{{ $label }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      @endforeach
+      <div class="col-6 col-lg-3">@include('shop::admin.partials.stat', ['label' => 'کل توکن‌ها', 'value' => $total, 'icon' => 'ph-key', 'tone' => 'primary'])</div>
+      <div class="col-6 col-lg-3">@include('shop::admin.partials.stat', ['label' => 'قابل استفاده', 'value' => $activeCount, 'icon' => 'ph-check-circle', 'tone' => 'success', 'hint' => 'فعال و منقضی‌نشده'])</div>
+      <div class="col-6 col-lg-3">@include('shop::admin.partials.stat', ['label' => 'خواندن و نوشتن', 'value' => $writeCount, 'icon' => 'ph-pencil-simple', 'tone' => 'warning'])</div>
+      <div class="col-6 col-lg-3">@include('shop::admin.partials.stat', ['label' => 'فقط خواندن', 'value' => $readCount, 'icon' => 'ph-eye', 'tone' => 'info'])</div>
     </div>
 
-    {{-- Endpoints --}}
     <div class="row g-3 mb-3">
-      @foreach($endpoints as $endpoint)
-        @php
-          [$eIcon, $eColor] = $endpointIcons[$endpoint['title']] ?? ['ph-link', 'secondary'];
-        @endphp
-        <div class="col-md-4">
-          <div class="card h-100 mb-0">
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="api-icon api-icon-sm bg-{{ $eColor }} bg-opacity-10 text-{{ $eColor }}"><i class="{{ $eIcon }}"></i></span>
-                <div>
+      <div class="col-lg-6">
+        <div class="card mb-0 h-100">
+          <div class="card-header"><h6 class="shop-card-title"><i class="ph-link"></i> آدرس‌ها</h6></div>
+          <ul class="shop-tl">
+            @foreach($endpoints as $endpoint)
+              <li>
+                <span class="shop-icon shop-icon--sm tone-muted"><i class="{{ $endpointIcons[$endpoint['title']] ?? 'ph-link' }}"></i></span>
+                <div class="shop-tl__body">
                   <div class="fw-semibold">{{ $endpoint['title'] }}</div>
-                  <div class="text-muted fs-sm">{{ $endpoint['hint'] }}</div>
+                  <div class="shop-tl__meta mb-1">{{ $endpoint['hint'] }}</div>
+                  <div class="d-flex gap-2 align-items-center">
+                    <code class="shop-code flex-grow-1" dir="ltr">{{ $endpoint['path'] }}</code>
+                    <button type="button" class="btn btn-light btn-icon shop-btn-sq" data-copy="{{ $endpoint['url'] }}" title="کپی آدرس"><i class="ph-copy"></i></button>
+                    @if(!empty($endpoint['openable']))
+                      <a class="btn btn-light btn-icon shop-btn-sq" href="{{ $endpoint['url'] }}" target="_blank" rel="noopener" title="باز کردن"><i class="ph-arrow-square-out"></i></a>
+                    @endif
+                  </div>
                 </div>
-              </div>
-              <div class="d-flex gap-2 align-items-center">
-                <code class="api-path flex-grow-1" dir="ltr">{{ $endpoint['path'] }}</code>
-                <button type="button" class="btn btn-sm btn-light text-nowrap" data-copy="{{ $endpoint['url'] }}" title="کپی آدرس"><i class="ph-copy"></i></button>
-                @if(!empty($endpoint['openable']))
-                  <a class="btn btn-sm btn-light text-nowrap" href="{{ $endpoint['url'] }}" target="_blank" rel="noopener" title="باز کردن"><i class="ph-arrow-square-out"></i></a>
-                @endif
-              </div>
-            </div>
+              </li>
+            @endforeach
+          </ul>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card mb-0 h-100">
+          <div class="card-header d-flex align-items-center">
+            <h6 class="shop-card-title"><i class="ph-robot"></i> اتصال یک ایجنت AI</h6>
+            <button type="button" class="btn btn-light btn-sm ms-auto" data-copy="{{ $agentPrompt }}"><i class="ph-copy me-1"></i> کپی</button>
+          </div>
+          <div class="card-body">
+            <p class="fs-sm text-muted mb-2">ساده‌ترین راه: روی هر توکن «کپی متن اتصال» را بزن و همان را به ایجنت بده؛ توکن، آدرس‌ها، مستندات و روش کار داخلش است. این‌جا فقط نمونهٔ بدون توکن است. برای کار روزمره «فقط خواندن» کافی است.</p>
+            <pre class="shop-code" dir="auto">{{ $agentPrompt }}</pre>
           </div>
         </div>
-      @endforeach
-    </div>
-
-    {{-- Agent quick start --}}
-    <div class="card mb-3 border-start border-warning border-3">
-      <div class="card-body d-flex flex-wrap align-items-start gap-3">
-        <span class="api-icon api-icon-sm bg-warning bg-opacity-10 text-warning"><i class="ph-robot"></i></span>
-        <div class="flex-grow-1" style="min-width:260px">
-          <div class="fw-semibold mb-1">اتصال یک ایجنت AI</div>
-          <div class="text-muted fs-sm mb-2">ساده‌ترین راه: روی هر توکن دکمهٔ «کپی متن اتصال» را بزن و همان را به ایجنت بده؛ توکن، آدرس‌ها، مستندات و روش کار داخلش است. این کارت فقط نمونهٔ بدون توکن است. برای کار روزمره سطح «فقط خواندن» کافی است.</div>
-          <pre class="api-prompt mb-0" dir="auto">{{ $agentPrompt }}</pre>
-        </div>
-        <button type="button" class="btn btn-sm btn-light text-nowrap" data-copy="{{ $agentPrompt }}"><i class="ph-copy me-1"></i> کپی متن</button>
       </div>
     </div>
 
     {{-- New token --}}
     <div class="collapse {{ $errors->any() ? 'show' : '' }} mb-3" id="new-access">
       <div class="card mb-0">
-        <div class="card-header d-flex align-items-center">
-          <h6 class="mb-0"><i class="ph-plus-circle me-1"></i> توکن تازه</h6>
-        </div>
+        <div class="card-header"><h6 class="shop-card-title"><i class="ph-plus-circle"></i> توکن تازه</h6></div>
         <div class="card-body">
           <form method="post" action="{{ route('admin.shop.api-accesses.store') }}" class="row g-3 align-items-start">
             @csrf
@@ -141,26 +121,26 @@
             </div>
             <div class="col-md-4">
               <label class="form-label">سطح دسترسی</label>
-              <div class="btn-group w-100" role="group">
+              <div class="btn-group w-100 shop-segment" role="group">
                 <input type="radio" class="btn-check" name="permission" id="perm-read-new" value="read" autocomplete="off" @checked(old('permission', 'read') === 'read')>
-                <label class="btn btn-outline-info" for="perm-read-new"><i class="ph-eye me-1"></i> فقط خواندن</label>
+                <label class="btn tone-info" for="perm-read-new"><i class="ph-eye"></i> فقط خواندن</label>
                 <input type="radio" class="btn-check" name="permission" id="perm-rw-new" value="read_write" autocomplete="off" @checked(old('permission') === 'read_write')>
-                <label class="btn btn-outline-warning" for="perm-rw-new"><i class="ph-pencil-simple me-1"></i> خواندن و نوشتن</label>
+                <label class="btn tone-warning" for="perm-rw-new"><i class="ph-pencil-simple"></i> خواندن و نوشتن</label>
               </div>
-              <div class="form-text">پیش‌فرض امن: فقط خواندن. نوشتن را فقط برای اپ مدیریت یا کار اعمال مستقیم بده.</div>
+              <div class="form-text">پیش‌فرض امن: فقط خواندن.</div>
               @error('permission')<div class="form-text text-danger">{{ $message }}</div>@enderror
             </div>
             <div class="col-12">
               <label class="form-label">مدت اعتبار</label>
-              <div class="d-flex flex-wrap gap-2">
+              <div class="shop-chips">
                 @foreach($expiryPresets as $key => $preset)
                   <input type="radio" class="btn-check" name="expiry" id="exp-new-{{ $key }}" value="{{ $key }}" autocomplete="off" @checked(old('expiry', $expiryDefault) === $key)>
-                  <label class="btn btn-outline-{{ $key === 'never' ? 'danger' : 'secondary' }}" for="exp-new-{{ $key }}">
-                    @if($key === 'never')<i class="ph-infinity me-1"></i>@endif{{ $preset['label'] }}
+                  <label class="btn {{ $key === 'never' ? 'tone-danger' : '' }}" for="exp-new-{{ $key }}">
+                    @if($key === 'never')<i class="ph-infinity"></i>@endif{{ $preset['label'] }}
                   </label>
                 @endforeach
               </div>
-              <div class="form-text">بعد از این مدت توکن خودش از کار می‌افتد و درخواست‌ها 401 می‌گیرند؛ اگر فراموش کنی حذفش کنی، امن می‌ماند. «بدون انقضا» فقط برای اپ‌های دائمی.</div>
+              <div class="form-text">بعد از این مدت توکن خودش از کار می‌افتد و درخواست‌ها 401 می‌گیرند. «بدون انقضا» فقط برای اپ‌های دائمی.</div>
               @error('expiry')<div class="form-text text-danger">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-9">
@@ -185,32 +165,26 @@
       @forelse($accesses as $access)
         @php
           $canWrite = $access->permission === 'read_write';
-          $accent = $canWrite ? 'warning' : 'info';
+          $permTone = $canWrite ? 'warning' : 'info';
+          $expTone = $access->isExpired() ? 'danger' : ($access->expiresSoon() ? 'warning' : ($access->expires_at ? 'muted' : 'info'));
         @endphp
-        <div class="card mb-0 api-token border-start border-{{ $accent }} border-3 {{ $access->isUsable() ? '' : 'api-token-off' }}">
+        <div class="card mb-0 shop-card-accent tone-{{ $permTone }} {{ $access->isUsable() ? '' : 'opacity-75' }}">
           <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div class="d-flex align-items-center gap-3">
-              <span class="api-icon api-icon-sm bg-{{ $accent }} bg-opacity-10 text-{{ $accent }}"><i class="{{ $canWrite ? 'ph-pencil-simple' : 'ph-eye' }}"></i></span>
+              <span class="shop-icon"><i class="{{ $canWrite ? 'ph-pencil-simple' : 'ph-eye' }}"></i></span>
               <div>
                 <div class="fw-semibold">{{ $access->name }}</div>
-                <div class="text-muted fs-sm">
-                  <i class="ph-clock me-1"></i>{{ $access->last_used_at ? 'آخرین استفاده '.$access->last_used_at->format('Y-m-d H:i') : 'هنوز استفاده نشده' }}
-                </div>
+                <div class="shop-tl__meta"><i class="ph-clock me-1"></i>{{ $access->last_used_at ? 'آخرین استفاده '.$access->last_used_at->format('Y-m-d H:i') : 'هنوز استفاده نشده' }}</div>
               </div>
             </div>
-            <div class="api-actions">
-              <span class="badge bg-{{ $accent }} bg-opacity-20 text-{{ $accent }}">{{ $canWrite ? 'خواندن و نوشتن' : 'فقط خواندن' }}</span>
-              @php
-                $expClass = $access->isExpired() ? 'danger' : ($access->expiresSoon() ? 'warning' : ($access->expires_at ? 'secondary' : 'info'));
-              @endphp
-              <span class="badge bg-{{ $expClass }} bg-opacity-20 text-{{ $expClass }}" title="{{ $access->expires_at ? 'تا '.$access->expires_at->format('Y-m-d H:i') : 'هیچ‌وقت منقضی نمی‌شود' }}">
-                <i class="ph-hourglass me-1"></i>{{ $access->expiryLabel() }}
-              </span>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <span class="shop-soft tone-{{ $permTone }}">{{ $canWrite ? 'خواندن و نوشتن' : 'فقط خواندن' }}</span>
+              <span class="shop-soft tone-{{ $expTone }}" title="{{ $access->expires_at ? 'تا '.$access->expires_at->format('Y-m-d H:i') : 'هیچ‌وقت منقضی نمی‌شود' }}"><i class="ph-hourglass"></i>{{ $access->expiryLabel() }}</span>
+              <span class="shop-dot tone-{{ $access->active ? 'success' : 'muted' }}">{{ $access->active ? 'فعال' : 'غیرفعال' }}</span>
+
               @if($access->expires_at)
                 <div class="dropdown">
-                  <button type="button" class="btn {{ $access->isExpired() || $access->expiresSoon() ? 'btn-warning' : 'btn-outline-primary' }}" data-bs-toggle="dropdown">
-                    <i class="ph-plus-circle me-1"></i> تمدید
-                  </button>
+                  <button type="button" class="btn btn-light" data-bs-toggle="dropdown"><i class="ph-plus-circle me-1"></i> تمدید</button>
                   <form method="post" action="{{ route('admin.shop.api-accesses.extend', $access) }}" class="dropdown-menu dropdown-menu-end p-0">
                     @csrf
                     <div class="dropdown-header">اضافه شود به اعتبار فعلی</div>
@@ -222,8 +196,8 @@
                   </form>
                 </div>
               @endif
+
               @if($access->active)
-                <span class="badge bg-success bg-opacity-20 text-success">فعال</span>
                 <form method="post" action="{{ route('admin.shop.api-accesses.revoke', $access) }}"
                       data-confirm="توکن «{{ $access->name }}» غیرفعال شود؟"
                       data-confirm-title="غیرفعال کردن توکن"
@@ -232,15 +206,15 @@
                       data-confirm-ok="غیرفعال کن"
                       data-confirm-icon="ph-prohibit">
                   @csrf
-                  <button type="submit" class="btn btn-outline-warning"><i class="ph-prohibit me-1"></i> غیرفعال کن</button>
+                  <button type="submit" class="btn btn-light"><i class="ph-prohibit me-1"></i> غیرفعال</button>
                 </form>
               @else
-                <span class="badge bg-secondary bg-opacity-20 text-secondary">غیرفعال</span>
                 <form method="post" action="{{ route('admin.shop.api-accesses.activate', $access) }}">
                   @csrf
-                  <button type="submit" class="btn btn-outline-success"><i class="ph-play me-1"></i> فعال کن</button>
+                  <button type="submit" class="btn btn-light"><i class="ph-play me-1"></i> فعال کن</button>
                 </form>
               @endif
+
               <form method="post" action="{{ route('admin.shop.api-accesses.destroy', $access) }}"
                     data-confirm="توکن «{{ $access->name }}» برای همیشه حذف شود؟"
                     data-confirm-title="حذف توکن"
@@ -250,7 +224,7 @@
                     data-confirm-type-to-confirm="{{ $access->name }}">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="btn btn-outline-danger btn-icon" title="حذف توکن"><i class="ph-trash"></i></button>
+                <button type="submit" class="btn btn-light btn-icon shop-btn-sq tone-danger" style="color:rgb(var(--tone-danger))" title="حذف توکن"><i class="ph-trash"></i></button>
               </form>
             </div>
           </div>
@@ -259,18 +233,18 @@
             <div class="mb-3">
               <label class="form-label fs-sm text-muted mb-1">توکن</label>
               @if($access->token)
-                <div class="api-token-row">
-                  <input type="password" class="form-control font-monospace" dir="ltr" readonly value="{{ $access->token }}" data-secret>
-                  <button type="button" class="btn btn-light btn-icon" data-toggle-secret title="نمایش یا پنهان"><i class="ph-eye"></i></button>
-                  <button type="button" class="btn btn-primary" data-copy="{{ $connectionText($access) }}" title="توکن + آدرس‌ها + مستندات + روش کار، یک‌جا برای ایجنت"><i class="ph-copy me-1"></i> کپی متن اتصال</button>
-                  <button type="button" class="btn btn-light btn-icon" data-copy="{{ $access->token }}" title="فقط خود توکن"><i class="ph-key"></i></button>
-                  <button type="submit" class="btn btn-light btn-icon" form="rotate-{{ $access->id }}" title="صدور توکن تازه"
+                <div class="d-flex flex-wrap gap-2 align-items-stretch">
+                  <input type="password" class="form-control font-monospace" dir="ltr" readonly value="{{ $access->token }}" data-secret style="flex:1 1 14rem;width:auto">
+                  <button type="button" class="btn btn-light btn-icon shop-btn-sq" data-toggle-secret title="نمایش یا پنهان"><i class="ph-eye"></i></button>
+                  <button type="button" class="btn btn-light btn-icon shop-btn-sq" data-copy="{{ $access->token }}" title="فقط خود توکن"><i class="ph-key"></i></button>
+                  <button type="submit" class="btn btn-light btn-icon shop-btn-sq" form="rotate-{{ $access->id }}" title="صدور توکن تازه"
                           data-confirm="برای «{{ $access->name }}» توکن تازه صادر شود؟"
                           data-confirm-title="صدور توکن تازه"
                           data-confirm-desc="توکن فعلی همان لحظه از کار می‌افتد؛ هر جا که از آن استفاده می‌شود باید توکن تازه را بگیرد."
                           data-confirm-type="warning"
                           data-confirm-ok="صدور توکن تازه"
                           data-confirm-icon="ph-arrows-clockwise"><i class="ph-arrows-clockwise"></i></button>
+                  <button type="button" class="btn btn-primary text-nowrap" data-copy="{{ $connectionText($access) }}" title="توکن + آدرس‌ها + مستندات + روش کار، یک‌جا برای ایجنت"><i class="ph-copy me-1"></i> کپی متن اتصال</button>
                 </div>
                 <form id="rotate-{{ $access->id }}" method="post" action="{{ route('admin.shop.api-accesses.rotate', $access) }}">@csrf</form>
               @else
@@ -278,13 +252,13 @@
                   <span class="text-muted fs-sm"><i class="ph-info me-1"></i>این توکن قبل از ذخیرهٔ متن ساخته شده و دیگر قابل نمایش نیست.</span>
                   <form method="post" action="{{ route('admin.shop.api-accesses.rotate', $access) }}">
                     @csrf
-                    <button type="submit" class="btn btn-sm btn-outline-primary"><i class="ph-arrows-clockwise me-1"></i> صدور توکن تازه</button>
+                    <button type="submit" class="btn btn-light btn-sm"><i class="ph-arrows-clockwise me-1"></i> صدور توکن تازه</button>
                   </form>
                 </div>
               @endif
             </div>
 
-            <form method="post" action="{{ route('admin.shop.api-accesses.update', $access) }}" class="row g-3 align-items-end border-top pt-3">
+            <form method="post" action="{{ route('admin.shop.api-accesses.update', $access) }}" class="row g-3 align-items-end border-top pt-3" style="border-color:var(--shop-line) !important">
               @csrf
               @method('PUT')
               <div class="col-md-2">
@@ -300,24 +274,24 @@
               </div>
               <div class="col-md-3">
                 <label class="form-label fs-sm text-muted">سطح دسترسی</label>
-                <div class="btn-group w-100" role="group">
+                <div class="btn-group w-100 shop-segment" role="group">
                   <input type="radio" class="btn-check" name="permission" id="perm-read-{{ $access->id }}" value="read" autocomplete="off" @checked(!$canWrite)>
-                  <label class="btn btn-outline-info" for="perm-read-{{ $access->id }}"><i class="ph-eye me-1"></i> خواندن</label>
+                  <label class="btn tone-info" for="perm-read-{{ $access->id }}"><i class="ph-eye"></i> خواندن</label>
                   <input type="radio" class="btn-check" name="permission" id="perm-rw-{{ $access->id }}" value="read_write" autocomplete="off" @checked($canWrite)>
-                  <label class="btn btn-outline-warning" for="perm-rw-{{ $access->id }}"><i class="ph-pencil-simple me-1"></i> نوشتن</label>
+                  <label class="btn tone-warning" for="perm-rw-{{ $access->id }}"><i class="ph-pencil-simple"></i> نوشتن</label>
                 </div>
               </div>
-              <div class="col-md-2 d-flex align-items-end">
+              <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100"><i class="ph-floppy-disk me-1"></i> ذخیره</button>
               </div>
               <div class="col-12">
                 <label class="form-label fs-sm text-muted">تمدید یا تغییر اعتبار (از همین الان حساب می‌شود)</label>
-                <div class="d-flex flex-wrap gap-2">
+                <div class="shop-chips">
                   <input type="radio" class="btn-check" name="expiry" id="exp-{{ $access->id }}-keep" value="keep" autocomplete="off" checked>
-                  <label class="btn btn-outline-primary" for="exp-{{ $access->id }}-keep">بدون تغییر ({{ $access->expiryLabel() }})</label>
+                  <label class="btn tone-primary" for="exp-{{ $access->id }}-keep">بدون تغییر ({{ $access->expiryLabel() }})</label>
                   @foreach($expiryPresets as $key => $preset)
                     <input type="radio" class="btn-check" name="expiry" id="exp-{{ $access->id }}-{{ $key }}" value="{{ $key }}" autocomplete="off">
-                    <label class="btn btn-outline-{{ $key === 'never' ? 'danger' : 'secondary' }}" for="exp-{{ $access->id }}-{{ $key }}">{{ $preset['label'] }}</label>
+                    <label class="btn {{ $key === 'never' ? 'tone-danger' : '' }}" for="exp-{{ $access->id }}-{{ $key }}">{{ $preset['label'] }}</label>
                   @endforeach
                 </div>
               </div>
@@ -326,10 +300,7 @@
         </div>
       @empty
         <div class="card mb-0">
-          <div class="card-body text-center text-muted py-5">
-            <i class="ph-key ph-3x d-block mb-2"></i>
-            هنوز دسترسی‌ای ثبت نشده است. با «توکن تازه» اولین را بساز.
-          </div>
+          @include('shop::admin.partials.empty', ['icon' => 'ph-key', 'title' => 'هنوز توکنی ساخته نشده است', 'hint' => 'با «توکن تازه» اولین دسترسی را بساز.'])
         </div>
       @endforelse
     </div>
@@ -337,118 +308,6 @@
 </div>
 
 @include('shop::admin.partials.confirm')
-
-<style>
-  .api-access-page .api-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    flex-shrink: 0;
-  }
-  .api-access-page .api-icon-sm { width: 40px; height: 40px; border-radius: 10px; font-size: 1.25rem; }
-  /* One control height everywhere so rows line up: inputs, buttons, segmented labels. */
-  .api-access-page { --api-h: 2.5rem; }
-  .api-access-page .form-control,
-  .api-access-page .form-select,
-  .api-access-page .btn:not(.btn-sm),
-  .api-access-page .ip-tags { min-height: var(--api-h); }
-  .api-access-page .btn-icon { width: var(--api-h); height: var(--api-h); padding: 0; display: inline-flex; align-items: center; justify-content: center; }
-  .api-access-page .api-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
-  .api-access-page .api-actions form { margin: 0; }
-  .api-access-page .api-token-row { display: flex; align-items: stretch; gap: .5rem; }
-  .api-access-page .api-token-row .form-control { flex: 1 1 auto; min-width: 0; }
-  .api-access-page .btn-group .btn { display: inline-flex; align-items: center; justify-content: center; }
-  .api-access-page .api-token { transition: box-shadow .15s ease; }
-  .api-access-page .api-token:hover { box-shadow: 0 .25rem 1rem rgba(0, 0, 0, .12); }
-  .api-access-page .api-token-off { opacity: .65; }
-  .api-access-page .api-prompt {
-    padding: .75rem 1rem;
-    border-radius: var(--border-radius, .375rem);
-    border: 1px dashed var(--border-color, var(--gray-400, #ced4da));
-    background: color-mix(in srgb, var(--body-color, #212529) 5%, transparent);
-    color: inherit;
-    font-size: .8125rem;
-    white-space: pre-wrap;
-  }
-  .api-access-page .form-control,
-  .api-access-page .api-path,
-  .api-access-page .ip-tags {
-    background-color: var(--input-bg, var(--gray-100, #fff));
-    color: var(--body-color, #212529);
-    border-color: var(--border-color, var(--gray-400, #ced4da));
-  }
-  .api-access-page .form-control:focus {
-    background-color: var(--input-bg, var(--gray-100, #fff));
-    color: var(--body-color, #212529);
-    border-color: var(--component-active-bg, #0c83ff);
-    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--component-active-bg, #0c83ff) 25%, transparent);
-  }
-  .api-access-page .form-control::placeholder,
-  .api-access-page .ip-tags-input::placeholder {
-    color: var(--gray-600, #6c757d);
-    opacity: .85;
-  }
-  .api-path {
-    display: block;
-    padding: .45rem .6rem;
-    border: 1px solid var(--border-color, var(--gray-400, #ced4da));
-    border-radius: var(--border-radius, .375rem);
-    font-size: .85rem;
-    min-width: 0;
-    overflow: auto;
-  }
-  .ip-tags {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: .35rem;
-    min-height: 2.5rem;
-    padding: .35rem .5rem;
-    border: 1px solid var(--border-color, var(--gray-400, #ced4da));
-    border-radius: var(--border-radius, .375rem);
-    cursor: text;
-  }
-  .ip-tags:focus-within {
-    border-color: var(--component-active-bg, #0c83ff);
-    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--component-active-bg, #0c83ff) 25%, transparent);
-  }
-  .ip-tags.is-invalid { border-color: var(--danger, #dc3545); }
-  .ip-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: .3rem;
-    padding: .1rem .45rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--component-active-bg, #0c83ff) 18%, transparent);
-    color: var(--component-active-bg, #0c83ff);
-    font-size: .8125rem;
-    direction: ltr;
-    line-height: 1.4;
-  }
-  .ip-tag button {
-    border: 0;
-    background: transparent;
-    color: inherit;
-    padding: 0;
-    line-height: 1;
-    cursor: pointer;
-    font-size: 1rem;
-  }
-  .ip-tags-input {
-    flex: 1 1 7rem;
-    min-width: 7rem;
-    border: 0;
-    outline: none;
-    background: transparent;
-    color: inherit;
-    direction: ltr;
-    text-align: left;
-    padding: .1rem 0;
-  }
-</style>
 @endsection
 
 @push('scripts')
@@ -574,7 +433,7 @@
       var value = button.getAttribute('data-copy') || '';
       copyText(value).then(function () {
         var previous = button.innerHTML;
-        button.innerHTML = '<i class="ph-check text-success"></i>';
+        button.innerHTML = '<i class="ph-check"></i>';
         setTimeout(function () { button.innerHTML = previous; }, 1200);
       });
     });
