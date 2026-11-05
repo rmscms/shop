@@ -224,7 +224,13 @@
               @endif
               @if($access->active)
                 <span class="badge bg-success bg-opacity-20 text-success">فعال</span>
-                <form method="post" action="{{ route('admin.shop.api-accesses.revoke', $access) }}">
+                <form method="post" action="{{ route('admin.shop.api-accesses.revoke', $access) }}"
+                      data-confirm="توکن «{{ $access->name }}» غیرفعال شود؟"
+                      data-confirm-title="غیرفعال کردن توکن"
+                      data-confirm-desc="درخواست‌های این توکن فوراً رد می‌شوند. هر وقت خواستی دوباره فعالش کن."
+                      data-confirm-type="warning"
+                      data-confirm-ok="غیرفعال کن"
+                      data-confirm-icon="ph-prohibit">
                   @csrf
                   <button type="submit" class="btn btn-outline-warning"><i class="ph-prohibit me-1"></i> غیرفعال کن</button>
                 </form>
@@ -236,7 +242,12 @@
                 </form>
               @endif
               <form method="post" action="{{ route('admin.shop.api-accesses.destroy', $access) }}"
-                    onsubmit="return confirm('توکن «{{ $access->name }}» برای همیشه حذف شود؟ این کار برگشت‌پذیر نیست.')">
+                    data-confirm="توکن «{{ $access->name }}» برای همیشه حذف شود؟"
+                    data-confirm-title="حذف توکن"
+                    data-confirm-desc="هر اپ یا ایجنتی که از این توکن استفاده می‌کند همین الان قطع می‌شود و این کار برگشت‌پذیر نیست."
+                    data-confirm-type="danger"
+                    data-confirm-ok="حذف توکن"
+                    data-confirm-type-to-confirm="{{ $access->name }}">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-outline-danger btn-icon" title="حذف توکن"><i class="ph-trash"></i></button>
@@ -253,7 +264,13 @@
                   <button type="button" class="btn btn-light btn-icon" data-toggle-secret title="نمایش یا پنهان"><i class="ph-eye"></i></button>
                   <button type="button" class="btn btn-primary" data-copy="{{ $connectionText($access) }}" title="توکن + آدرس‌ها + مستندات + روش کار، یک‌جا برای ایجنت"><i class="ph-copy me-1"></i> کپی متن اتصال</button>
                   <button type="button" class="btn btn-light btn-icon" data-copy="{{ $access->token }}" title="فقط خود توکن"><i class="ph-key"></i></button>
-                  <button type="submit" class="btn btn-light btn-icon" form="rotate-{{ $access->id }}" title="صدور توکن تازه" onclick="return confirm('توکن قبلی از کار می‌افتد. ادامه؟')"><i class="ph-arrows-clockwise"></i></button>
+                  <button type="submit" class="btn btn-light btn-icon" form="rotate-{{ $access->id }}" title="صدور توکن تازه"
+                          data-confirm="برای «{{ $access->name }}» توکن تازه صادر شود؟"
+                          data-confirm-title="صدور توکن تازه"
+                          data-confirm-desc="توکن فعلی همان لحظه از کار می‌افتد؛ هر جا که از آن استفاده می‌شود باید توکن تازه را بگیرد."
+                          data-confirm-type="warning"
+                          data-confirm-ok="صدور توکن تازه"
+                          data-confirm-icon="ph-arrows-clockwise"><i class="ph-arrows-clockwise"></i></button>
                 </div>
                 <form id="rotate-{{ $access->id }}" method="post" action="{{ route('admin.shop.api-accesses.rotate', $access) }}">@csrf</form>
               @else
@@ -318,6 +335,8 @@
     </div>
   @endif
 </div>
+
+@include('shop::admin.partials.confirm')
 
 <style>
   .api-access-page .api-icon {

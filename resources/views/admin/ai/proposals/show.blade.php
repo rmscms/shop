@@ -69,12 +69,24 @@
 
     @if($pending && $model)
       <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-success"><i class="ph-check me-1"></i> اعمال فیلدهای انتخاب‌شده</button>
-        <button type="submit" class="btn btn-outline-danger" formaction="{{ route('admin.shop.ai-proposals.reject', $proposal) }}" formnovalidate>
+        <button type="submit" class="btn btn-success"
+                data-confirm="فیلدهای تیک‌خورده روی {{ $resource?->label() ?? 'این مورد' }} اعمال شوند؟"
+                data-confirm-title="اعمال تغییرها"
+                data-confirm-desc="مقدارهای فعلی با پیشنهاد ایجنت جایگزین می‌شوند و در تاریخچه ثبت می‌گردند."
+                data-confirm-type="success"
+                data-confirm-ok="اعمال کن"><i class="ph-check me-1"></i> اعمال فیلدهای انتخاب‌شده</button>
+        <button type="submit" class="btn btn-outline-danger" formaction="{{ route('admin.shop.ai-proposals.reject', $proposal) }}" formnovalidate
+                data-confirm="کل این پیشنهاد رد شود؟"
+                data-confirm-title="رد پیشنهاد"
+                data-confirm-desc="هیچ تغییری اعمال نمی‌شود و پیشنهاد بسته می‌شود."
+                data-confirm-type="danger"
+                data-confirm-ok="رد کن"
+                data-confirm-icon="ph-x-circle">
           <i class="ph-x me-1"></i> رد کل پیشنهاد
         </button>
       </div>
     @endif
   </form>
 </div>
+@include('shop::admin.partials.confirm')
 @endsection

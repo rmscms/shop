@@ -68,7 +68,12 @@
         <div class="card-header d-flex align-items-center flex-wrap gap-2">
           <h6 class="mb-0">بررسی‌نشده‌ها ({{ $stats['unreviewed'] }})</h6>
           <form method="post" action="{{ route('admin.shop.ai-reviews.request-all') }}" class="ms-auto"
-                onsubmit="return confirm('برای همهٔ محصولات بررسی‌نشده درخواست ثبت شود؟')">
+                data-confirm="برای همهٔ محصولات بررسی‌نشده درخواست بررسی ثبت شود؟"
+                data-confirm-title="درخواست بررسی گروهی"
+                data-confirm-desc="برای هر محصولی که هنوز بررسی نشده یک درخواست در صف ایجنت می‌رود. چیزی روی محصول‌ها عوض نمی‌شود."
+                data-confirm-type="info"
+                data-confirm-ok="ثبت درخواست‌ها"
+                data-confirm-icon="ph-paper-plane-tilt">
             @csrf
             <button class="btn btn-sm btn-primary" type="submit">درخواست بررسی برای همهٔ بررسی‌نشده‌ها</button>
           </form>
@@ -144,7 +149,12 @@
                   @if($r->status === 'done')
                     <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.shop.ai-reviews.show', $r) }}">گزارش</a>
                   @elseif($r->status === 'requested')
-                    <form method="post" action="{{ route('admin.shop.ai-reviews.dismiss', $r) }}" class="d-inline">@csrf
+                    <form method="post" action="{{ route('admin.shop.ai-reviews.dismiss', $r) }}" class="d-inline"
+                          data-confirm="درخواست بررسی این محصول لغو شود؟"
+                          data-confirm-title="لغو درخواست"
+                          data-confirm-type="warning"
+                          data-confirm-ok="لغو کن"
+                          data-confirm-cancel="نه، بماند">@csrf
                       <button class="btn btn-sm btn-outline-secondary" type="submit">لغو</button></form>
                   @endif
                 </td>
@@ -161,4 +171,5 @@
     </div>
   @endif
 </div>
+@include('shop::admin.partials.confirm')
 @endsection
