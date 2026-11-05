@@ -120,6 +120,16 @@ class ApiAccessesController extends ShopAdminController
             ->with('success', 'دسترسی به‌روز شد.');
     }
 
+    public function destroy(ShopApiAccess $access): RedirectResponse
+    {
+        $name = $access->name;
+        $access->delete();
+
+        return redirect()
+            ->route('admin.shop.api-accesses.index')
+            ->with('success', 'توکن «'.$name.'» حذف شد.');
+    }
+
     public function revoke(ShopApiAccess $access): RedirectResponse
     {
         $access->forceFill(['active' => false])->save();

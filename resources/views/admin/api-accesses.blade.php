@@ -163,21 +163,27 @@
                 </div>
               </div>
             </div>
-            <div class="d-flex align-items-center gap-2">
+            <div class="api-actions">
               <span class="badge bg-{{ $accent }} bg-opacity-20 text-{{ $accent }}">{{ $canWrite ? 'خواندن و نوشتن' : 'فقط خواندن' }}</span>
               @if($access->active)
-                <span class="badge bg-success bg-opacity-20 text-success"><i class="ph-circle me-1" style="font-size:.6rem"></i> فعال</span>
+                <span class="badge bg-success bg-opacity-20 text-success">فعال</span>
                 <form method="post" action="{{ route('admin.shop.api-accesses.revoke', $access) }}">
                   @csrf
-                  <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ph-prohibit me-1"></i> غیرفعال کن</button>
+                  <button type="submit" class="btn btn-outline-warning"><i class="ph-prohibit me-1"></i> غیرفعال کن</button>
                 </form>
               @else
                 <span class="badge bg-secondary bg-opacity-20 text-secondary">غیرفعال</span>
                 <form method="post" action="{{ route('admin.shop.api-accesses.activate', $access) }}">
                   @csrf
-                  <button type="submit" class="btn btn-sm btn-outline-success"><i class="ph-play me-1"></i> فعال کن</button>
+                  <button type="submit" class="btn btn-outline-success"><i class="ph-play me-1"></i> فعال کن</button>
                 </form>
               @endif
+              <form method="post" action="{{ route('admin.shop.api-accesses.destroy', $access) }}"
+                    onsubmit="return confirm('توکن «{{ $access->name }}» برای همیشه حذف شود؟ این کار برگشت‌پذیر نیست.')">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-outline-danger btn-icon" title="حذف توکن"><i class="ph-trash"></i></button>
+              </form>
             </div>
           </div>
 
@@ -185,11 +191,11 @@
             <div class="mb-3">
               <label class="form-label fs-sm text-muted mb-1">توکن</label>
               @if($access->token)
-                <div class="input-group">
+                <div class="api-token-row">
                   <input type="password" class="form-control font-monospace" dir="ltr" readonly value="{{ $access->token }}" data-secret>
-                  <button type="button" class="btn btn-light" data-toggle-secret title="نمایش یا پنهان"><i class="ph-eye"></i></button>
-                  <button type="button" class="btn btn-light" data-copy="{{ $access->token }}" title="کپی توکن"><i class="ph-copy"></i></button>
-                  <button type="submit" class="btn btn-light" form="rotate-{{ $access->id }}" title="صدور توکن تازه" onclick="return confirm('توکن قبلی از کار می‌افتد. ادامه؟')"><i class="ph-arrows-clockwise"></i></button>
+                  <button type="button" class="btn btn-light btn-icon" data-toggle-secret title="نمایش یا پنهان"><i class="ph-eye"></i></button>
+                  <button type="button" class="btn btn-light btn-icon" data-copy="{{ $access->token }}" title="کپی توکن"><i class="ph-copy"></i></button>
+                  <button type="submit" class="btn btn-light btn-icon" form="rotate-{{ $access->id }}" title="صدور توکن تازه" onclick="return confirm('توکن قبلی از کار می‌افتد. ادامه؟')"><i class="ph-arrows-clockwise"></i></button>
                 </div>
                 <form id="rotate-{{ $access->id }}" method="post" action="{{ route('admin.shop.api-accesses.rotate', $access) }}">@csrf</form>
               @else
@@ -203,7 +209,7 @@
               @endif
             </div>
 
-            <form method="post" action="{{ route('admin.shop.api-accesses.update', $access) }}" class="row g-3 align-items-start border-top pt-3">
+            <form method="post" action="{{ route('admin.shop.api-accesses.update', $access) }}" class="row g-3 align-items-end border-top pt-3">
               @csrf
               @method('PUT')
               <div class="col-md-2">
@@ -255,6 +261,18 @@
     flex-shrink: 0;
   }
   .api-access-page .api-icon-sm { width: 40px; height: 40px; border-radius: 10px; font-size: 1.25rem; }
+  /* One control height everywhere so rows line up: inputs, buttons, segmented labels. */
+  .api-access-page { --api-h: 2.5rem; }
+  .api-access-page .form-control,
+  .api-access-page .form-select,
+  .api-access-page .btn:not(.btn-sm),
+  .api-access-page .ip-tags { min-height: var(--api-h); }
+  .api-access-page .btn-icon { width: var(--api-h); height: var(--api-h); padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+  .api-access-page .api-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+  .api-access-page .api-actions form { margin: 0; }
+  .api-access-page .api-token-row { display: flex; align-items: stretch; gap: .5rem; }
+  .api-access-page .api-token-row .form-control { flex: 1 1 auto; min-width: 0; }
+  .api-access-page .btn-group .btn { display: inline-flex; align-items: center; justify-content: center; }
   .api-access-page .api-token { transition: box-shadow .15s ease; }
   .api-access-page .api-token:hover { box-shadow: 0 .25rem 1rem rgba(0, 0, 0, .12); }
   .api-access-page .api-token-off { opacity: .65; }
