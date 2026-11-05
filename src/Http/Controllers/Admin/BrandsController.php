@@ -103,7 +103,7 @@ class BrandsController extends ShopAdminController implements HasList, HasForm, 
         return [
             'logo_path' => UploadConfig::create('logo_path')
                 ->path('uploads/brands/logos')
-                ->types(['jpg', 'jpeg', 'png', 'webp'])
+                ->allowedTypes(['jpg', 'jpeg', 'png', 'webp'])
                 ->maxSize(2048)
                 ->ajaxUpload(true)
                 ->listThumbnailSize(36, 36),
