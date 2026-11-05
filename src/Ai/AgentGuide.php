@@ -22,12 +22,38 @@ class AgentGuide
     {
         $base = rtrim($base, '/');
 
-        return [
+        $links = [
             ['order' => '1', 'name' => 'agent_guide', 'url' => $base.'/ai/guide', 'why' => 'نقش، قوانین و روال کار. اول این را بخوان؛ قبل از هر کاری.'],
             ['order' => '2', 'name' => 'inbox', 'url' => $base.'/ai/inbox', 'why' => 'چه کارهایی منتظر توست: درخواست‌های بررسی ادمین، محصولات بدون بررسی، اسلاگ‌های انگلیسی و پیشنهادهای منتظر تأیید. همیشه بعد از راهنما این را بخوان.'],
             ['order' => '3', 'name' => 'tasks', 'url' => $base.'/ai/tasks', 'why' => 'فهرست کارها و endpointهای هر کار.'],
             ['order' => '4', 'name' => 'docs', 'url' => url(config('l5-swagger.documentations.default.routes.api', 'api/documentation')), 'why' => 'مستندات کامل (فقط مرجع؛ از endpointهای مجاز راهنما بیرون نرو).'],
         ];
+
+        // Host apps can add their own links (config shop.ai.guide_extra.need_to_check: [{name, path, why}]).
+        $order = count($links);
+        foreach ((array) config('shop.ai.guide_extra.need_to_check', []) as $extra) {
+            $links[] = [
+                'order' => (string) ++$order,
+                'name' => (string) ($extra['name'] ?? ''),
+                'url' => $base.'/'.ltrim((string) ($extra['path'] ?? ''), '/'),
+                'why' => (string) ($extra['why'] ?? ''),
+            ];
+        }
+
+        return $links;
+    }
+
+    /** Extra guide parts from the host app, with {base} replaced by the API base URL. */
+    protected static function extra(string $key, string $base): array
+    {
+        $value = (array) config('shop.ai.guide_extra.'.$key, []);
+        array_walk_recursive($value, function (&$item) use ($base) {
+            if (is_string($item)) {
+                $item = str_replace('{base}', $base, $item);
+            }
+        });
+
+        return $value;
     }
 
     /** @return array<string, mixed> */
@@ -35,7 +61,7 @@ class AgentGuide
     {
         $base = rtrim($base, '/');
 
-        return [
+        $guide = [
             'version' => self::VERSION,
             'role' => 'ایجنت محتوا و کیفیت فروشگاه digitalpart.ir. محصولات را بررسی می‌کند و پیشنهاد می‌دهد؛ تصمیم نهایی با ادمین است.',
             'language' => 'همهٔ متن‌هایی که ثبت می‌کنی (خلاصه، یافته‌ها، پیشنهادها) فارسی و کوتاه و مشخص باشد.',
@@ -151,5 +177,12 @@ class AgentGuide
             ],
             'after_work' => 'به اپراتور بگو چند مورد ثبت شد، چند مورد منتظر تأیید است و کجا ببیند: admin/shop/ai و admin/shop/ai-reviews.',
         ];
+
+        // Parts the host app adds (config shop.ai.guide_extra: rules, allowed_endpoints, workflows).
+        $guide['rules'] = array_merge($guide['rules'], static::extra('rules', $base));
+        $guide['allowed_endpoints'] = array_merge($guide['allowed_endpoints'], static::extra('allowed_endpoints', $base));
+        $guide['workflows'] = array_merge($guide['workflows'], static::extra('workflows', $base));
+
+        return $guide;
     }
 }

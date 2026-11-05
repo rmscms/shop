@@ -54,7 +54,7 @@ class AuthenticateShopApiAccess
         // it records results for an admin to look at and changes nothing in the shop.
         if (! $access->canWrite()
             && ! in_array($request->method(), ['GET', 'HEAD', 'OPTIONS'], true)
-            && ! in_array($request->route()?->getName(), self::READ_TOKEN_WRITABLE_ROUTES, true)) {
+            && ! in_array($request->route()?->getName(), array_merge(self::READ_TOKEN_WRITABLE_ROUTES, (array) config('shop.ai.read_token_routes', [])), true)) {
             return $this->error($request, ['permission' => ['این توکن فقط خواندنی است (read).']], 403);
         }
 
