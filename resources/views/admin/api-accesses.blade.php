@@ -1,26 +1,81 @@
 @extends('cms::admin.layout.index')
 
+@php
+  $total = $accesses->count();
+  $activeCount = $accesses->where('active', true)->count();
+  $writeCount = $accesses->where('permission', 'read_write')->count();
+  $readCount = $total - $writeCount;
+  $adminApi = collect($endpoints ?? [])->firstWhere('title', 'API ادمین')['url'] ?? url('api/v1/admin/shop');
+  $endpointIcons = ['داک API' => ['ph-book-open-text', 'info'], 'API ادمین' => ['ph-shield-check', 'warning'], 'API پنل' => ['ph-users-three', 'success']];
+  $agentPrompt = "آدرس API: {$adminApi}\nتوکن: (توکن این صفحه را اینجا بگذار)\nاول GET {$adminApi}/ai/guide و بعد GET {$adminApi}/ai/inbox را با هدر Authorization: Bearer بخوان و طبق راهنما کار کن.\nنتیجهٔ هر کار را در سیستم ثبت کن (نه فقط در چت) و بدون «اعمال کن» صریح من چیزی را روی محصول تغییر نده.";
+@endphp
+
 @section('content')
 <div class="content api-access-page">
   @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
+    <div class="alert alert-success d-flex align-items-center"><i class="ph-check-circle me-2"></i>{{ session('success') }}</div>
+  @endif
+  @if($errors->any())
+    <div class="alert alert-danger d-flex align-items-center"><i class="ph-warning-circle me-2"></i>{{ $errors->first() }}</div>
   @endif
 
   @if(!$ready)
     <div class="alert alert-warning mb-0">جدول دسترسی هنوز ساخته نشده است. مهاجرت shop را اجرا کنید.</div>
   @else
+    {{-- Header + numbers --}}
+    <div class="d-flex align-items-center flex-wrap gap-3 mb-3">
+      <span class="api-icon bg-primary bg-opacity-10 text-primary"><i class="ph-key ph-2x"></i></span>
+      <div>
+        <h4 class="mb-0">دسترسی API</h4>
+        <div class="text-muted">توکن‌های اتصال اپ‌ها و ایجنت‌ها به فروشگاه</div>
+      </div>
+      <button class="btn btn-primary ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#new-access">
+        <i class="ph-plus me-1"></i> توکن تازه
+      </button>
+    </div>
+
+    <div class="row g-3 mb-3">
+      @foreach([
+        ['کل توکن‌ها', $total, 'ph-key', 'primary'],
+        ['فعال', $activeCount, 'ph-check-circle', 'success'],
+        ['خواندن و نوشتن', $writeCount, 'ph-pencil-simple', 'warning'],
+        ['فقط خواندن', $readCount, 'ph-eye', 'info'],
+      ] as [$label, $value, $icon, $color])
+        <div class="col-6 col-lg-3">
+          <div class="card mb-0">
+            <div class="card-body d-flex align-items-center gap-3 py-3">
+              <span class="api-icon api-icon-sm bg-{{ $color }} bg-opacity-10 text-{{ $color }}"><i class="{{ $icon }}"></i></span>
+              <div>
+                <div class="fs-4 fw-semibold lh-1">{{ $value }}</div>
+                <div class="text-muted fs-sm mt-1">{{ $label }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      @endforeach
+    </div>
+
+    {{-- Endpoints --}}
     <div class="row g-3 mb-3">
       @foreach($endpoints as $endpoint)
+        @php
+          [$eIcon, $eColor] = $endpointIcons[$endpoint['title']] ?? ['ph-link', 'secondary'];
+        @endphp
         <div class="col-md-4">
           <div class="card h-100 mb-0">
             <div class="card-body">
-              <div class="text-muted small mb-1">{{ $endpoint['hint'] }}</div>
-              <div class="fw-semibold mb-2">{{ $endpoint['title'] }}</div>
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="api-icon api-icon-sm bg-{{ $eColor }} bg-opacity-10 text-{{ $eColor }}"><i class="{{ $eIcon }}"></i></span>
+                <div>
+                  <div class="fw-semibold">{{ $endpoint['title'] }}</div>
+                  <div class="text-muted fs-sm">{{ $endpoint['hint'] }}</div>
+                </div>
+              </div>
               <div class="d-flex gap-2 align-items-center">
                 <code class="api-path flex-grow-1" dir="ltr">{{ $endpoint['path'] }}</code>
-                <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" data-copy="{{ $endpoint['url'] }}">کپی</button>
+                <button type="button" class="btn btn-sm btn-light text-nowrap" data-copy="{{ $endpoint['url'] }}" title="کپی آدرس"><i class="ph-copy"></i></button>
                 @if(!empty($endpoint['openable']))
-                  <a class="btn btn-sm btn-outline-primary text-nowrap" href="{{ $endpoint['url'] }}" target="_blank" rel="noopener">باز کردن</a>
+                  <a class="btn btn-sm btn-light text-nowrap" href="{{ $endpoint['url'] }}" target="_blank" rel="noopener" title="باز کردن"><i class="ph-arrow-square-out"></i></a>
                 @endif
               </div>
             </div>
@@ -29,126 +84,160 @@
       @endforeach
     </div>
 
-    <div class="card mb-3">
-      <div class="card-header">
-        <h6 class="mb-0">دسترسی تازه</h6>
-      </div>
-      <div class="card-body">
-        <form method="post" action="{{ route('admin.shop.api-accesses.store') }}" class="row g-3 align-items-start">
-          @csrf
-          <div class="col-md-2">
-            <label class="form-label" for="name">نام</label>
-            <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required maxlength="190">
-            @error('name')<div class="form-text text-danger">{{ $message }}</div>@enderror
-          </div>
-          <div class="col-md-2">
-            <label class="form-label" for="rate_limit">سقف در دقیقه</label>
-            <input type="text" class="form-control" id="rate_limit" name="rate_limit" value="{{ old('rate_limit', '0') }}" inputmode="numeric" autocomplete="off" required>
-            <div class="form-text">صفر یعنی بدون سقف.</div>
-            @error('rate_limit')<div class="form-text text-danger">{{ $message }}</div>@enderror
-          </div>
-          <div class="col-md-4">
-            <label class="form-label" for="allowed_ips_input">آی‌پی‌های مجاز</label>
-            <div class="ip-tags" data-ip-tags>
-              <input type="hidden" name="allowed_ips" value="{{ old('allowed_ips') }}">
-              <input type="text" class="ip-tags-input" id="allowed_ips_input" dir="ltr" placeholder="127.0.0.1" autocomplete="off">
-            </div>
-            <div class="form-text">اختیاری. با اینتر یا تب تگ می‌شود. خالی یعنی همهٔ آی‌پی‌ها.</div>
-            @error('allowed_ips')<div class="form-text text-danger">{{ $message }}</div>@enderror
-          </div>
-          <div class="col-md-2">
-            <label class="form-label" for="permission">سطح دسترسی</label>
-            <select class="form-select" id="permission" name="permission">
-              <option value="read" @selected(old('permission', 'read') === 'read')>فقط خواندن</option>
-              <option value="read_write" @selected(old('permission') === 'read_write')>خواندن و نوشتن</option>
-            </select>
-            @error('permission')<div class="form-text text-danger">{{ $message }}</div>@enderror
-          </div>
-          <div class="col-md-2">
-            <label class="form-label d-none d-md-block">&nbsp;</label>
-            <button type="submit" class="btn btn-primary w-100">ساخت توکن</button>
-          </div>
-        </form>
+    {{-- Agent quick start --}}
+    <div class="card mb-3 border-start border-warning border-3">
+      <div class="card-body d-flex flex-wrap align-items-start gap-3">
+        <span class="api-icon api-icon-sm bg-warning bg-opacity-10 text-warning"><i class="ph-robot"></i></span>
+        <div class="flex-grow-1" style="min-width:260px">
+          <div class="fw-semibold mb-1">اتصال یک ایجنت AI</div>
+          <div class="text-muted fs-sm mb-2">این متن را به اپراتور بده و توکن را جایش بگذار. ایجنت با آن راهنما و صندوق کارها را می‌خواند. برای کار روزمره سطح «فقط خواندن» کافی است.</div>
+          <pre class="api-prompt mb-0" dir="auto">{{ $agentPrompt }}</pre>
+        </div>
+        <button type="button" class="btn btn-sm btn-light text-nowrap" data-copy="{{ $agentPrompt }}"><i class="ph-copy me-1"></i> کپی متن</button>
       </div>
     </div>
 
+    {{-- New token --}}
+    <div class="collapse {{ $errors->any() ? 'show' : '' }} mb-3" id="new-access">
+      <div class="card mb-0">
+        <div class="card-header d-flex align-items-center">
+          <h6 class="mb-0"><i class="ph-plus-circle me-1"></i> توکن تازه</h6>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{{ route('admin.shop.api-accesses.store') }}" class="row g-3 align-items-start">
+            @csrf
+            <div class="col-md-4">
+              <label class="form-label" for="name">نام</label>
+              <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required maxlength="190" placeholder="مثلاً ایجنت محتوا">
+              @error('name')<div class="form-text text-danger">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="rate_limit">سقف در دقیقه</label>
+              <input type="text" class="form-control" id="rate_limit" name="rate_limit" value="{{ old('rate_limit', '60') }}" inputmode="numeric" autocomplete="off" required>
+              <div class="form-text">صفر یعنی بدون سقف.</div>
+              @error('rate_limit')<div class="form-text text-danger">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">سطح دسترسی</label>
+              <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="permission" id="perm-read-new" value="read" autocomplete="off" @checked(old('permission', 'read') === 'read')>
+                <label class="btn btn-outline-info" for="perm-read-new"><i class="ph-eye me-1"></i> فقط خواندن</label>
+                <input type="radio" class="btn-check" name="permission" id="perm-rw-new" value="read_write" autocomplete="off" @checked(old('permission') === 'read_write')>
+                <label class="btn btn-outline-warning" for="perm-rw-new"><i class="ph-pencil-simple me-1"></i> خواندن و نوشتن</label>
+              </div>
+              <div class="form-text">پیش‌فرض امن: فقط خواندن. نوشتن را فقط برای اپ مدیریت یا کار اعمال مستقیم بده.</div>
+              @error('permission')<div class="form-text text-danger">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-9">
+              <label class="form-label" for="allowed_ips_input">آی‌پی‌های مجاز</label>
+              <div class="ip-tags" data-ip-tags>
+                <input type="hidden" name="allowed_ips" value="{{ old('allowed_ips') }}">
+                <input type="text" class="ip-tags-input" id="allowed_ips_input" dir="ltr" placeholder="127.0.0.1" autocomplete="off">
+              </div>
+              <div class="form-text">اختیاری. با اینتر یا تب تگ می‌شود. خالی یعنی همهٔ آی‌پی‌ها.</div>
+              @error('allowed_ips')<div class="form-text text-danger">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary w-100"><i class="ph-key me-1"></i> ساخت توکن</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    {{-- Tokens --}}
     <div class="d-flex flex-column gap-3">
       @forelse($accesses as $access)
-        <div class="card mb-0">
+        @php
+          $canWrite = $access->permission === 'read_write';
+          $accent = $canWrite ? 'warning' : 'info';
+        @endphp
+        <div class="card mb-0 api-token border-start border-{{ $accent }} border-3 {{ $access->active ? '' : 'api-token-off' }}">
           <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-              <div class="fw-semibold">{{ $access->name }}</div>
-              <div class="small text-muted">{{ $access->last_used_at ? 'آخرین استفاده '.$access->last_used_at->format('Y-m-d H:i') : 'هنوز استفاده نشده' }}</div>
+            <div class="d-flex align-items-center gap-3">
+              <span class="api-icon api-icon-sm bg-{{ $accent }} bg-opacity-10 text-{{ $accent }}"><i class="{{ $canWrite ? 'ph-pencil-simple' : 'ph-eye' }}"></i></span>
+              <div>
+                <div class="fw-semibold">{{ $access->name }}</div>
+                <div class="text-muted fs-sm">
+                  <i class="ph-clock me-1"></i>{{ $access->last_used_at ? 'آخرین استفاده '.$access->last_used_at->format('Y-m-d H:i') : 'هنوز استفاده نشده' }}
+                </div>
+              </div>
             </div>
             <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-{{ $accent }} bg-opacity-20 text-{{ $accent }}">{{ $canWrite ? 'خواندن و نوشتن' : 'فقط خواندن' }}</span>
               @if($access->active)
-                <span class="badge bg-success">فعال</span>
-              @else
-                <span class="badge bg-secondary">غیرفعال</span>
-              @endif
-              @if($access->active)
+                <span class="badge bg-success bg-opacity-20 text-success"><i class="ph-circle me-1" style="font-size:.6rem"></i> فعال</span>
                 <form method="post" action="{{ route('admin.shop.api-accesses.revoke', $access) }}">
                   @csrf
-                  <button type="submit" class="btn btn-sm btn-outline-danger">غیرفعال</button>
+                  <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ph-prohibit me-1"></i> غیرفعال کن</button>
                 </form>
               @else
+                <span class="badge bg-secondary bg-opacity-20 text-secondary">غیرفعال</span>
                 <form method="post" action="{{ route('admin.shop.api-accesses.activate', $access) }}">
                   @csrf
-                  <button type="submit" class="btn btn-sm btn-outline-success">فعال</button>
+                  <button type="submit" class="btn btn-sm btn-outline-success"><i class="ph-play me-1"></i> فعال کن</button>
                 </form>
               @endif
             </div>
           </div>
+
           <div class="card-body">
             <div class="mb-3">
-              <label class="form-label">توکن</label>
+              <label class="form-label fs-sm text-muted mb-1">توکن</label>
               @if($access->token)
                 <div class="input-group">
-                  <input type="text" class="form-control font-monospace" dir="ltr" readonly value="{{ $access->token }}">
-                  <button type="button" class="btn btn-outline-primary" data-copy="{{ $access->token }}">کپی</button>
+                  <input type="password" class="form-control font-monospace" dir="ltr" readonly value="{{ $access->token }}" data-secret>
+                  <button type="button" class="btn btn-light" data-toggle-secret title="نمایش یا پنهان"><i class="ph-eye"></i></button>
+                  <button type="button" class="btn btn-light" data-copy="{{ $access->token }}" title="کپی توکن"><i class="ph-copy"></i></button>
+                  <button type="submit" class="btn btn-light" form="rotate-{{ $access->id }}" title="صدور توکن تازه" onclick="return confirm('توکن قبلی از کار می‌افتد. ادامه؟')"><i class="ph-arrows-clockwise"></i></button>
                 </div>
+                <form id="rotate-{{ $access->id }}" method="post" action="{{ route('admin.shop.api-accesses.rotate', $access) }}">@csrf</form>
               @else
                 <div class="d-flex flex-wrap align-items-center gap-2">
-                  <span class="text-muted small">این توکن قبل از ذخیرهٔ متن ساخته شده و دیگر قابل نمایش نیست.</span>
+                  <span class="text-muted fs-sm"><i class="ph-info me-1"></i>این توکن قبل از ذخیرهٔ متن ساخته شده و دیگر قابل نمایش نیست.</span>
                   <form method="post" action="{{ route('admin.shop.api-accesses.rotate', $access) }}">
                     @csrf
-                    <button type="submit" class="btn btn-sm btn-outline-primary">صدور توکن تازه</button>
+                    <button type="submit" class="btn btn-sm btn-outline-primary"><i class="ph-arrows-clockwise me-1"></i> صدور توکن تازه</button>
                   </form>
                 </div>
               @endif
             </div>
 
-            <form method="post" action="{{ route('admin.shop.api-accesses.update', $access) }}" class="row g-3 align-items-start">
+            <form method="post" action="{{ route('admin.shop.api-accesses.update', $access) }}" class="row g-3 align-items-start border-top pt-3">
               @csrf
               @method('PUT')
-              <div class="col-md-3">
-                <label class="form-label">سقف در دقیقه</label>
+              <div class="col-md-2">
+                <label class="form-label fs-sm text-muted">سقف در دقیقه</label>
                 <input type="text" class="form-control" name="rate_limit" value="{{ $access->rate_limit }}" inputmode="numeric" autocomplete="off" required>
               </div>
               <div class="col-md-5">
-                <label class="form-label">آی‌پی‌های مجاز</label>
+                <label class="form-label fs-sm text-muted">آی‌پی‌های مجاز</label>
                 <div class="ip-tags" data-ip-tags>
                   <input type="hidden" name="allowed_ips" value="{{ implode("\n", $access->allowed_ips ?? []) }}">
-                  <input type="text" class="ip-tags-input" dir="ltr" placeholder="127.0.0.1" autocomplete="off">
+                  <input type="text" class="ip-tags-input" dir="ltr" placeholder="خالی = همهٔ آی‌پی‌ها" autocomplete="off">
                 </div>
               </div>
-              <div class="col-md-2">
-                <label class="form-label">سطح دسترسی</label>
-                <select name="permission" class="form-select">
-                  <option value="read" @selected($access->permission === 'read')>فقط خواندن</option>
-                  <option value="read_write" @selected($access->permission === 'read_write')>خواندن و نوشتن</option>
-                </select>
+              <div class="col-md-3">
+                <label class="form-label fs-sm text-muted">سطح دسترسی</label>
+                <div class="btn-group w-100" role="group">
+                  <input type="radio" class="btn-check" name="permission" id="perm-read-{{ $access->id }}" value="read" autocomplete="off" @checked(!$canWrite)>
+                  <label class="btn btn-outline-info" for="perm-read-{{ $access->id }}"><i class="ph-eye me-1"></i> خواندن</label>
+                  <input type="radio" class="btn-check" name="permission" id="perm-rw-{{ $access->id }}" value="read_write" autocomplete="off" @checked($canWrite)>
+                  <label class="btn btn-outline-warning" for="perm-rw-{{ $access->id }}"><i class="ph-pencil-simple me-1"></i> نوشتن</label>
+                </div>
               </div>
-              <div class="col-md-2">
-                <label class="form-label d-none d-md-block">&nbsp;</label>
-                <button type="submit" class="btn btn-outline-primary w-100">ذخیره</button>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100"><i class="ph-floppy-disk me-1"></i> ذخیره</button>
               </div>
             </form>
           </div>
         </div>
       @empty
         <div class="card mb-0">
-          <div class="card-body text-muted">هنوز دسترسی‌ای ثبت نشده است.</div>
+          <div class="card-body text-center text-muted py-5">
+            <i class="ph-key ph-3x d-block mb-2"></i>
+            هنوز دسترسی‌ای ثبت نشده است. با «توکن تازه» اولین را بساز.
+          </div>
         </div>
       @endforelse
     </div>
@@ -156,6 +245,28 @@
 </div>
 
 <style>
+  .api-access-page .api-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    flex-shrink: 0;
+  }
+  .api-access-page .api-icon-sm { width: 40px; height: 40px; border-radius: 10px; font-size: 1.25rem; }
+  .api-access-page .api-token { transition: box-shadow .15s ease; }
+  .api-access-page .api-token:hover { box-shadow: 0 .25rem 1rem rgba(0, 0, 0, .12); }
+  .api-access-page .api-token-off { opacity: .65; }
+  .api-access-page .api-prompt {
+    padding: .75rem 1rem;
+    border-radius: var(--border-radius, .375rem);
+    border: 1px dashed var(--border-color, var(--gray-400, #ced4da));
+    background: color-mix(in srgb, var(--body-color, #212529) 5%, transparent);
+    color: inherit;
+    font-size: .8125rem;
+    white-space: pre-wrap;
+  }
   .api-access-page .form-control,
   .api-access-page .api-path,
   .api-access-page .ip-tags {
@@ -356,10 +467,20 @@
     button.addEventListener('click', function () {
       var value = button.getAttribute('data-copy') || '';
       copyText(value).then(function () {
-        var previous = button.textContent;
-        button.textContent = 'کپی شد';
-        setTimeout(function () { button.textContent = previous; }, 1200);
+        var previous = button.innerHTML;
+        button.innerHTML = '<i class="ph-check text-success"></i>';
+        setTimeout(function () { button.innerHTML = previous; }, 1200);
       });
+    });
+  });
+
+  document.querySelectorAll('[data-toggle-secret]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var input = button.parentNode.querySelector('[data-secret]');
+      if (!input) return;
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      button.innerHTML = show ? '<i class="ph-eye-slash"></i>' : '<i class="ph-eye"></i>';
     });
   });
 })();
