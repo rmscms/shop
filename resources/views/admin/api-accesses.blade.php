@@ -7,7 +7,26 @@
   $readCount = $total - $writeCount;
   $adminApi = collect($endpoints ?? [])->firstWhere('title', 'API ادمین')['url'] ?? url('api/v1/admin/shop');
   $endpointIcons = ['داک API' => ['ph-book-open-text', 'info'], 'API ادمین' => ['ph-shield-check', 'warning'], 'API پنل' => ['ph-users-three', 'success']];
-  $agentPrompt = "آدرس API: {$adminApi}\nتوکن: (توکن این صفحه را اینجا بگذار)\nاول GET {$adminApi}/ai/guide و بعد GET {$adminApi}/ai/inbox را با هدر Authorization: Bearer بخوان و طبق راهنما کار کن.\nنتیجهٔ هر کار را در سیستم ثبت کن (نه فقط در چت) و بدون «اعمال کن» صریح من چیزی را روی محصول تغییر نده.";
+  $docsUrl = collect($endpoints ?? [])->firstWhere('title', 'داک API')['url'] ?? url('api/documentation');
+  // Everything an agent needs in one paste, with the token inside.
+  $connectionText = function ($access) use ($adminApi, $docsUrl) {
+      $level = $access->permission === 'read_write' ? 'خواندن و نوشتن (قبل از هر نوشتن از اپراتور اجازه بگیر)' : 'فقط خواندن (پیشنهاد و بررسی ثبت می‌شود و ادمین تأیید می‌کند)';
+
+      return "اتصال به API فروشگاه digitalpart.ir\n"
+          ."آدرس API: {$adminApi}\n"
+          ."توکن (Bearer): {$access->token}\n"
+          ."سطح این توکن: {$level}\n"
+          ."مستندات: {$docsUrl}\n"
+          ."راهنمای ایجنت: GET {$adminApi}/ai/guide\n"
+          ."صندوق کارها: GET {$adminApi}/ai/inbox\n\n"
+          ."روش کار:\n"
+          ."1. همهٔ درخواست‌ها با هدر Authorization: Bearer <توکن> انجام می‌شود.\n"
+          ."2. اول راهنما (ai/guide) و بعد صندوق (ai/inbox) را بخوان و طبق آن کار کن.\n"
+          ."3. نتیجهٔ هر کار را در سیستم ثبت کن (بررسی با ai/reviews، پیشنهاد تغییر با ai/proposals، یادداشت با ai/notes)؛ فقط در چت گزارش نده.\n"
+          ."4. بدون «اعمال کن» صریح اپراتور چیزی را روی محصول، دسته یا برند مستقیم تغییر نده.\n"
+          ."5. توکن را در جای عمومی یا مخزن کد ننویس.";
+  };
+  $agentPrompt ="آدرس API: {$adminApi}\nتوکن: (توکن این صفحه را اینجا بگذار)\nاول GET {$adminApi}/ai/guide و بعد GET {$adminApi}/ai/inbox را با هدر Authorization: Bearer بخوان و طبق راهنما کار کن.\nنتیجهٔ هر کار را در سیستم ثبت کن (نه فقط در چت) و بدون «اعمال کن» صریح من چیزی را روی محصول تغییر نده.";
 @endphp
 
 @section('content')
@@ -90,7 +109,7 @@
         <span class="api-icon api-icon-sm bg-warning bg-opacity-10 text-warning"><i class="ph-robot"></i></span>
         <div class="flex-grow-1" style="min-width:260px">
           <div class="fw-semibold mb-1">اتصال یک ایجنت AI</div>
-          <div class="text-muted fs-sm mb-2">این متن را به اپراتور بده و توکن را جایش بگذار. ایجنت با آن راهنما و صندوق کارها را می‌خواند. برای کار روزمره سطح «فقط خواندن» کافی است.</div>
+          <div class="text-muted fs-sm mb-2">ساده‌ترین راه: روی هر توکن دکمهٔ «کپی متن اتصال» را بزن و همان را به ایجنت بده؛ توکن، آدرس‌ها، مستندات و روش کار داخلش است. این کارت فقط نمونهٔ بدون توکن است. برای کار روزمره سطح «فقط خواندن» کافی است.</div>
           <pre class="api-prompt mb-0" dir="auto">{{ $agentPrompt }}</pre>
         </div>
         <button type="button" class="btn btn-sm btn-light text-nowrap" data-copy="{{ $agentPrompt }}"><i class="ph-copy me-1"></i> کپی متن</button>
@@ -194,7 +213,8 @@
                 <div class="api-token-row">
                   <input type="password" class="form-control font-monospace" dir="ltr" readonly value="{{ $access->token }}" data-secret>
                   <button type="button" class="btn btn-light btn-icon" data-toggle-secret title="نمایش یا پنهان"><i class="ph-eye"></i></button>
-                  <button type="button" class="btn btn-light btn-icon" data-copy="{{ $access->token }}" title="کپی توکن"><i class="ph-copy"></i></button>
+                  <button type="button" class="btn btn-primary" data-copy="{{ $connectionText($access) }}" title="توکن + آدرس‌ها + مستندات + روش کار، یک‌جا برای ایجنت"><i class="ph-copy me-1"></i> کپی متن اتصال</button>
+                  <button type="button" class="btn btn-light btn-icon" data-copy="{{ $access->token }}" title="فقط خود توکن"><i class="ph-key"></i></button>
                   <button type="submit" class="btn btn-light btn-icon" form="rotate-{{ $access->id }}" title="صدور توکن تازه" onclick="return confirm('توکن قبلی از کار می‌افتد. ادامه؟')"><i class="ph-arrows-clockwise"></i></button>
                 </div>
                 <form id="rotate-{{ $access->id }}" method="post" action="{{ route('admin.shop.api-accesses.rotate', $access) }}">@csrf</form>
