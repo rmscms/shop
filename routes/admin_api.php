@@ -72,6 +72,7 @@ Route::prefix($prefix)
             Route::get('ai/tasks/{task}/items', [AiTaskController::class, 'items'])->name('ai.tasks.items');
             Route::post('ai/suggestions', [AiTaskController::class, 'submit'])->name('ai.suggestions.store');
             Route::post('ai/apply', [AiTaskController::class, 'apply'])->name('ai.apply');
+            Route::post('ai/notes', [AiTaskController::class, 'note'])->name('ai.notes.store');
             Route::get('ai/reviews/queue', [AiReviewController::class, 'queue'])->name('ai.reviews.queue');
             Route::get('ai/reviews/unreviewed', [AiReviewController::class, 'unreviewed'])->name('ai.reviews.unreviewed');
             Route::post('ai/reviews', [AiReviewController::class, 'submit'])->name('ai.reviews.store');

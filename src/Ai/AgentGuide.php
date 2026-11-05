@@ -55,6 +55,8 @@ class AgentGuide
                 'ادعای بدون مدرک ننویس. برای رقابت و قیمت، نام فروشگاه، لینک و قیمت و تاریخ مشاهده را در یافته‌ها بنویس. اگر چیزی را نتوانستی بررسی کنی، همین را بنویس و امتیاز آن جنبه را نده.',
                 'سقف درخواست توکن محدود است (کد 429 یعنی صبر کن). از آی‌پی غیرمجاز هم کار نمی‌کند.',
                 'تاریخ را خود سرور ثبت می‌کند؛ لازم نیست بفرستی.',
+                'هر کار روی یک محصول باید در تاریخچهٔ همان محصول دیده شود (دکمهٔ «بررسی AI» در صفحهٔ محصول). ثبت بررسی، پیشنهاد، اعمال مستقیم و تغییرهای محصول از راه API خودکار لاگ می‌شود. هر کار دیگر (مثلاً دیدن چیزی، تصمیمی که گرفتی، چیزی که نتوانستی انجام بدهی) را با POST ai/notes ثبت کن.',
+                'پایان کار روی هر محصول: یک POST ai/notes با title کوتاه (چه کردی) و details (نتیجه و کارهای باقی‌مانده).',
             ],
             'allowed_endpoints' => [
                 'GET '.$base.'/ai/guide',
@@ -64,6 +66,7 @@ class AgentGuide
                 'POST '.$base.'/ai/reviews',
                 'GET '.$base.'/ai/tasks/slug_fa/items',
                 'POST '.$base.'/ai/suggestions',
+                'POST '.$base.'/ai/notes  {product_id, title, details?}  (یادداشت کار روی محصول؛ با توکن read هم مجاز است)',
                 'POST '.$base.'/ai/apply  (فقط با دستور صریح اپراتور؛ فیلدها: product_id, operator_instruction, و name|short_desc|description|slug|meta_title|meta_description|focus_keyword|image_alt)',
                 'GET '.$base.'/products  و  GET '.$base.'/products/{id}  (فقط خواندن)',
                 'GET '.$base.'/categories  و  GET '.$base.'/brands  (فقط خواندن)',

@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use RMS\Shop\Models\AiAction;
+use RMS\Shop\Models\AiActivity;
 use RMS\Shop\Models\AiReview;
 use RMS\Shop\Models\Product;
 
@@ -120,6 +121,25 @@ class AiReviewsController extends ShopAdminController
                     ->orderByDesc('reviewed_at')
                     ->get(['id', 'score', 'reviewed_at', 'source']),
                 'aspects' => AiReview::ASPECTS,
+            ]);
+
+        return $this->view();
+    }
+
+    /** Full timeline of what the agent did on one product. */
+    public function activity(Product $product)
+    {
+        $this->title('تاریخچهٔ کار AI روی محصول #'.$product->id);
+
+        $this->view->usePackageNamespace('shop')
+            ->setTheme('admin')
+            ->setTpl('ai.reviews.activity')
+            ->withVariables([
+                'product' => $product,
+                'items' => Schema::hasTable('shop_ai_activities')
+                    ? AiActivity::query()->where('product_id', $product->id)->orderByDesc('id')->paginate(50)
+                    : collect(),
+                'types' => AiActivity::TYPES,
             ]);
 
         return $this->view();

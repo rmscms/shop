@@ -65,6 +65,7 @@ Route::middleware([
         Route::post('ai-reviews/request-all', [AiReviewsController::class, 'requestAll'])->name('ai-reviews.request-all');
         Route::get('ai-reviews/{review}', [AiReviewsController::class, 'show'])->name('ai-reviews.show');
         Route::post('ai-reviews/{review}/dismiss', [AiReviewsController::class, 'dismiss'])->name('ai-reviews.dismiss');
+        Route::get('products/{product}/ai-activity', [AiReviewsController::class, 'activity'])->name('products.ai-activity');
         Route::post('products/{product}/ai-review', [AiReviewsController::class, 'request'])->name('products.ai-review.request');
 
         // AI catalog plan (before ai/{suggestion} so "catalog" is not read as a suggestion id)

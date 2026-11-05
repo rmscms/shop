@@ -8,6 +8,7 @@ use RMS\Shop\Ai\AgentGuide;
 use RMS\Shop\Ai\ProductAiEnricher;
 use RMS\Shop\Ai\SlugTask;
 use RMS\Shop\Models\AiAction;
+use RMS\Shop\Models\AiActivity;
 use RMS\Shop\Models\AiSuggestion;
 use RMS\Shop\Models\Product;
 
@@ -167,6 +168,13 @@ class AiTaskController extends BaseController
             'suggestion_id' => $suggestion->id,
         ]);
 
+        AiActivity::record($access, $product->id, 'apply', 'اعمال مستقیم: '.implode('، ', $touched), [
+            'action_id' => $action->id,
+            'operator_instruction' => $action->operator_instruction,
+            'before' => $before,
+            'after' => $after,
+        ]);
+
         return response()->json([
             'status' => 'ok',
             'data' => ['action_id' => $action->id, 'applied' => $touched, 'logged_at' => $action->created_at->toIso8601String()],
@@ -196,11 +204,33 @@ class AiTaskController extends BaseController
 
         $suggestion = $enricher->fromData($product, ['slug' => $slug, 'task' => SlugTask::KEY], 'agent: '.($data['source'] ?? 'api'));
 
+        AiActivity::record($request->attributes->get('shop_api_access'), $product->id, 'suggestion', 'پیشنهاد اسلاگ فارسی', [
+            'suggestion_id' => $suggestion->id,
+            'from' => $product->slug,
+            'to' => $slug,
+        ]);
+
         return response()->json([
             'status' => 'ok',
             'data' => ['suggestion_id' => $suggestion->id, 'status' => $suggestion->status, 'slug' => $slug],
             'errors' => [],
             'meta' => [],
         ], 201);
+    }
+
+    /** Free-form work note: what the agent did or found on a product (allowed for read tokens). */
+    public function note(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'title' => ['required', 'string', 'max:200'],
+            'details' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        AiActivity::record($request->attributes->get('shop_api_access'), (int) $data['product_id'], 'note', $data['title'], array_filter([
+            'text' => $data['details'] ?? null,
+        ]));
+
+        return response()->json(['status' => 'ok', 'data' => ['logged' => true], 'errors' => [], 'meta' => []], 201);
     }
 }

@@ -4,6 +4,7 @@ namespace RMS\Shop\Http\Controllers\Api\Admin;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use RMS\Shop\Models\AiActivity;
 use RMS\Shop\Models\AiReview;
 use RMS\Shop\Models\Product;
 
@@ -101,6 +102,12 @@ class AiReviewController extends BaseController
             'source' => 'agent: '.($data['source'] ?? 'api'),
             'reviewed_at' => now(),
         ])->save();
+
+        AiActivity::record($request->attributes->get('shop_api_access'), (int) $data['product_id'], 'review', 'بررسی محصول ('.implode('، ', array_map(fn ($k) => AiReview::ASPECTS[$k] ?? $k, array_keys($result))).')', [
+            'review_id' => $review->id,
+            'score' => $score,
+            'summary' => $review->summary,
+        ]);
 
         return $this->payload(['review_id' => $review->id, 'score' => $score, 'reviewed_at' => $review->reviewed_at->toIso8601String()], [], 201);
     }
