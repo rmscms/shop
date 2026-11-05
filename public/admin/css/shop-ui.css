@@ -193,3 +193,33 @@
 
 /* table row that needs a look (replaces the solid table-warning yellow) */
 .shop-ui .shop-row-warn > td { background: rgba(var(--tone-warning), .09) !important; }
+
+/* ---- soft badges: the core lists use solid .badge.bg-* everywhere; inside .shop-ui they become quiet ---- */
+.shop-ui .badge { font-weight: 500; letter-spacing: 0; }
+.shop-ui .badge.bg-success   { background: rgba(var(--tone-success), .14) !important; color: rgb(var(--tone-success)) !important; }
+.shop-ui .badge.bg-danger    { background: rgba(var(--tone-danger), .14) !important;  color: rgb(var(--tone-danger)) !important; }
+.shop-ui .badge.bg-warning   { background: rgba(var(--tone-warning), .16) !important; color: rgb(var(--tone-warning)) !important; }
+.shop-ui .badge.bg-info      { background: rgba(var(--tone-info), .14) !important;    color: rgb(var(--tone-info)) !important; }
+.shop-ui .badge.bg-primary   { background: rgba(var(--tone-primary), .14) !important; color: rgb(var(--tone-primary)) !important; }
+.shop-ui .badge.bg-secondary,
+.shop-ui .badge.bg-dark,
+.shop-ui .badge.bg-light     { background: rgba(var(--tone-muted), .16) !important;   color: rgb(var(--tone-muted)) !important; }
+
+/* ---- core list pages (cms list template gets .shop-ui.shop-list on shop routes) ---- */
+.shop-ui.shop-list .card { margin-bottom: 1rem; }
+.shop-ui.shop-list .table { --bs-table-bg: transparent; margin-bottom: 0; }
+.shop-ui.shop-list .table thead th {
+  font-size: .75rem; font-weight: 500; color: var(--text-muted, var(--gray-600)); background: transparent;
+  border-bottom: 1px solid var(--shop-line); white-space: nowrap;
+}
+.shop-ui.shop-list .table > :not(caption) > * > * { border-color: var(--shop-line); }
+.shop-ui.shop-list .table tbody tr:hover > td { background: var(--shop-ink-soft); }
+.shop-ui.shop-list .table td { vertical-align: middle; }
+.shop-ui.shop-list .card-header h6 { font-weight: 600; }
+
+/* ---- pagination, everywhere in .shop-ui ---- */
+.shop-ui .pagination { gap: .25rem; }
+.shop-ui .page-link { border-radius: .5rem !important; border: 1px solid var(--shop-line); background: transparent; color: var(--body-color); }
+.shop-ui .page-link:hover { background: var(--shop-ink-soft); color: var(--body-color); }
+.shop-ui .page-item.active .page-link { background: rgba(var(--tone-primary), .14) !important; border-color: rgba(var(--tone-primary), .45) !important; color: rgb(var(--tone-primary)) !important; }
+.shop-ui .page-item.disabled .page-link { opacity: .45; background: transparent !important; }
