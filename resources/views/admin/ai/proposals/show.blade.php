@@ -6,6 +6,7 @@
   $spec = $resource?->fields() ?? [];
   $creates = (bool) $resource?->creates();
   $canApply = $pending && ($model || $creates);
+  $str = fn ($v) => is_array($v) ? (collect($v)->flatten()->every(fn ($x) => is_scalar($x) || $x === null) ? collect($v)->flatten()->implode('، ') : json_encode($v, JSON_UNESCAPED_UNICODE)) : (string) $v;
   $renderFeatures = function ($groups) {
       $out = '';
       foreach ((array) $groups as $g) {
@@ -61,8 +62,8 @@
             @foreach((array) $proposal->changes as $field => $value)
               @php
                 $isFeatures = ($spec[$field]['type'] ?? '') === 'features';
-                $now = $isFeatures ? '' : (string) ($live[$field] ?? '');
-                $was = (string) data_get($proposal->before, $field, '');
+                $now = $isFeatures ? '' : $str($live[$field] ?? '');
+                $was = $str(data_get($proposal->before, $field, ''));
                 $drift = $pending && ! $isFeatures && ! $creates && $now !== $was;
               @endphp
               <tr>
@@ -76,7 +77,7 @@
                   <td><div class="shop-diff shop-diff--new">{!! $renderFeatures($value) !!}</div><div class="fs-xs text-muted mt-1">فقط ویژگی‌های جدید اضافه می‌شوند؛ موارد فعلی حفظ می‌شوند.</div></td>
                 @else
                   <td><div class="shop-diff shop-diff--old">{{ $creates ? '—' : (\Illuminate\Support\Str::limit(strip_tags($now), 600) ?: '—') }}</div></td>
-                  <td><div class="shop-diff shop-diff--new">{{ \Illuminate\Support\Str::limit(strip_tags((string) $value), 600) }}</div></td>
+                  <td><div class="shop-diff shop-diff--new">{{ \Illuminate\Support\Str::limit(strip_tags($str($value)), 600) }}</div></td>
                 @endif
               </tr>
             @endforeach
