@@ -99,8 +99,9 @@ class ProposalService
      */
     public function apply(AiProposal $proposal, array $fields, ?int $adminId): array
     {
-        if ($proposal->status !== AiProposal::STATUS_PENDING) {
-            return ['status' => ['این پیشنهاد دیگر در انتظار نیست.']];
+        // Rejected or failed proposals can be applied later; applied and superseded ones cannot.
+        if (! in_array($proposal->status, [AiProposal::STATUS_PENDING, AiProposal::STATUS_REJECTED, AiProposal::STATUS_FAILED], true)) {
+            return ['status' => ['این پیشنهاد قابل اعمال نیست.']];
         }
 
         $resource = AiResourceRegistry::get($proposal->resource_type);
@@ -131,6 +132,7 @@ class ProposalService
             }
             $proposal->forceFill([
                 'status' => AiProposal::STATUS_APPLIED,
+                'error' => null,
                 'applied_fields' => array_keys($cleaned),
                 'reviewed_by' => $adminId,
                 'applied_at' => now(),
